@@ -1,73 +1,268 @@
-# Welcome to your Lovable project
+# SCALVEA E-Commerce Platform
 
-## Project info
+A full-stack international e-commerce platform for SCALVEA hair care products with multi-country pricing, Stripe payments, inventory management, and admin dashboard.
 
-**URL**: https://lovable.dev/projects/a8e59680-e4fc-4735-a797-36af2f7e2875
+---
 
-## How can I edit this code?
+## 🌍 Overview
 
-There are several ways of editing your application.
+SCALVEA is a modern international e-commerce platform built for selling hair care products globally. The platform supports multi-country pricing, multi-currency payments, inventory management, admin dashboard, and international shipping logic.
 
-**Use Lovable**
+The system supports:
+- Australia (AUD)
+- India (INR)
+- USA (USD)
+- Other countries (USD)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a8e59680-e4fc-4735-a797-36af2f7e2875) and start prompting.
+Prices, taxes, shipping charges, and delivery time change based on the selected country.
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## 🚀 Features
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### User Features
+- User Registration & Login
+- Country Selection (India / Australia / USA / Other)
+- Multi-Currency Pricing
+- Product Browsing
+- Product Details Page
+- Add to Cart
+- Wishlist
+- Checkout
+- Stripe Payments
+- Order History
+- Address Management
+- Email Order Confirmation
+- Delivery Time per Country
+- Taxes & Shipping Calculation
+- Coupons / Discount Codes
+- Product Reviews
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Admin Features
+- Admin Dashboard
+- Product Management
+- Inventory Management
+- Order Management
+- User Management
+- Country Pricing Management
+- Taxes Management per Country
+- Shipping Charges per Country
+- Coupons Management
+- Sales Analytics
+- Low Stock Alerts
+- Revenue by Country
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🛠 Tech Stack
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
+### Frontend
+- Next.js
 - React
-- shadcn-ui
 - Tailwind CSS
+- Redux Toolkit / Context API
+- Stripe JS
+- Axios
 
-## How can I deploy this project?
+### Backend
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT Authentication
+- Stripe API
+- Cloudinary (Image Upload)
+- Nodemailer / Resend (Emails)
 
-Simply open [Lovable](https://lovable.dev/projects/a8e59680-e4fc-4735-a797-36af2f7e2875) and click on Share -> Publish.
+### Deployment
+- Frontend → Vercel
+- Backend → Render / Railway
+- Database → MongoDB Atlas
+- Images → Cloudinary
+- Payments → Stripe
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
+## 📁 Project Structure
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+scalvea/
+│
+├── frontend/ # Next.js frontend
+│
+├── backend/
+│ ├── controllers/
+│ ├── routes/
+│ ├── models/
+│ ├── middleware/
+│ ├── utils/
+│ ├── config/
+│ └── server.js
+│
+├── admin/ # Admin dashboard
+│
+├── .env
+├── .gitignore
+├── README.md
+└── package.json
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+---
+
+## 🗄 Database Models
+
+The system includes the following database models:
+
+- Users
+- Products
+- ProductPrices
+- Orders
+- OrderItems
+- Inventory
+- CountrySettings
+- Coupons
+- Reviews
+- Addresses
+- InventoryLogs
+
+---
+
+## 🌎 Multi-Country Logic
+
+The platform supports different pricing, taxes, and shipping per country.
+
+| Country | Currency |
+|--------|----------|
+| Australia | AUD |
+| India | INR |
+| USA | USD |
+| Others | USD |
+
+### Checkout Calculation
+
+Subtotal = Product Prices (based on country)
+Tax = Subtotal × Country Tax %
+Shipping = Country Shipping Charge
+Total = Subtotal + Tax + Shipping
+
+
+---
+
+## 💳 Stripe Payment Integration
+
+Stripe is used for handling international payments.
+
+Supported currencies:
+- AUD
+- INR
+- USD
+
+Payment Flow:
+1. User selects country
+2. Prices loaded based on country
+3. User checkout
+4. Backend creates Stripe PaymentIntent
+5. User pays
+6. Stripe webhook confirms payment
+7. Order marked as paid
+8. Inventory updated
+9. Confirmation email sent
+
+---
+
+## 🔐 Authentication & Security
+
+- JWT Authentication
+- Password Hashing (bcrypt)
+- Protected Admin Routes
+- Rate Limiting
+- Helmet Security
+- Input Validation
+- Stripe Webhook Verification
+
+---
+
+## 📦 Admin Panel Features
+
+Admin dashboard includes:
+- Total Orders
+- Total Revenue
+- Sales Analytics
+- Revenue by Country
+- Product Management
+- Inventory Management
+- Order Management
+- User Management
+- Coupons
+- Taxes Management
+- Shipping Management
+- Country Pricing Management
+
+---
+
+## ⚙️ Environment Variables
+
+Create a `.env` file in backend:
+
+PORT=5000
+MONGO_URI=
+JWT_SECRET=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+EMAIL_USER=
+EMAIL_PASS=
+FRONTEND_URL=
+
+
+---
+
+## ▶️ Installation & Setup
+
+### Backend Setup
+
+cd backend
+npm install
+npm run dev
+
+
+### Frontend Setup
+
+cd frontend
+npm install
+npm run dev
+
+
+### Admin Panel Setup
+
+cd admin
+npm install
+npm run dev
+
+---
+
+## 📊 Future Improvements
+
+- Subscription Products
+- Hair Consultation AI
+- Mobile App
+- Referral System
+- Loyalty Points
+- Abandoned Cart Emails
+- Blog & SEO System
+- Multi-language Support
+- Warehouse Management
+- Returns & Refund System
+
+---
+
+## 📞 Store Information
+
+**SCALVEA**
+263 Heaths Rd  
+Werribee VIC 3030  
+Australia  
++61 460 309 333
+
+---
+
+## 📄 License
+This project is proprietary and developed for SCALVEA.
