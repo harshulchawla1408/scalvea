@@ -1,0 +1,73 @@
+# =========================
+# Logs
+# =========================
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# =========================
+# Node modules
+# =========================
+node_modules/
+
+# =========================
+# Build outputs
+# =========================
+.next/
+out/
+build/
+dist/
+dist-ssr/
+coverage/
+
+# =========================
+# Environment files
+# =========================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.sw?
+
+# =========================
+# Database
+# =========================
+*.sqlite
+*.db
+
+# =========================
+# Uploads / Images / Temp
+# =========================
+uploads/
+temp/
+tmp/
+
+# =========================
+# Misc
+# =========================
+*.local
+.cache
+.vercel
