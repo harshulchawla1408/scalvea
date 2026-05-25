@@ -3,254 +3,686 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/products/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Star, Check, Truck, Shield, Leaf } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, Star, Truck, Shield, Leaf, Check } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { motion, AnimatePresence } from "framer-motion";
+import Lenis from "lenis";
+
+// Asset imports
 import follicle8Serum from "@/assets/follicle8-serum.png";
 import follicle8Black from "@/assets/follicle8-black.png";
 import client1 from "@/assets/client-1.jpg";
 import client2 from "@/assets/client-2.jpg";
 import client3 from "@/assets/client-3.jpg";
-import ingredientsBg from "@/assets/ingredients-bg.jpg";
+import client4 from "@/assets/client-4.jpg";
+import client5 from "@/assets/client-5.jpg";
+import heroPng from "@/assets/hero.png";
+import heroVideo from "@/assets/hero-video.mp4";
+import hero2 from "@/assets/hero2.png";
+import hero3 from "@/assets/hero3.png";
+import aboutMp4 from "@/assets/about.mp4";
+import about1 from "@/assets/about1.png";
+import about2 from "@/assets/about2.png";
+
+// Testimonial reviews data
+const REVIEWS = [
+  { name: "Sarah M.", text: "After 8 weeks of using Follicle 8, I can visibly see new baby hairs growing along my hairline. Absolutely love it!", img: client1, location: "Melbourne, AU" },
+  { name: "James K.", text: "Finally a brand that tells you exactly what's inside. My hair feels thicker and healthier than ever before.", img: client2, location: "Sydney, AU" },
+  { name: "Priya R.", text: "I've tried many hair growth serums but Scalvea is the first one that actually delivered visible results.", img: client3, location: "Mumbai, IN" },
+  { name: "Elena P.", text: "The non-greasy formula is amazing. I apply it before styling and it doesn't leave any residue.", img: client4, location: "Sydney, AU" },
+  { name: "Marcus T.", text: "My scalp feels so much healthier. The shedding has decreased by at least 70% in 6 weeks.", img: client5, location: "Brisbane, AU" },
+];
+
+// Helper CountUp Component
+const CountUp = ({ value, duration = 1.8 }: { value: number; duration?: number }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = value;
+    const totalMiliseconds = duration * 1000;
+    const incrementTime = 40;
+    const totalSteps = totalMiliseconds / incrementTime;
+    const stepValue = end / totalSteps;
+
+    const timer = setInterval(() => {
+      start += stepValue;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, incrementTime);
+
+    return () => clearInterval(timer);
+  }, [value, duration]);
+
+  return <>{count}</>;
+};
 
 const Index = () => {
   const [email, setEmail] = useState("");
   const { products, loading } = useProducts();
   const featured = products.filter((p) => p.featured);
+  
+  const [scrollY, setScrollY] = useState(0);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [scienceInView, setScienceInView] = useState(false);
+
+  // Initialize Lenis Smooth Scroll
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    });
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    // Scroll tracker for parallax
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    // Loading screen timer
+    const timer = setTimeout(() => {
+      setPageLoading(false);
+    }, 2800);
+
+    return () => {
+      lenis.destroy();
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(timer);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-hidden relative">
+      
+      {/* 10. WEBSITE-WIDE PRE-LOADING ANIMATION */}
+      <AnimatePresence>
+        {pageLoading && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 1, ease: [0.16, 1, 0.3, 1] } }}
+            className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center overflow-hidden"
+          >
+            {/* Cinematic grain/noise overlay */}
+            <div className="absolute inset-0 noise-bg opacity-[0.03] pointer-events-none" />
+            
+            {/* Ambient background light */}
+            <div className="absolute w-[450px] h-[450px] rounded-full bg-amber-50/5 blur-[130px] top-1/4 left-1/3 animate-ambient-light pointer-events-none" />
+            
+            <div className="relative flex flex-col items-center space-y-8 z-10">
+              {/* Coded Typography Logo with letter-by-letter reveal & subtle blur shift */}
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: { 
+                    opacity: 1,
+                    transition: { staggerChildren: 0.1, delayChildren: 0.4 } 
+                  }
+                }}
+                className="flex items-center tracking-[0.35em] text-2xl md:text-3xl font-sans font-light uppercase select-none text-white/90 relative"
+              >
+                {"SCALVEA".split("").map((letter, idx) => (
+                  <motion.span
+                    key={idx}
+                    variants={{
+                      hidden: { opacity: 0, filter: "blur(8px)", y: 8 },
+                      visible: { 
+                        opacity: 1, 
+                        filter: "blur(0px)", 
+                        y: 0,
+                        transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] }
+                      }
+                    }}
+                    className="inline-block"
+                    style={{ textShadow: "0 0 10px rgba(255,255,255,0.06)" }}
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
+                
+                {/* Subtle moving light streak pass overlay */}
+                <motion.div 
+                  initial={{ left: "-100%" }}
+                  animate={{ left: "100%" }}
+                  transition={{ delay: 1.5, duration: 1.2, ease: "easeInOut" }}
+                  className="absolute top-0 bottom-0 w-[40%] bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 pointer-events-none"
+                />
+              </motion.div>
+
+              {/* Subtle Breathing Loading Bar */}
+              <div className="w-32 h-[1px] bg-white/10 relative overflow-hidden">
+                <motion.div 
+                  initial={{ left: "-100%" }}
+                  animate={{ left: "100%" }}
+                  transition={{ delay: 0.6, duration: 1.8, ease: "easeInOut" }}
+                  className="absolute inset-0 bg-white/40 w-1/3"
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <Header />
 
-      {/* Video Hero */}
-      <section className="relative h-[70vh] md:h-[80vh] max-h-[700px] overflow-hidden">
+      {/* Global Grain/Noise Overlay */}
+      <div className="fixed inset-0 noise-bg pointer-events-none z-40 select-none opacity-[0.02]" />
+
+      {/* 1. CINEMATIC HERO SECTION */}
+      <section className="relative h-screen min-h-[650px] w-full overflow-hidden bg-black flex items-center">
+        {/* Parallax Background Container */}
+        <div 
+          className="absolute inset-0 z-0 overflow-hidden select-none pointer-events-none"
+          style={{ transform: `translateY(${scrollY * 0.12}px)` }}
+        >
+          <img
+            src={heroPng}
+            alt="Scalvea Hero Background"
+            className="absolute inset-0 w-full h-full object-cover object-[72%_center] md:object-right-bottom scale-105 animate-cinematic-zoom"
+          />
+          {/* Looped Cinematic Hero Video overlay with opacity blending */}
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover object-[72%_center] md:object-right-bottom opacity-50 mix-blend-screen"
+          >
+            <source src={heroVideo} type="video/mp4" />
+          </video>
+          {/* Soft Dark Overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-transparent" />
+          <div className="absolute inset-0 bg-black/25" />
+          <div className="absolute top-[15%] left-[20%] w-[380px] h-[380px] bg-amber-100/5 rounded-full blur-[140px] animate-ambient-light" />
+        </div>
+
+        {/* Smooth section blend transition at the bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background via-background/40 to-transparent z-10 pointer-events-none" />
+
+        {/* Hero Content Grid */}
+        <div className="relative z-20 w-full max-w-7xl mx-auto px-6 lg:px-16 flex flex-col justify-center h-full pt-12">
+          <div className="max-w-xl space-y-6">
+            
+            {/* Thin hair line drawings */}
+            <div 
+              className="h-[1px] bg-white/25 w-0 animate-draw-line" 
+              style={{ animationDelay: "0.2s" }} 
+            />
+
+            {/* Sub-label */}
+            <p 
+              className="text-[9px] tracking-[0.3em] uppercase text-white/50 opacity-0 animate-fade-in-soft" 
+              style={{ animationDelay: "0.6s" }}
+            >
+              SCIENCE-BACKED HAIR GROWTH
+            </p>
+
+            {/* Heading Editorial */}
+            <h2 className="text-[52px] md:text-[72px] lg:text-[88px] leading-[0.9] text-white editorial-heading flex flex-col">
+              <span className="opacity-0 animate-fade-up-soft" style={{ animationDelay: "0.9s" }}>Nothing</span>
+              <span className="opacity-0 animate-fade-up-soft mt-1" style={{ animationDelay: "1.2s" }}>To</span>
+              <span className="opacity-0 animate-blur-to-clear italic text-amber-50/90 font-light mt-1" style={{ animationDelay: "1.5s" }}>Hide</span>
+            </h2>
+
+            {/* Description */}
+            <p 
+              className="text-xs md:text-sm text-white/60 font-light leading-relaxed max-w-sm opacity-0 animate-fade-up-soft" 
+              style={{ animationDelay: "1.9s" }}
+            >
+              Clinically formulated with Redensyl, Baicapil, Procapil & Anagain at proven concentrations.
+            </p>
+
+            {/* Staggered buttons with slide-reveal hovers */}
+            <div 
+              className="flex gap-4 pt-4 opacity-0 animate-scale-up-soft" 
+              style={{ animationDelay: "2.4s" }}
+            >
+              <Link 
+                to="/shop" 
+                className="group relative overflow-hidden h-11 px-8 flex items-center justify-center text-[10px] tracking-[0.2em] uppercase font-medium bg-white text-black border border-white hover:text-white transition-all duration-500 hover:-translate-y-0.5 transform shadow-lg"
+              >
+                <span className="absolute inset-0 w-0 bg-black transition-all duration-500 ease-out group-hover:w-full" />
+                <span className="relative z-10">Shop Now</span>
+              </Link>
+              
+              <Link 
+                to="/about" 
+                className="group relative overflow-hidden h-11 px-8 flex items-center justify-center text-[10px] tracking-[0.2em] uppercase font-light text-white border border-white/30 hover:border-white transition-all duration-500 hover:-translate-y-0.5 transform bg-white/5 backdrop-blur-sm"
+              >
+                <span className="absolute inset-0 w-0 bg-white/10 transition-all duration-500 ease-out group-hover:w-full" />
+                <span className="relative z-10">Our Story</span>
+              </Link>
+            </div>
+            
+          </div>
+        </div>
+      </section>
+
+      {/* Trust bar */}
+      <section className="border-b border-border relative z-20 bg-background py-6">
+        <div className="max-w-7xl mx-auto px-6 lg:px-16">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 divide-x divide-border">
+            {[
+              { icon: Truck, label: "Free Shipping", sub: "On regional orders" },
+              { icon: Shield, label: "Clinically Proven", sub: "4 key active ingredients" },
+              { icon: Leaf, label: "Clean Formulation", sub: "Transparent dosing" },
+              { icon: Check, label: "Made in Australia", sub: "Lab certified results" },
+            ].map((item, idx) => (
+              <div key={idx} className="flex items-center gap-3 px-6">
+                <item.icon className="h-4 w-4 text-neutral-400 flex-shrink-0" />
+                <div>
+                  <p className="text-[9px] tracking-[0.1em] uppercase font-medium text-neutral-800">{item.label}</p>
+                  <p className="text-[9px] text-neutral-400 font-light">{item.sub}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 2. BEST SELLERS / PRODUCTS SECTION */}
+      <section className="bg-white py-24 md:py-32 overflow-hidden relative z-20">
+        <div className="max-w-7xl mx-auto px-6 lg:px-16">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+            <div>
+              <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-light block mb-3">
+                BEST SELLERS
+              </span>
+              <h2 className="text-3xl md:text-4xl leading-tight editorial-heading text-neutral-900">
+                Our Products
+              </h2>
+            </div>
+            <Link 
+              to="/shop" 
+              className="text-[10px] tracking-[0.15em] uppercase text-black hover:opacity-60 transition-opacity flex items-center gap-2 font-medium w-fit border-b border-black/15 pb-1"
+            >
+              View Collection <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="space-y-4">
+                  <Skeleton className="aspect-[3/4] w-full" />
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            // Mobile horizontal swipe, Desktop 3-column grid
+            <div className="overflow-x-auto flex md:grid md:grid-cols-3 gap-8 pb-6 md:pb-0 scrollbar-none snap-x snap-mandatory">
+              {(featured.length > 0 ? featured : products.slice(0, 3)).map((product) => (
+                <div key={product.id} className="min-w-[280px] md:min-w-0 flex-shrink-0 snap-start w-[85%] md:w-auto">
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 3. PHILOSOPHY SECTION */}
+      <section className="bg-[#fafafa] py-24 md:py-32 overflow-hidden border-t border-border/30 relative">
+        <div className="max-w-7xl mx-auto px-6 lg:px-16">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+            {/* Image Container (Left side) */}
+            <div className="lg:col-span-7 relative overflow-hidden group border border-border/20 shadow-2xl">
+              <motion.div
+                initial={{ scale: 1.04, opacity: 0 }}
+                whileInView={{ scale: 1, opacity: 1 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+                className="aspect-[4/3] w-full"
+              >
+                <img
+                  src={about1}
+                  alt="Scalvea Scientific Lab Ingredients Setup"
+                  className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-103"
+                />
+              </motion.div>
+            </div>
+            
+            {/* Text Overlay Card (Right side, Overlapping Glassmorphism) */}
+            <div className="lg:col-span-5 relative z-10 lg:-ml-24">
+              <motion.div
+                initial={{ y: 40, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                className="bg-white/80 backdrop-blur-xl border border-white/40 p-8 md:p-12 shadow-2xl"
+              >
+                <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-light block mb-3">
+                  OUR PHILOSOPHY
+                </span>
+                <h2 className="text-3xl md:text-4xl leading-tight editorial-heading mb-6">
+                  Transparency in Every Drop
+                </h2>
+                <div className="space-y-4 text-xs md:text-sm text-neutral-500 font-light leading-relaxed">
+                  <p>
+                    At Scalvea, we believe in full ingredient transparency. Every formula is backed by clinical research and contains only what your hair needs.
+                  </p>
+                  <p>
+                    Our Follicle 8 range combines four clinically validated hair growth actives at effective concentrations, free from fillers or hidden chemicals.
+                  </p>
+                </div>
+                <div className="mt-8">
+                  <Link 
+                    to="/about" 
+                    className="text-[10px] tracking-[0.15em] uppercase text-black hover:opacity-60 transition-opacity flex items-center gap-2 font-medium"
+                  >
+                    Learn More <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SCIENTIFIC LAB VIDEO BANNER SECTION */}
+      <section className="relative h-[65vh] min-h-[420px] w-full overflow-hidden bg-black flex items-center justify-center">
         <video
           autoPlay
           muted
           loop
           playsInline
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover opacity-60"
         >
-          <source src="/videos/scalvea-hero.mp4" type="video/mp4" />
+          <source src={aboutMp4} type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="relative z-10 flex flex-col justify-end h-full px-6 lg:px-16 pb-16 lg:pb-24">
-          <p className="text-[10px] tracking-[0.25em] uppercase text-white/70 mb-3">Science-Backed Hair Growth</p>
-          <h2 className="text-4xl md:text-6xl lg:text-7xl font-light leading-[1.05] tracking-[0.02em] text-white mb-4 max-w-2xl">
-            Nothing<br />To Hide
-          </h2>
-          <p className="text-sm text-white/70 leading-relaxed max-w-md mb-8">
-            Clinically formulated with Redensyl, Baicapil, Procapil & Anagain at proven concentrations.
-          </p>
-          <div className="flex gap-3">
-            <Button asChild className="bg-white text-foreground hover:bg-white/90 text-[10px] tracking-[0.15em] uppercase h-11 px-8">
-              <Link to="/shop">Shop Now</Link>
-            </Button>
-            <Button asChild variant="outline" className="text-[10px] tracking-[0.15em] uppercase h-11 px-8 border-white/40 text-white hover:bg-white/10">
-              <Link to="/about">Our Story</Link>
-            </Button>
-          </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black" />
+        <div className="relative z-10 text-center max-w-xl px-6">
+          <motion.div
+            initial={{ scale: 0.96, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.4 }}
+            className="space-y-4"
+          >
+            <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-light block">
+              SCIENTIFIC CLINICAL LABS
+            </span>
+            <h3 className="text-2xl md:text-3xl font-light text-white editorial-heading tracking-wide leading-tight">
+              Formulated in Advanced Laboratories
+            </h3>
+            <p className="text-xs text-neutral-300 font-light max-w-md mx-auto leading-relaxed">
+              Every active ingredient is verified using gas chromatography and bio-assays to ensure potency, purity, and clinical efficacy.
+            </p>
+          </motion.div>
         </div>
       </section>
 
-      {/* Trust Bar */}
-      <section className="border-b border-border">
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
-          {[
-            { icon: Truck, label: "Free Shipping", sub: "On orders over $50" },
-            { icon: Shield, label: "Clinically Proven", sub: "4 key actives" },
-            { icon: Leaf, label: "Clean Formula", sub: "No hidden ingredients" },
-            { icon: Check, label: "Made in Australia", sub: "Quality guaranteed" },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center gap-3 px-6 py-5">
-              <item.icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <div>
-                <p className="text-[10px] tracking-[0.1em] uppercase font-medium">{item.label}</p>
-                <p className="text-[10px] text-muted-foreground">{item.sub}</p>
-              </div>
-            </div>
-          ))}
+      {/* 4. INGREDIENTS / SCIENCE SECTION */}
+      <section className="relative py-24 md:py-32 overflow-hidden bg-white border-y border-border/30">
+        {/* Faded Scientific Background Image */}
+        <div className="absolute inset-0 z-0 opacity-15 select-none pointer-events-none">
+          <img
+            src={hero2}
+            alt="Ingredients science microscopic texture"
+            className="w-full h-full object-cover scale-105 animate-cinematic-zoom"
+          />
         </div>
-      </section>
-
-      {/* Featured Products — compact cards */}
-      <section className="px-6 lg:px-12 py-16 lg:py-24">
-        <div className="flex items-center justify-between mb-10">
-          <div>
-            <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-1">Best Sellers</p>
-            <h2 className="text-2xl md:text-3xl font-light tracking-[0.04em]">Our Products</h2>
-          </div>
-          <Link to="/shop" className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-            View All <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
-        {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="space-y-3">
-                <Skeleton className="aspect-square w-full" />
-                <Skeleton className="h-3 w-1/3" />
-                <Skeleton className="h-3 w-2/3" />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-            {(featured.length > 0 ? featured : products).map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Split: Product + Philosophy */}
-      <section className="bg-secondary">
-        <div className="grid grid-cols-1 lg:grid-cols-2">
-          <div className="aspect-[4/5] lg:aspect-auto lg:max-h-[550px] relative overflow-hidden">
-            <img src={follicle8Black} alt="Scalvea Black Edition" className="w-full h-full object-cover object-center" loading="lazy" />
-          </div>
-          <div className="flex flex-col justify-center px-6 lg:px-16 py-14 lg:py-0">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-3">Our Philosophy</p>
-            <h2 className="text-2xl md:text-3xl font-light tracking-[0.04em] mb-5">
-              Transparency<br />in Every Drop
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-16">
+          <div className="text-center max-w-xl mx-auto mb-16 md:mb-24">
+            <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-light block mb-3">
+              CLINICALLY PROVEN ACTIVES
+            </span>
+            <h2 className="text-3xl md:text-4xl leading-tight editorial-heading text-neutral-900">
+              The Science Behind Follicle 8
             </h2>
-            <p className="text-xs text-muted-foreground leading-relaxed max-w-md mb-3">
-              At Scalvea, we believe in full ingredient transparency. Every formula is backed by clinical research and contains only what your hair needs.
-            </p>
-            <p className="text-xs text-muted-foreground leading-relaxed max-w-md mb-6">
-              Our Follicle 8 range combines four clinically validated hair growth actives at effective concentrations.
-            </p>
-            <Link to="/about" className="text-[10px] tracking-[0.12em] uppercase flex items-center gap-2 hover:opacity-60 transition-opacity w-fit">
-              Learn More <ArrowRight className="h-3 w-3" />
-            </Link>
+            <div className="h-[1px] bg-neutral-200 w-24 mx-auto mt-6" />
           </div>
-        </div>
-      </section>
 
-      {/* Ingredients Section with background image */}
-      <section className="relative py-20 lg:py-28 overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={ingredientsBg} alt="" className="w-full h-full object-cover opacity-10" loading="lazy" />
-        </div>
-        <div className="relative z-10 px-6 lg:px-12">
-          <div className="text-center mb-14">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-3">Clinically Proven Actives</p>
-            <h2 className="text-2xl md:text-3xl font-light tracking-[0.04em]">The Science Behind Follicle 8</h2>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 max-w-4xl mx-auto">
+          <motion.div
+            onViewportEnter={() => setScienceInView(true)}
+            viewport={{ once: true, amount: 0.2 }}
+            className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 max-w-5xl mx-auto"
+          >
             {[
-              { name: "Redensyl", pct: "3%", desc: "Targets hair follicle stem cells to reactivate growth" },
-              { name: "Baicapil", pct: "3%", desc: "Strengthens and nourishes hair from root to tip" },
-              { name: "Procapil", pct: "3%", desc: "Prevents follicle aging and improves hair anchoring" },
-              { name: "Anagain", pct: "4%", desc: "Stimulates dermal papilla cells for new hair growth" },
-            ].map((ingredient) => (
-              <div key={ingredient.name} className="text-center">
-                <p className="text-3xl md:text-4xl font-light mb-2">{ingredient.pct}</p>
-                <p className="text-[10px] tracking-[0.12em] uppercase font-medium mb-2">{ingredient.name}</p>
-                <p className="text-[10px] text-muted-foreground leading-relaxed">{ingredient.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Real Client Results / Testimonials */}
-      <section className="bg-foreground text-primary-foreground">
-        <div className="px-6 lg:px-12 py-16 lg:py-24">
-          <div className="text-center mb-14">
-            <p className="text-[10px] tracking-[0.2em] uppercase opacity-50 mb-3">Real Results</p>
-            <h2 className="text-2xl md:text-3xl font-light tracking-[0.04em]">What Our Customers Say</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              { name: "Sarah M.", text: "After 8 weeks of using Follicle 8, I can visibly see new baby hairs growing along my hairline. Absolutely love it!", img: client1, location: "Melbourne, AU" },
-              { name: "James K.", text: "Finally a brand that tells you exactly what's inside. My hair feels thicker and healthier than ever before.", img: client2, location: "Sydney, AU" },
-              { name: "Priya R.", text: "I've tried many hair growth serums but Scalvea is the first one that actually delivered visible results.", img: client3, location: "Mumbai, IN" },
-            ].map((t, i) => (
-              <div key={i} className="text-center space-y-4">
-                <div className="w-14 h-14 mx-auto overflow-hidden rounded-full">
-                  <img src={t.img} alt={t.name} className="w-full h-full object-cover" loading="lazy" width={80} height={80} />
+              { name: "Redensyl", pct: 3, desc: "Targets hair follicle stem cells to reactivate growth" },
+              { name: "Baicapil", pct: 3, desc: "Strengthens and nourishes hair from root to tip" },
+              { name: "Procapil", pct: 3, desc: "Prevents follicle aging and improves hair anchoring" },
+              { name: "Anagain", pct: 4, desc: "Stimulates dermal papilla cells for new hair growth" },
+            ].map((ingredient, i) => (
+              <motion.div
+                key={ingredient.name}
+                initial={{ y: 30, opacity: 0 }}
+                whileInView={{ y: 0, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: i * 0.15 }}
+                className="text-center flex flex-col items-center p-6 border border-neutral-100 bg-white/60 backdrop-blur-sm shadow-sm"
+              >
+                <div className="text-4xl md:text-5xl font-light text-neutral-900 mb-3 flex items-baseline">
+                  {scienceInView ? <CountUp value={ingredient.pct} /> : "0"}
+                  <span className="text-lg md:text-xl font-light text-neutral-500">%</span>
                 </div>
-                <div className="flex justify-center gap-0.5">
+                <p className="text-[10px] tracking-[0.15em] uppercase font-medium text-neutral-900 mb-2 font-mono">
+                  {ingredient.name}
+                </p>
+                <p className="text-[10px] text-neutral-500 leading-relaxed font-light">
+                  {ingredient.desc}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* 5. TESTIMONIAL MARQUEE SECTION */}
+      <section className="bg-black text-white py-24 md:py-32 overflow-hidden relative">
+        <div className="absolute inset-0 noise-bg opacity-[0.02] pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto px-6 lg:px-16 mb-16">
+          <div className="text-center max-w-xl mx-auto">
+            <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-500 font-light block mb-3">
+              REAL CLIENT RESULTS
+            </span>
+            <h2 className="text-3xl md:text-4xl leading-tight editorial-heading text-neutral-100">
+              What Our Customers Say
+            </h2>
+          </div>
+        </div>
+
+        {/* Infinite marquee block */}
+        <div className="relative w-full flex items-center justify-start overflow-hidden py-6 border-y border-neutral-900 bg-neutral-950/40">
+          <div className="animate-marquee-scroll flex gap-6 pr-6">
+            {[...REVIEWS, ...REVIEWS].map((t, idx) => (
+              <div 
+                key={idx} 
+                className="w-[280px] md:w-[350px] shrink-0 bg-neutral-900/60 backdrop-blur-md border border-neutral-800/40 p-6 md:p-8 flex flex-col space-y-4 hover:border-amber-100/20 hover:shadow-[0_0_30px_rgba(255,255,255,0.02)] transition-all duration-500"
+              >
+                <div className="flex items-center gap-4">
+                  <img 
+                    src={t.img} 
+                    alt={t.name} 
+                    className="w-12 h-12 rounded-full object-cover border border-neutral-800" 
+                    loading="lazy" 
+                  />
+                  <div>
+                    <p className="text-[10px] tracking-[0.12em] uppercase font-medium text-neutral-200">{t.name}</p>
+                    <p className="text-[9px] tracking-[0.08em] uppercase text-neutral-500">{t.location}</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-0.5">
                   {Array.from({ length: 5 }).map((_, j) => (
-                    <Star key={j} className="h-3 w-3 fill-primary-foreground text-primary-foreground" />
+                    <Star key={j} className="h-3 w-3 fill-amber-100/90 text-amber-100/90" />
                   ))}
                 </div>
-                <p className="text-xs leading-relaxed opacity-80 italic max-w-xs mx-auto">"{t.text}"</p>
-                <div>
-                  <p className="text-[10px] tracking-[0.12em] uppercase opacity-80">{t.name}</p>
-                  <p className="text-[9px] tracking-[0.08em] uppercase opacity-40">{t.location}</p>
-                </div>
+                
+                <p className="text-xs leading-relaxed text-neutral-400 font-light italic">
+                  "{t.text}"
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="px-6 lg:px-12 py-16 lg:py-24">
-        <div className="text-center mb-14">
-          <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-3">Simple Routine</p>
-          <h2 className="text-2xl md:text-3xl font-light tracking-[0.04em]">How To Use</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-3xl mx-auto">
-          {[
-            { step: "01", title: "Apply", desc: "Apply 1ml directly to the scalp in thinning areas" },
-            { step: "02", title: "Massage", desc: "Gently massage for 1-2 minutes to improve absorption" },
-            { step: "03", title: "Repeat", desc: "Use twice daily for best results. Results in 8-12 weeks" },
-          ].map((s) => (
-            <div key={s.step} className="text-center">
-              <p className="text-3xl font-light text-muted-foreground/30 mb-3">{s.step}</p>
-              <h3 className="text-xs tracking-[0.15em] uppercase font-medium mb-2">{s.title}</h3>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">{s.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA Banner with product image */}
-      <section className="bg-secondary">
-        <div className="grid grid-cols-1 lg:grid-cols-2">
-          <div className="flex flex-col justify-center px-6 lg:px-16 py-14 lg:py-0 order-2 lg:order-1">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-3">Start Your Journey</p>
-            <h2 className="text-2xl md:text-3xl font-light tracking-[0.04em] mb-4">
-              Your Hair<br />Deserves Science
+      {/* 6. HOW TO USE TIMELINE */}
+      <section className="bg-white py-24 md:py-32 overflow-hidden relative">
+        <div className="max-w-7xl mx-auto px-6 lg:px-16">
+          <div className="text-center max-w-xl mx-auto mb-20">
+            <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-light block mb-3">
+              SIMPLE ROUTINE
+            </span>
+            <h2 className="text-3xl md:text-4xl leading-tight editorial-heading text-neutral-900">
+              How To Use
             </h2>
-            <p className="text-xs text-muted-foreground leading-relaxed max-w-md mb-6">
-              Join thousands of customers who have transformed their hair with clinically proven ingredients. See results in as little as 8 weeks.
-            </p>
-            <Button asChild className="bg-foreground text-background hover:bg-foreground/90 text-[10px] tracking-[0.12em] uppercase h-11 px-8 w-fit">
-              <Link to="/shop">Shop Follicle 8</Link>
-            </Button>
           </div>
-          <div className="flex items-center justify-center py-12 lg:py-16 order-1 lg:order-2">
-            <img src={follicle8Serum} alt="Follicle 8 Serum" className="max-h-[280px] lg:max-h-[350px] object-contain drop-shadow-2xl" loading="lazy" />
+
+          <div className="relative max-w-4xl mx-auto">
+            {/* Connect line */}
+            <div className="absolute top-[28px] left-[15%] right-[15%] h-[1px] bg-neutral-100 hidden md:block z-0 overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                whileInView={{ width: "100%" }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.5, ease: "easeInOut" }}
+                className="h-full bg-neutral-900"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8 relative z-10">
+              {[
+                { step: "01", title: "Apply", desc: "Apply 1ml directly to the scalp in thinning areas" },
+                { step: "02", title: "Massage", desc: "Gently massage for 1-2 minutes to improve absorption" },
+                { step: "03", title: "Repeat", desc: "Use twice daily for best results. Results in 8-12 weeks" },
+              ].map((s, i) => (
+                <motion.div 
+                  key={s.step} 
+                  initial={{ y: 40, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: i * 0.2 }}
+                  className="text-center flex flex-col items-center"
+                >
+                  <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    whileInView={{ scale: 1, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6, delay: i * 0.2 + 0.3 }}
+                    className="w-14 h-14 rounded-full bg-[#fafafa] border border-neutral-100 flex items-center justify-center text-sm font-light text-neutral-900 mb-6 shadow-sm font-mono"
+                  >
+                    {s.step}
+                  </motion.div>
+                  <h3 className="text-xs tracking-[0.2em] uppercase font-medium text-neutral-900 mb-2">
+                    {s.title}
+                  </h3>
+                  <p className="text-xs text-neutral-500 font-light leading-relaxed max-w-[200px]">
+                    {s.desc}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Newsletter */}
-      <section className="px-6 lg:px-12 py-16 lg:py-24">
-        <div className="max-w-lg mx-auto text-center">
-          <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground mb-3">Stay Updated</p>
-          <h2 className="text-2xl md:text-3xl font-light tracking-[0.04em] mb-3">Subscribe to Our Newsletter</h2>
-          <p className="text-xs text-muted-foreground mb-8">Be the first to know about new products, special offers, and hair care tips.</p>
-          <form onSubmit={(e) => e.preventDefault()} className="flex gap-0">
+      {/* 7. LIFESTYLE / CTA SECTION */}
+      <section className="bg-[#fafafa] py-24 md:py-32 overflow-hidden border-t border-border/30 relative">
+        <div className="max-w-7xl mx-auto px-6 lg:px-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Text details (Left side) */}
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1.2 }}
+              className="space-y-6 order-2 lg:order-1 text-center lg:text-left"
+            >
+              <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-light block">
+                START YOUR JOURNEY
+              </span>
+              <h2 className="text-4xl md:text-5xl leading-tight editorial-heading text-neutral-900">
+                Your Hair<br className="hidden md:block" /> Deserves Science
+              </h2>
+              <p className="text-xs md:text-sm text-neutral-500 font-light leading-relaxed max-w-md mx-auto lg:mx-0">
+                Join thousands of customers who have transformed their hair with clinically proven ingredients. See visible density and thickness in as little as 8 weeks.
+              </p>
+              <div className="pt-4 flex justify-center lg:justify-start">
+                <Link 
+                  to="/shop" 
+                  className="group relative overflow-hidden h-12 px-10 flex items-center justify-center text-[10px] tracking-[0.2em] uppercase font-medium bg-black text-white hover:text-black transition-all duration-500 hover:-translate-y-0.5 transform border border-black shadow-lg"
+                >
+                  <span className="absolute inset-0 w-0 bg-white transition-all duration-500 ease-out group-hover:w-full" />
+                  <span className="relative z-10">Shop Follicle 8</span>
+                </Link>
+              </div>
+            </motion.div>
+
+            {/* Lifestyle Image setup (Right side) */}
+            <div className="relative overflow-hidden group border border-border/20 shadow-2xl order-1 lg:order-2">
+              <motion.div
+                initial={{ scale: 1.05, opacity: 0 }}
+                whileInView={{ scale: 1, opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.5 }}
+                className="aspect-[4/3] w-full"
+              >
+                <img
+                  src={hero3}
+                  alt="Premium lifestyle hair oil application woman"
+                  className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-104"
+                />
+              </motion.div>
+              <div className="absolute inset-0 bg-amber-500/5 mix-blend-color-burn pointer-events-none" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. NEWSLETTER SIGNUP SECTION */}
+      <section className="bg-white py-24 md:py-32 overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#fafafa] to-transparent pointer-events-none" />
+        
+        <div className="relative z-10 max-w-lg mx-auto text-center px-6">
+          <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-light block mb-3">
+            STAY UPDATED
+          </span>
+          <h2 className="text-3xl md:text-4xl leading-tight editorial-heading mb-4 text-neutral-900">
+            Subscribe to Our Newsletter
+          </h2>
+          <p className="text-xs text-neutral-500 font-light mb-8 max-w-sm mx-auto leading-relaxed">
+            Be the first to know about new products, special offers, and hair care tips.
+          </p>
+          
+          <form 
+            onSubmit={(e) => { e.preventDefault(); setEmail(""); }} 
+            className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+          >
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="flex-1 h-11 px-4 text-xs bg-transparent border border-border border-r-0 outline-none focus:border-foreground transition-colors"
+              className="flex-1 h-11 px-4 text-xs bg-transparent border border-neutral-300 outline-none focus:border-black focus:ring-1 focus:ring-black transition-all font-light rounded-none"
+              required
             />
-            <Button type="submit" className="h-11 px-6 bg-foreground text-background hover:bg-foreground/90 text-[10px] tracking-[0.12em] uppercase">
+            <button 
+              type="submit" 
+              className="h-11 px-8 bg-black text-white hover:bg-neutral-900 transition-colors text-[9px] tracking-[0.2em] uppercase font-medium flex items-center justify-center rounded-none"
+            >
               Subscribe
-            </Button>
+            </button>
           </form>
         </div>
       </section>
-
       <Footer />
     </div>
   );

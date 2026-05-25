@@ -29,41 +29,52 @@ const AdminOrders = () => {
     setExpandedOrder(orderId);
   };
 
-  const updateStatus = async (id: string, status: string, prevStatus: string) => {
+  const updateStatus = async (id: string, status: string, prevStatus: string, orderCountry: string) => {
     await supabase.from("orders").update({ order_status: status } as any).eq("id", id);
 
-    // Deduct inventory when order is delivered
+    // Deduct country-specific inventory when order is delivered
     if (status === "delivered" && prevStatus !== "delivered") {
       const items = orderItems[id] || (await supabase.from("order_items").select("*").eq("order_id", id)).data || [];
+      const isIndia = orderCountry?.toLowerCase() === "india";
+      const stockField = isIndia ? "inventory_quantity_india" : "inventory_quantity_australia";
+
       for (const item of items) {
         if (!item.product_id) continue;
-        const { data: product } = await supabase.from("products").select("inventory_quantity").eq("id", item.product_id).single();
+        const { data: product } = await supabase
+          .from("products")
+          .select(`id, ${stockField}`)
+          .eq("id", item.product_id)
+          .single();
+
         if (product) {
-          const prevQty = product.inventory_quantity;
+          const prevQty = (product as any)[stockField] ?? 0;
           const newQty = Math.max(0, prevQty - item.quantity);
-          await supabase.from("products").update({ inventory_quantity: newQty } as any).eq("id", item.product_id);
+          await supabase
+            .from("products")
+            .update({ [stockField]: newQty } as any)
+            .eq("id", item.product_id);
+
           await supabase.from("inventory_logs").insert({
             product_id: item.product_id,
             change_amount: -(item.quantity),
             previous_quantity: prevQty,
             new_quantity: newQty,
-            reason: `Order delivered (${id.slice(0, 8)})`,
+            reason: `Order delivered (${id.slice(0, 8)}) - ${orderCountry.toUpperCase()}`,
           } as any);
         }
       }
-    }
-
-    // Restore inventory if cancelled from a non-cancelled/non-delivered state
-    if (status === "cancelled" && prevStatus !== "cancelled" && prevStatus !== "delivered") {
-      // No inventory was deducted before delivery, so nothing to restore
     }
 
     toast({ title: `Order status updated to ${status}` });
     fetchOrders();
   };
 
-  const filtered = countryFilter === "All" ? orders : orders.filter(o => o.country === countryFilter);
-  const countries = ["All", ...new Set(orders.map(o => o.country))];
+  // Only support India and Australia filtering (plus All)
+  const filtered = countryFilter === "All" 
+    ? orders.filter(o => o.country === "India" || o.country === "Australia")
+    : orders.filter(o => o.country === countryFilter);
+
+  const countries = ["All", "Australia", "India"];
 
   if (loading) return <p className="text-sm text-muted-foreground">Loading...</p>;
 
@@ -83,50 +94,56 @@ const AdminOrders = () => {
           {filtered.map((order) => {
             const addr = order.shipping_address as any;
             const isExpanded = expandedOrder === order.id;
+            const isIndia = order.country?.toLowerCase() === "india";
+            
             return (
-              <div key={order.id} className="border border-border p-4 space-y-3">
+              <div key={order.id} className="border border-border p-4 space-y-3 bg-background">
                 <div className="flex items-center justify-between">
                   <div>
                     <button onClick={() => loadOrderItems(order.id)} className="text-sm font-medium hover:underline">{order.order_number}</button>
-                    <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleString()}</p>
+                    <p className="text-[10px] text-muted-foreground">{new Date(order.created_at).toLocaleString()}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm">{order.currency === "INR" ? "₹" : "$"}{Number(order.total_amount).toFixed(2)} {order.currency}</p>
-                    <p className="text-xs text-muted-foreground uppercase">{order.payment_status} · {order.payment_method}</p>
+                    <p className="text-sm font-mono font-medium">
+                      {isIndia ? "₹" : "A$"}{Number(order.total_amount).toLocaleString(isIndia ? "en-IN" : "en-AU")}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground uppercase">{order.payment_status} · {order.payment_method}</p>
                   </div>
                 </div>
 
                 {isExpanded && orderItems[order.id] && (
-                  <div className="bg-secondary p-3 space-y-2">
-                    <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Order Items</p>
+                  <div className="bg-secondary/50 border border-border/40 p-3 space-y-2">
+                    <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground font-medium">Order Items</p>
                     {orderItems[order.id].map((item: any) => (
-                      <div key={item.id} className="flex justify-between text-xs">
+                      <div key={item.id} className="flex justify-between text-xs font-light">
                         <span>{item.product_name} × {item.quantity}</span>
-                        <span>{order.currency === "INR" ? "₹" : "$"}{Number(item.price * item.quantity).toFixed(2)}</span>
+                        <span>{isIndia ? "₹" : "A$"}{Number(item.price * item.quantity).toLocaleString(isIndia ? "en-IN" : "en-AU")}</span>
                       </div>
                     ))}
                   </div>
                 )}
 
                 <div className="flex items-center justify-between">
-                  <div className="text-xs text-muted-foreground">
-                    {addr && <span>{addr.firstName} {addr.lastName}, {addr.city}, {addr.country}</span>}
-                    <span className="ml-2">· {order.country}</span>
+                  <div className="text-xs text-muted-foreground font-light">
+                    {addr && <span>{addr.firstName} {addr.lastName}, {addr.address}, {addr.city}, {addr.state} {addr.postcode}, {addr.country}</span>}
+                    <span className="ml-2 font-medium">· {order.country === "India" ? "🇮🇳 India" : "🇦🇺 Australia"}</span>
                   </div>
                   <select
                     value={order.order_status}
-                    onChange={(e) => updateStatus(order.id, e.target.value, order.order_status)}
+                    onChange={(e) => updateStatus(order.id, e.target.value, order.order_status, order.country)}
                     className={`text-xs tracking-[0.08em] uppercase bg-transparent border px-2 py-1 outline-none ${
-                      order.order_status === "delivered" ? "border-green-500 text-green-600" :
-                      order.order_status === "cancelled" ? "border-red-500 text-red-500" :
+                      order.order_status === "delivered" ? "border-green-500 text-green-600 font-medium" :
+                      order.order_status === "cancelled" ? "border-red-500 text-red-500 font-medium" :
                       "border-border"
                     }`}
                   >
                     {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  Subtotal: {order.currency === "INR" ? "₹" : "$"}{Number(order.subtotal).toFixed(2)} · Tax: {order.currency === "INR" ? "₹" : "$"}{Number(order.tax_amount).toFixed(2)} · Shipping: {order.currency === "INR" ? "₹" : "$"}{Number(order.shipping_amount).toFixed(2)}
+                <div className="text-[10px] text-muted-foreground border-t border-border/20 pt-2 flex gap-4 font-mono">
+                  <span>Subtotal: {isIndia ? "₹" : "A$"}{Number(order.subtotal).toLocaleString(isIndia ? "en-IN" : "en-AU")}</span>
+                  <span>Tax: {isIndia ? "₹" : "A$"}{Number(order.tax_amount).toLocaleString(isIndia ? "en-IN" : "en-AU")}</span>
+                  <span>Shipping: {isIndia ? "₹" : "A$"}{Number(order.shipping_amount).toLocaleString(isIndia ? "en-IN" : "en-AU")}</span>
                 </div>
               </div>
             );

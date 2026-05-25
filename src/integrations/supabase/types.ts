@@ -107,6 +107,7 @@ export type Database = {
       coupons: {
         Row: {
           code: string
+          country: string | null
           created_at: string | null
           discount_percentage: number
           expires_at: string | null
@@ -117,6 +118,7 @@ export type Database = {
         }
         Insert: {
           code: string
+          country?: string | null
           created_at?: string | null
           discount_percentage?: number
           expires_at?: string | null
@@ -127,6 +129,7 @@ export type Database = {
         }
         Update: {
           code?: string
+          country?: string | null
           created_at?: string | null
           discount_percentage?: number
           expires_at?: string | null
@@ -330,12 +333,18 @@ export type Database = {
           images: string[] | null
           ingredients: string | null
           inventory_quantity: number | null
+          inventory_quantity_india: number | null
+          inventory_quantity_australia: number | null
           is_active: boolean | null
+          is_active_india: boolean | null
+          is_active_australia: boolean | null
           key_ingredients: string[] | null
           low_stock_threshold: number | null
           name: string
           size: string | null
           slug: string
+          sku_india: string | null
+          sku_australia: string | null
           updated_at: string | null
         }
         Insert: {
@@ -349,12 +358,18 @@ export type Database = {
           images?: string[] | null
           ingredients?: string | null
           inventory_quantity?: number | null
+          inventory_quantity_india?: number | null
+          inventory_quantity_australia?: number | null
           is_active?: boolean | null
+          is_active_india?: boolean | null
+          is_active_australia?: boolean | null
           key_ingredients?: string[] | null
           low_stock_threshold?: number | null
           name: string
           size?: string | null
           slug: string
+          sku_india?: string | null
+          sku_australia?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -368,12 +383,18 @@ export type Database = {
           images?: string[] | null
           ingredients?: string | null
           inventory_quantity?: number | null
+          inventory_quantity_india?: number | null
+          inventory_quantity_australia?: number | null
           is_active?: boolean | null
+          is_active_india?: boolean | null
+          is_active_australia?: boolean | null
           key_ingredients?: string[] | null
           low_stock_threshold?: number | null
           name?: string
           size?: string | null
           slug?: string
+          sku_india?: string | null
+          sku_australia?: string | null
           updated_at?: string | null
         }
         Relationships: []

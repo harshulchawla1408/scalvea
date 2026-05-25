@@ -1,8 +1,147 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@200;300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Luxury Animation Keyframes */
+@keyframes drawLine {
+  from { width: 0; }
+  to { width: 60px; }
+}
+
+@keyframes fadeInSoft {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeUpSoft {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes blurToClear {
+  from {
+    opacity: 0;
+    filter: blur(16px);
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleUpSoft {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes cinematicZoom {
+  from {
+    transform: scale(1.03);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes ambientLight {
+  0% {
+    transform: translate(-10%, -10%) scale(1);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translate(15%, 10%) scale(1.2);
+    opacity: 0.25;
+  }
+  100% {
+    transform: translate(-10%, -10%) scale(1);
+    opacity: 0.15;
+  }
+}
+
+@keyframes noiseMove {
+  0%, 100% { transform:translate(0, 0) }
+  10% { transform:translate(-1%, -1%) }
+  20% { transform:translate(-2%, 1%) }
+  30% { transform:translate(1%, -2%) }
+  40% { transform:translate(-1%, 3%) }
+  50% { transform:translate(-2%, 1%) }
+  60% { transform:translate(1%, 2%) }
+  70% { transform:translate(3%, -2%) }
+  80% { transform:translate(-1%, 1%) }
+  90% { transform:translate(2%, -1%) }
+}
+
+/* Custom Animation Classes */
+.animate-draw-line {
+  animation: drawLine 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.animate-fade-in-soft {
+  animation: fadeInSoft 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.animate-fade-up-soft {
+  animation: fadeUpSoft 1.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.animate-blur-to-clear {
+  animation: blurToClear 1.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.animate-scale-up-soft {
+  animation: scaleUpSoft 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.animate-cinematic-zoom {
+  animation: cinematicZoom 16s ease-out infinite alternate;
+}
+
+.animate-ambient-light {
+  animation: ambientLight 12s ease-in-out infinite;
+}
+
+.noise-bg {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter%20id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  animation: noiseMove 6s steps(10) infinite;
+}
+
+.editorial-heading {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee-scroll {
+  display: flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
+}
+
+.animate-marquee-scroll:hover {
+  animation-play-state: paused;
+}
 
 /* SCALVEA Design System - Minimal Premium Hair Care */
 

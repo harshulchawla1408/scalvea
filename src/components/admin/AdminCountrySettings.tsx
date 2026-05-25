@@ -10,7 +10,11 @@ const AdminCountrySettings = () => {
   const [form, setForm] = useState({ tax_percentage: 0, shipping_charge: 0, free_shipping_above: 0, delivery_time: "", is_enabled: true });
 
   const fetchCountries = async () => {
-    const { data } = await supabase.from("country_settings").select("*").order("country");
+    const { data } = await supabase
+      .from("country_settings")
+      .select("*")
+      .in("country", ["India", "Australia"])
+      .order("country");
     setCountries(data || []);
     setLoading(false);
   };
