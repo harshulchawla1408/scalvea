@@ -11,8 +11,6 @@ SCALVEA is a modern international e-commerce platform built for selling hair car
 The system supports:
 - Australia (AUD)
 - India (INR)
-- USA (USD)
-- Other countries (USD)
 
 Prices, taxes, shipping charges, and delivery time change based on the selected country.
 
@@ -22,7 +20,7 @@ Prices, taxes, shipping charges, and delivery time change based on the selected 
 
 ### User Features
 - User Registration & Login
-- Country Selection (India / Australia / USA / Other)
+- Country Selection (India / Australia)
 - Multi-Currency Pricing
 - Product Browsing
 - Product Details Page
@@ -134,8 +132,6 @@ The platform supports different pricing, taxes, and shipping per country.
 |--------|----------|
 | Australia | AUD |
 | India | INR |
-| USA | USD |
-| Others | USD |
 
 ### Checkout Calculation
 
