@@ -32,36 +32,41 @@ const AdminOrders = () => {
   const updateStatus = async (id: string, status: string, prevStatus: string, orderCountry: string) => {
     await supabase.from("orders").update({ order_status: status } as any).eq("id", id);
 
-    // Deduct country-specific inventory when order is delivered
+    // Deduct country-specific inventory when order is delivered, unless Stripe order (which deducts at payment/webhook)
     if (status === "delivered" && prevStatus !== "delivered") {
-      const items = orderItems[id] || (await supabase.from("order_items").select("*").eq("order_id", id)).data || [];
-      const isIndia = orderCountry?.toLowerCase() === "india";
-      const stockField = isIndia ? "inventory_quantity_india" : "inventory_quantity_australia";
+      const { data: orderDetails } = await supabase.from("orders").select("payment_provider").eq("id", id).maybeSingle();
+      if (orderDetails?.payment_provider !== "stripe" && orderDetails?.payment_provider !== "shiprocket") {
+        const items = orderItems[id] || (await supabase.from("order_items").select("*").eq("order_id", id)).data || [];
+        const isIndia = orderCountry?.toLowerCase() === "india";
+        const stockField = isIndia ? "inventory_quantity" : "inventory_quantity_australia";
 
-      for (const item of items) {
-        if (!item.product_id) continue;
-        const { data: product } = await supabase
-          .from("products")
-          .select(`id, ${stockField}`)
-          .eq("id", item.product_id)
-          .single();
-
-        if (product) {
-          const prevQty = (product as any)[stockField] ?? 0;
-          const newQty = Math.max(0, prevQty - item.quantity);
-          await supabase
+        for (const item of items) {
+          if (!item.product_id) continue;
+          const { data: product } = await supabase
             .from("products")
-            .update({ [stockField]: newQty } as any)
-            .eq("id", item.product_id);
+            .select(`id, ${stockField}`)
+            .eq("id", item.product_id)
+            .single();
 
-          await supabase.from("inventory_logs").insert({
-            product_id: item.product_id,
-            change_amount: -(item.quantity),
-            previous_quantity: prevQty,
-            new_quantity: newQty,
-            reason: `Order delivered (${id.slice(0, 8)}) - ${orderCountry.toUpperCase()}`,
-          } as any);
+          if (product) {
+            const prevQty = (product as any)[stockField] ?? 0;
+            const newQty = Math.max(0, prevQty - item.quantity);
+            await supabase
+              .from("products")
+              .update({ [stockField]: newQty } as any)
+              .eq("id", item.product_id);
+
+            await supabase.from("inventory_logs").insert({
+              product_id: item.product_id,
+              change_amount: -(item.quantity),
+              previous_quantity: prevQty,
+              new_quantity: newQty,
+              reason: `Order delivered (${id.slice(0, 8)}) - ${orderCountry.toUpperCase()}`,
+            } as any);
+          }
         }
+      } else {
+        console.log("Skipping inventory deduction on status change: Stripe/Shiprocket inventory already deducted by payment webhook.");
       }
     }
 
@@ -107,7 +112,9 @@ const AdminOrders = () => {
                     <p className="text-sm font-mono font-medium">
                       {isIndia ? "₹" : "A$"}{Number(order.total_amount).toLocaleString(isIndia ? "en-IN" : "en-AU")}
                     </p>
-                    <p className="text-[10px] text-muted-foreground uppercase">{order.payment_status} · {order.payment_method}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-mono mt-0.5">
+                      {order.market || (isIndia ? "IN" : "AU")} | {order.payment_provider || order.payment_method} | {order.order_status} | {order.payment_status} | {order.currency}
+                    </p>
                   </div>
                 </div>
 

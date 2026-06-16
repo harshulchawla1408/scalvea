@@ -4,11 +4,39 @@ import Footer from "@/components/layout/Footer";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Mail, Phone, Clock, MapPin, MessageSquare, Share2, Building2, Globe } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 // Asset imports
 import heroPng from "@/assets/hero.png";
 
 const Contact = () => {
+  useSEO({
+    title: "Contact Us & Regional Offices",
+    description: "Get in touch with Scalvea's customer support and business teams in Werribee, Australia and Chandigarh, India for shipping, orders, or distribution queries.",
+    keywords: "Scalvea contact, Scalvea customer service, hair growth serum support, Melbourne office, India distribution",
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "ContactPage",
+      "name": "Contact Us & Regional Offices | Scalvea",
+      "description": "Get in touch with Scalvea's customer support and business teams in Werribee, Australia and Chandigarh, India for shipping, orders, or distribution queries.",
+      "mainEntity": {
+        "@type": "Organization",
+        "name": "Scalvea",
+        "url": "https://scalvea.com",
+        "logo": "https://scalvea.com/logo.png",
+        "contactPoint": [
+          {
+            "@type": "ContactPoint",
+            "telephone": "+61 460 309 333",
+            "contactType": "customer service",
+            "areaServed": "AU",
+            "availableLanguage": "en"
+          }
+        ]
+      }
+    }
+  });
+
   const [form, setForm] = useState({ name: "", email: "", subject: "", country: "Australia", message: "" });
   const [scrollY, setScrollY] = useState(0);
   const [emailSub, setEmailSub] = useState("");
@@ -266,63 +294,7 @@ const Contact = () => {
           </div>
         </section>
 
-        {/* 4. GLOBAL MAP SECTION */}
-        <section className="py-24 md:py-32 bg-white relative z-20">
-          <div className="max-w-7xl mx-auto px-6 lg:px-16">
-            
-            <div className="text-center max-w-xl mx-auto mb-16">
-              <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-light block mb-3">
-                LOCATOR MAPS
-              </span>
-              <h2 className="text-3xl md:text-4xl leading-tight editorial-heading text-neutral-900">
-                Strategic Locations
-              </h2>
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              
-              {/* Australia Map Location */}
-              <div className="relative overflow-hidden group border border-neutral-100 shadow-xl">
-                <div className="aspect-[16/9] w-full filter grayscale contrast-[1.1] hover:grayscale-0 transition-all duration-[1.2s] ease-out group-hover:scale-[1.02]">
-                  <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3148.5!2d144.66!3d-37.88!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzfCsDUyJzQ4LjAiUyAxNDTCsDM5JzM2LjAiRQ!5e0!3m2!1sen!2sau!4v1"
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Scalvea Melbourne Head Office Map"
-                  />
-                </div>
-                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-neutral-100 px-3 py-1.5 shadow-md">
-                  <p className="text-[9px] tracking-[0.15em] uppercase font-semibold text-neutral-900">Melbourne, Australia</p>
-                </div>
-              </div>
-
-              {/* India Map Location */}
-              <div className="relative overflow-hidden group border border-neutral-100 shadow-xl">
-                <div className="aspect-[16/9] w-full filter grayscale contrast-[1.1] hover:grayscale-0 transition-all duration-[1.2s] ease-out group-hover:scale-[1.02]">
-                  <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d13717.339678142714!2d76.77941785!3d30.7333148!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390fed0be66ec96b%3A0xa5ff90f907e0d9b5!2sChandigarh%2C%20India!5e0!3m2!1sen!2sin!4v1684323214532!5m2!1sen!2sin"
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Scalvea India Hub Chandigarh Map"
-                  />
-                </div>
-                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-neutral-100 px-3 py-1.5 shadow-md">
-                  <p className="text-[9px] tracking-[0.15em] uppercase font-semibold text-neutral-900">India Support Hub</p>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-        </section>
 
         {/* 5. SUPPORT TYPES SECTION */}
         <section className="py-24 md:py-32 bg-[#fafafa] border-t border-neutral-100 relative z-20">

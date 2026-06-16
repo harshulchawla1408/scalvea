@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Minus, Plus, Heart, Star, Share2, ShoppingBag, Check } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -26,7 +27,8 @@ const ProductDetail = () => {
   const { products: allProducts } = useProducts();
   const { addItem } = useCart();
   const { toggleItem, isInWishlist } = useWishlist();
-  const { formatPrice, getPrice, settings } = useCountry();
+  const { formatPrice, getPrice, settings, selectedCountry } = useCountry();
+
   const { addItem: addRecentlyViewed } = useRecentlyViewed();
   const { user } = useAuth();
   const [quantity, setQuantity] = useState(1);
@@ -60,6 +62,95 @@ const ProductDetail = () => {
   const avgRating = reviews.length > 0
     ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length
     : 0;
+
+  useSEO({
+    title: product ? product.name : "Product Detail",
+    description: product ? (product.description || "").slice(0, 155) : "View product details for Scalvea hair growth treatments.",
+    keywords: product ? `${product.name}, ${product.category}, hair growth, Scalvea` : "hair growth, Scalvea",
+    image: product && product.images?.[0] ? product.images[0] : "https://scalvea.com/og-image.jpg",
+    type: "product",
+    canonical: product ? `https://scalvea.com/product/${product.slug}` : undefined,
+    schema: product ? {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Product",
+          "name": product.name,
+          "image": product.images || [],
+          "description": product.description || "",
+          "sku": product.sku_australia || product.sku_india || product.id,
+          "mpn": product.id,
+          "brand": {
+            "@type": "Brand",
+            "name": "Scalvea"
+          },
+          "offers": {
+            "@type": "Offer",
+            "url": `https://scalvea.com/product/${product.slug}`,
+            "priceCurrency": selectedCountry === "india" ? "INR" : "AUD",
+            "price": selectedCountry === "india" ? product.price_inr : product.price_aud,
+            "priceValidUntil": `${new Date().getFullYear() + 1}-12-31`,
+            "itemCondition": "https://schema.org/NewCondition",
+            "availability": product.inventory_quantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+            "valueAddedTaxIncluded": true
+          },
+          ...(reviews.length > 0 ? {
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": avgRating.toFixed(1),
+              "reviewCount": reviews.length,
+              "bestRating": "5",
+              "worstRating": "1"
+            },
+            "review": reviews.map((r: any) => ({
+              "@type": "Review",
+              "author": {
+                "@type": "Person",
+                "name": r.reviewer_name || "Anonymous"
+              },
+              "datePublished": new Date(r.created_at).toISOString().split('T')[0],
+              "reviewBody": r.comment || "",
+              "reviewRating": {
+                "@type": "Rating",
+                "bestRating": "5",
+                "ratingValue": r.rating.toString(),
+                "worstRating": "1"
+              }
+            }))
+          } : {})
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://scalvea.com"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Shop",
+              "item": "https://scalvea.com/shop"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": product.category,
+              "item": `https://scalvea.com/shop?category=${encodeURIComponent(product.category)}`
+            },
+            {
+              "@type": "ListItem",
+              "position": 4,
+              "name": product.name,
+              "item": `https://scalvea.com/product/${product.slug}`
+            }
+          ]
+        }
+      ]
+    } : undefined
+  });
 
   const handleSubmitReview = async () => {
     if (!user) {
@@ -160,7 +251,13 @@ const ProductDetail = () => {
           {/* Images */}
           <div className="space-y-4">
             <div className="aspect-square max-h-[500px] bg-secondary overflow-hidden">
-              <img src={product.images[selectedImage]} alt={product.name} className="w-full h-full object-contain object-center" />
+              <img 
+                src={product.images[selectedImage]} 
+                alt={product.name} 
+                loading="eager"
+                fetchPriority="high"
+                className="w-full h-full object-contain object-center" 
+              />
             </div>
             <div className="flex gap-2">
               {product.images.map((img, i) => (

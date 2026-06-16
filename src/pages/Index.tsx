@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import Lenis from "lenis";
+import { useSEO } from "@/hooks/useSEO";
 
 // Asset imports
 import follicle8Serum from "@/assets/follicle8-serum.png";
@@ -63,6 +64,38 @@ const CountUp = ({ value, duration = 1.8 }: { value: number; duration?: number }
 };
 
 const Index = () => {
+  useSEO({
+    title: "Premium Hair Growth Solutions",
+    description: "Premium hair growth solutions backed by clinical research. Featuring Redensyl, Baicapil, Procapil and AnaGain for healthier, fuller-looking hair.",
+    keywords: "hair growth serum, hair growth spray, scalp treatment, hair regrowth, Scalvea, Redensyl, Baicapil, Procapil, AnaGain",
+    schema: {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "name": "Scalvea",
+          "url": "https://scalvea.com",
+          "logo": "https://scalvea.com/logo.png",
+          "sameAs": [
+            "https://www.instagram.com/scalvea",
+            "https://instagram.com/scalvea_",
+            "https://www.facebook.com/scalvea"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "name": "Scalvea",
+          "url": "https://scalvea.com",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://scalvea.com/shop?search={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+  });
+
   const [email, setEmail] = useState("");
   const { products, loading } = useProducts();
   const featured = products.filter((p) => p.featured);
@@ -190,6 +223,8 @@ const Index = () => {
           <img
             src={heroPng}
             alt="Scalvea Hero Background"
+            loading="eager"
+            fetchPriority="high"
             className="absolute inset-0 w-full h-full object-cover object-[72%_center] md:object-right-bottom scale-105 animate-cinematic-zoom"
           />
           {/* Looped Cinematic Hero Video overlay with opacity blending */}

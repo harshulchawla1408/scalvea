@@ -231,16 +231,22 @@ export type Database = {
           currency: string
           delivery_estimate: string | null
           discount_amount: number | null
+          gst: number | null
           id: string
+          market: string | null
           order_number: string | null
           order_status: string | null
           payment_method: string | null
+          payment_provider: string | null
           payment_status: string | null
           shipping_address: Json | null
           shipping_amount: number
+          shipping_cost: number | null
           stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           subtotal: number
           tax_amount: number
+          total: number | null
           total_amount: number
           updated_at: string | null
           user_id: string | null
@@ -252,16 +258,22 @@ export type Database = {
           currency?: string
           delivery_estimate?: string | null
           discount_amount?: number | null
+          gst?: number | null
           id?: string
+          market?: string | null
           order_number?: string | null
           order_status?: string | null
           payment_method?: string | null
+          payment_provider?: string | null
           payment_status?: string | null
           shipping_address?: Json | null
           shipping_amount?: number
+          shipping_cost?: number | null
           stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           subtotal?: number
           tax_amount?: number
+          total?: number | null
           total_amount?: number
           updated_at?: string | null
           user_id?: string | null
@@ -273,16 +285,22 @@ export type Database = {
           currency?: string
           delivery_estimate?: string | null
           discount_amount?: number | null
+          gst?: number | null
           id?: string
+          market?: string | null
           order_number?: string | null
           order_status?: string | null
           payment_method?: string | null
+          payment_provider?: string | null
           payment_status?: string | null
           shipping_address?: Json | null
           shipping_amount?: number
+          shipping_cost?: number | null
           stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           subtotal?: number
           tax_amount?: number
+          total?: number | null
           total_amount?: number
           updated_at?: string | null
           user_id?: string | null
@@ -291,21 +309,27 @@ export type Database = {
       }
       product_prices: {
         Row: {
+          australia_price: number | null
           id: string
+          india_price: number | null
           price_aud: number
           price_inr: number
           price_usd: number
           product_id: string
         }
         Insert: {
+          australia_price?: number | null
           id?: string
+          india_price?: number | null
           price_aud?: number
           price_inr?: number
           price_usd?: number
           product_id: string
         }
         Update: {
+          australia_price?: number | null
           id?: string
+          india_price?: number | null
           price_aud?: number
           price_inr?: number
           price_usd?: number

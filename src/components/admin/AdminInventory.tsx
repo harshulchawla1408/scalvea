@@ -13,7 +13,7 @@ const AdminInventory = () => {
   const [reason, setReason] = useState("");
 
   const fetchData = async () => {
-    const { data: prods } = await supabase.from("products").select("id, name, inventory_quantity_india, inventory_quantity_australia, low_stock_threshold").order("name");
+    const { data: prods } = await supabase.from("products").select("id, name, inventory_quantity, inventory_quantity_australia, low_stock_threshold").order("name");
     setProducts(prods || []);
     const { data: logData } = await supabase.from("inventory_logs").select("*, products(name)").order("created_at", { ascending: false }).limit(25);
     setLogs(logData || []);
@@ -25,7 +25,7 @@ const AdminInventory = () => {
   const handleUpdate = async (productId: string, currentQty: number, target: "india" | "australia") => {
     const change = newQty - currentQty;
     const updatePayload = target === "india" 
-      ? { inventory_quantity_india: newQty } 
+      ? { inventory_quantity: newQty } 
       : { inventory_quantity_australia: newQty };
       
     const logReason = reason ? `${reason} (${target.toUpperCase()})` : `Manual update (${target.toUpperCase()})`;
@@ -49,7 +49,7 @@ const AdminInventory = () => {
   if (loading) return <p className="text-sm text-muted-foreground">Loading...</p>;
 
   // Find products with low stock in either country
-  const lowStockIndia = products.filter(p => (p.inventory_quantity_india ?? 0) < (p.low_stock_threshold || 10));
+  const lowStockIndia = products.filter(p => (p.inventory_quantity ?? 0) < (p.low_stock_threshold || 10));
   const lowStockAustralia = products.filter(p => (p.inventory_quantity_australia ?? 0) < (p.low_stock_threshold || 10));
   const hasLowStock = lowStockIndia.length > 0 || lowStockAustralia.length > 0;
 
@@ -74,7 +74,7 @@ const AdminInventory = () => {
               <div>
                 <p className="text-xs uppercase text-muted-foreground font-medium mb-1">🇮🇳 India Low Stock</p>
                 {lowStockIndia.map(p => (
-                  <p key={`in-${p.id}`} className="text-red-700">{p.name}: {p.inventory_quantity_india ?? 0} left</p>
+                  <p key={`in-${p.id}`} className="text-red-700">{p.name}: {p.inventory_quantity ?? 0} left</p>
                 ))}
               </div>
             )}
@@ -118,19 +118,19 @@ const AdminInventory = () => {
                   <div className="border border-border/60 p-3 flex items-center justify-between">
                     <div>
                       <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">🇮🇳 India Stock</p>
-                      <p className={`text-sm mt-1 font-mono font-medium ${(p.inventory_quantity_india ?? 0) < (p.low_stock_threshold || 10) ? "text-red-500 font-bold" : ""}`}>
-                        {p.inventory_quantity_india ?? 0} {(p.inventory_quantity_india ?? 0) < (p.low_stock_threshold || 10) && "⚠️"}
+                      <p className={`text-sm mt-1 font-mono font-medium ${(p.inventory_quantity ?? 0) < (p.low_stock_threshold || 10) ? "text-red-500 font-bold" : ""}`}>
+                        {p.inventory_quantity ?? 0} {(p.inventory_quantity ?? 0) < (p.low_stock_threshold || 10) && "⚠️"}
                       </p>
                     </div>
                     {isEditingIndia ? (
                       <div className="flex items-center gap-2">
                         <input type="number" value={newQty} onChange={(e) => setNewQty(parseInt(e.target.value) || 0)} className="w-16 h-8 px-2 text-xs border border-border bg-transparent outline-none" />
                         <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason" className="w-24 h-8 px-2 text-xs border border-border bg-transparent outline-none" />
-                        <Button onClick={() => handleUpdate(p.id, p.inventory_quantity_india ?? 0, "india")} className="bg-foreground text-background h-8 px-3 text-[10px] uppercase tracking-[0.05em]">Save</Button>
+                        <Button onClick={() => handleUpdate(p.id, p.inventory_quantity ?? 0, "india")} className="bg-foreground text-background h-8 px-3 text-[10px] uppercase tracking-[0.05em]">Save</Button>
                         <Button variant="outline" onClick={() => setUpdateId(null)} className="h-8 px-2 text-[10px] uppercase">Cancel</Button>
                       </div>
                     ) : (
-                      <button onClick={() => { setUpdateId({ id: p.id, target: "india" }); setNewQty(p.inventory_quantity_india ?? 0); }} className="text-[10px] uppercase tracking-[0.05em] text-muted-foreground hover:text-foreground underline">Update</button>
+                      <button onClick={() => { setUpdateId({ id: p.id, target: "india" }); setNewQty(p.inventory_quantity ?? 0); }} className="text-[10px] uppercase tracking-[0.05em] text-muted-foreground hover:text-foreground underline">Update</button>
                     )}
                   </div>
                 </div>

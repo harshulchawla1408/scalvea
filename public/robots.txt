@@ -1,14 +1,32 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# Production robots.txt for Scalvea (Vite + React SPA)
 
 User-agent: *
 Allow: /
+Allow: /shop
+Allow: /about
+Allow: /contact
+Allow: /support
+Allow: /faq
+Allow: /faqs
+Allow: /shipping-returns
+Allow: /privacy-policy
+Allow: /terms-of-service
+Allow: /shipping-policy
+Allow: /returns-policy
+Allow: /product/
+
+# Block administrative, account, and checkout flows
+Disallow: /admin/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /cart/
+Disallow: /wishlist/
+Disallow: /auth/
+Disallow: /order-success
+
+# Block internal search query combinations to optimize crawl budget
+Disallow: /*?search=
+Disallow: /*?sortBy=
+
+# Sitemap Reference
+Sitemap: https://scalvea.com/sitemap.xml

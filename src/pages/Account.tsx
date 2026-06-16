@@ -16,6 +16,7 @@ import { Package, ChevronRight, Pencil, Plus, Trash2, Check, X, Clock, MapPin, H
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSEO } from "@/hooks/useSEO";
 
 interface Address {
   id: string;
@@ -33,6 +34,12 @@ interface Address {
 }
 
 const Account = () => {
+  useSEO({
+    title: "My Account",
+    description: "Manage your personal profile, addresses, and order history.",
+    noindex: true
+  });
+
   const { user, loading, isAdmin } = useAuth();
   const { country, setCountry, allCountries, formatPrice } = useCountry();
   const { items: recentlyViewedIds } = useRecentlyViewed();
@@ -66,7 +73,11 @@ const Account = () => {
   const { data: orders = [] } = useQuery({
     queryKey: ["orders", user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("orders").select("*").eq("user_id", user!.id).order("created_at", { ascending: false });
+      const { data } = await supabase
+        .from("orders")
+        .select("*, shiprocket_orders(*)")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
       return data || [];
     },
     enabled: !!user,
@@ -397,7 +408,30 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
                             <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Delivery Estimate</p>
                             <p>{order.delivery_estimate || "—"}</p>
                           </div>
+                          <div>
+                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Payment Method</p>
+                            <p className="uppercase">{order.payment_method || "—"}</p>
+                          </div>
                         </div>
+
+                        {order.shiprocket_orders && order.shiprocket_orders.length > 0 && (
+                          <div className="border-t border-border/40 pt-4 mt-2 grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Courier Partner</p>
+                              <p>{order.shiprocket_orders[0].courier_name || "Assigning..."}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Tracking Number</p>
+                              <p className="font-mono">
+                                {order.shiprocket_orders[0].tracking_id ? (
+                                  <span className="text-foreground font-semibold">{order.shiprocket_orders[0].tracking_id}</span>
+                                ) : (
+                                  "Pending shipment"
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        )}
 
                         {order.shipping_address && (
                           <div className="text-sm">

@@ -6,8 +6,15 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import { products } from "@/data/products";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSEO } from "@/hooks/useSEO";
 
 const Wishlist = () => {
+  useSEO({
+    title: "My Wishlist",
+    description: "Manage your favorite items on your Scalvea wishlist.",
+    noindex: true
+  });
+
   const { items } = useWishlist();
   const wishlistProducts = products.filter(p => items.includes(p.id));
 

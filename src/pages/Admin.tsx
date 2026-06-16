@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { LayoutDashboard, Package, ShoppingCart, Users, Globe, Tag, BarChart3, LogOut, Menu, X, Star, LineChart, Settings } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import AdminProducts from "@/components/admin/AdminProducts";
@@ -30,6 +31,12 @@ const adminPages = [
 ];
 
 const Admin = () => {
+  useSEO({
+    title: "Admin Panel",
+    description: "Scalvea Administrative Dashboard.",
+    noindex: true
+  });
+
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState("dashboard");

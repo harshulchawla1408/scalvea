@@ -1,5 +1,4 @@
 -- Add separate inventory, active status, and SKU columns for India and Australia in the products table
-ALTER TABLE public.products ADD COLUMN IF NOT EXISTS inventory_quantity_india integer DEFAULT 0;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS inventory_quantity_australia integer DEFAULT 0;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS is_active_india boolean DEFAULT true;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS is_active_australia boolean DEFAULT true;

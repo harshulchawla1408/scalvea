@@ -46,7 +46,7 @@ export function useProducts() {
         
         const isIndia = selectedCountry === "india";
         const inventory_quantity = isIndia 
-          ? (p.inventory_quantity_india ?? 0) 
+          ? (p.inventory_quantity ?? 0) 
           : (p.inventory_quantity_australia ?? 0);
         const is_active = isIndia 
           ? (p.is_active_india ?? true) 
@@ -70,7 +70,7 @@ export function useProducts() {
           price_aud: Number(prices.price_aud) || 0,
           price_inr: Number(prices.price_inr) || 0,
           price_usd: Number(prices.price_usd) || 0,
-          inventory_quantity_india: p.inventory_quantity_india ?? 0,
+          inventory_quantity_india: p.inventory_quantity ?? 0,
           inventory_quantity_australia: p.inventory_quantity_australia ?? 0,
           is_active_india: p.is_active_india ?? true,
           is_active_australia: p.is_active_australia ?? true,
@@ -113,7 +113,7 @@ export function useProduct(slug: string) {
           
           const isIndia = selectedCountry === "india";
           const inventory_quantity = isIndia 
-            ? (data.inventory_quantity_india ?? 0) 
+            ? (data.inventory_quantity ?? 0) 
             : (data.inventory_quantity_australia ?? 0);
           const is_active = isIndia 
             ? (data.is_active_india ?? true) 
@@ -137,7 +137,7 @@ export function useProduct(slug: string) {
             price_aud: Number(prices.price_aud) || 0,
             price_inr: Number(prices.price_inr) || 0,
             price_usd: Number(prices.price_usd) || 0,
-            inventory_quantity_india: data.inventory_quantity_india ?? 0,
+            inventory_quantity_india: data.inventory_quantity ?? 0,
             inventory_quantity_australia: data.inventory_quantity_australia ?? 0,
             is_active_india: data.is_active_india ?? true,
             is_active_australia: data.is_active_australia ?? true,

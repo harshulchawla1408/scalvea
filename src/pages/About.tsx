@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { ShieldCheck, ClipboardCheck, Microscope, HeartHandshake, ArrowRight } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 // Asset imports
 import aboutMp4 from "@/assets/about.mp4";
@@ -18,6 +19,24 @@ import client4 from "@/assets/client-4.jpg";
 import client5 from "@/assets/client-5.jpg";
 
 const About = () => {
+  useSEO({
+    title: "About Our Clinical Research & Story",
+    description: "Discover Scalvea's story of scientific integrity, clinical hair growth research, and 100% ingredient transparency from Melbourne, Australia to India.",
+    keywords: "Scalvea story, hair growth research, clinical formulations, Redensyl clinical trial, clean hair care",
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "AboutPage",
+      "name": "About Our Clinical Research & Story | Scalvea",
+      "description": "Discover Scalvea's story of scientific integrity, clinical hair growth research, and 100% ingredient transparency from Melbourne, Australia to India.",
+      "mainEntity": {
+        "@type": "Organization",
+        "name": "Scalvea",
+        "url": "https://scalvea.com",
+        "logo": "https://scalvea.com/logo.png"
+      }
+    }
+  });
+
   const [scrollY, setScrollY] = useState(0);
 
   // Monitor scroll for subtle parallax effects

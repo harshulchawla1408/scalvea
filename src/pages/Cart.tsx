@@ -5,8 +5,15 @@ import { useCart } from "@/contexts/CartContext";
 import { useCountry } from "@/contexts/CountryContext";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, ShoppingBag } from "lucide-react";
+import { useSEO } from "@/hooks/useSEO";
 
 const Cart = () => {
+  useSEO({
+    title: "Your Bag",
+    description: "View and manage items in your Scalvea shopping cart.",
+    noindex: true
+  });
+
   const { items, removeItem, updateQuantity, total } = useCart();
   const { currencySymbol, currencyCode, settings } = useCountry();
 

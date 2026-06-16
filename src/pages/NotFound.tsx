@@ -2,9 +2,17 @@ import { Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
+import { useSEO } from "@/hooks/useSEO";
 
-const NotFound = () => (
-  <div className="min-h-screen bg-background">
+const NotFound = () => {
+  useSEO({
+    title: "Page Not Found",
+    description: "The page you are looking for does not exist.",
+    noindex: true
+  });
+
+  return (
+    <div className="min-h-screen bg-background">
     <Header />
     <main className="flex items-center justify-center py-32">
       <div className="text-center space-y-4">
@@ -16,7 +24,8 @@ const NotFound = () => (
       </div>
     </main>
     <Footer />
-  </div>
-);
+    </div>
+  );
+};
 
 export default NotFound;

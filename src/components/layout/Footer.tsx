@@ -103,15 +103,15 @@ const Footer = () => {
           <div>
             <h4 className="text-[10px] tracking-[0.2em] uppercase font-semibold text-neutral-300 mb-5">Help</h4>
             <ul className="space-y-3 text-xs text-neutral-400 font-light">
-              <li><Link to="/contact" className="hover:text-white transition-colors relative group block w-fit">
+              <li><Link to="/support" className="hover:text-white transition-colors relative group block w-fit">
                 Support Center
                 <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all group-hover:w-full" />
               </Link></li>
-              <li><Link to="/contact" className="hover:text-white transition-colors relative group block w-fit">
+              <li><Link to="/shipping-returns" className="hover:text-white transition-colors relative group block w-fit">
                 Shipping & Returns
                 <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all group-hover:w-full" />
               </Link></li>
-              <li><Link to="/contact" className="hover:text-white transition-colors relative group block w-fit">
+              <li><Link to="/faqs" className="hover:text-white transition-colors relative group block w-fit">
                 FAQs
                 <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all group-hover:w-full" />
               </Link></li>

@@ -35,7 +35,7 @@ const AdminDashboard = () => {
     setLoading(true);
     const [ordersRes, productsRes, orderItemsRes] = await Promise.all([
       supabase.from("orders").select("*"),
-      supabase.from("products").select("id, name, inventory_quantity_india, inventory_quantity_australia, low_stock_threshold"),
+      supabase.from("products").select("id, name, inventory_quantity, inventory_quantity_australia, low_stock_threshold"),
       supabase.from("order_items").select("*, orders(country)"),
     ]);
 
@@ -64,9 +64,9 @@ const AdminDashboard = () => {
       if (selectedCountry === "Australia") {
         return (p.inventory_quantity_australia ?? 0) < lowLimit;
       } else if (selectedCountry === "India") {
-        return (p.inventory_quantity_india ?? 0) < lowLimit;
+        return (p.inventory_quantity ?? 0) < lowLimit;
       } else {
-        return (p.inventory_quantity_australia ?? 0) < lowLimit || (p.inventory_quantity_india ?? 0) < lowLimit;
+        return (p.inventory_quantity_australia ?? 0) < lowLimit || (p.inventory_quantity ?? 0) < lowLimit;
       }
     });
 
@@ -114,8 +114,8 @@ const AdminDashboard = () => {
         stockText: selectedCountry === "Australia" 
           ? `🇦🇺 ${p.inventory_quantity_australia ?? 0} left`
           : selectedCountry === "India"
-          ? `🇮🇳 ${p.inventory_quantity_india ?? 0} left`
-          : `🇦🇺 ${p.inventory_quantity_australia ?? 0} · 🇮🇳 ${p.inventory_quantity_india ?? 0}`
+          ? `🇮🇳 ${p.inventory_quantity ?? 0} left`
+          : `🇦🇺 ${p.inventory_quantity_australia ?? 0} · 🇮🇳 ${p.inventory_quantity ?? 0}`
       })).slice(0, 5)
     );
 
@@ -133,7 +133,7 @@ const AdminDashboard = () => {
       allProducts.map((p: any) => ({
         name: p.name.length > 15 ? p.name.slice(0, 15) + "…" : p.name,
         ...(selectedCountry === "All" || selectedCountry === "Australia" ? { "Australia": p.inventory_quantity_australia ?? 0 } : {}),
-        ...(selectedCountry === "All" || selectedCountry === "India" ? { "India": p.inventory_quantity_india ?? 0 } : {}),
+        ...(selectedCountry === "All" || selectedCountry === "India" ? { "India": p.inventory_quantity ?? 0 } : {}),
       }))
     );
 

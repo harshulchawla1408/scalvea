@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { loadStripe } from "@stripe/stripe-js";
+import { useSEO } from "@/hooks/useSEO";
 
 const AUSTRALIA_STATES = [
   "New South Wales (NSW)",
@@ -20,16 +22,15 @@ const AUSTRALIA_STATES = [
   "Northern Territory (NT)"
 ];
 
-const INDIA_STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", 
-  "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", 
-  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", 
-  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Delhi", "Puducherry"
-];
-
 const Checkout = () => {
+  useSEO({
+    title: "Checkout",
+    description: "Securely complete your purchase on Scalvea.",
+    noindex: true
+  });
+
   const { items, total, clearCart } = useCart();
-  const { settings, currencySymbol, currencyCode } = useCountry();
+  const { settings, currencySymbol, currencyCode, market } = useCountry();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -59,15 +60,16 @@ const Checkout = () => {
     phone: "",
   });
   
-  const [paymentMethod, setPaymentMethod] = useState<"stripe" | "cod">("stripe");
+  const [paymentMethod, setPaymentMethod] = useState<string>("stripe");
   const [placing, setPlacing] = useState(false);
 
   // Sync state selection when state lists change
   useEffect(() => {
     setForm(prev => ({
       ...prev,
-      state: isIndia ? INDIA_STATES[0] : AUSTRALIA_STATES[0]
+      state: isIndia ? "" : AUSTRALIA_STATES[0]
     }));
+    setPaymentMethod(isIndia ? "shiprocket" : "stripe");
   }, [isIndia]);
 
   const formatVal = (val: number) => {
@@ -123,41 +125,69 @@ const Checkout = () => {
     setCouponCode("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Dynamic load Shiprocket Checkout script
+  useEffect(() => {
+    if (isIndia) {
+      import("@/utils/shiprocket").then(({ loadShiprocketScript }) => {
+        loadShiprocketScript();
+      });
+    }
+  }, [isIndia]);
+
+  const handleShiprocketCheckout = async () => {
     if (!user) {
       toast({ title: "Please sign in", description: "You need an account to place an order.", variant: "destructive" });
       navigate("/auth");
       return;
     }
 
-    // Pincode/Postcode validation
-    if (isIndia) {
-      if (!/^\d{6}$/.test(form.postcode)) {
-        toast({ title: "Invalid Pincode", description: "Indian pincodes must be exactly 6 digits.", variant: "destructive" });
-        return;
-      }
-      if (!/^[6-9]\d{9}$/.test(form.phone.replace(/[\s-+]/g, ""))) {
-        toast({ title: "Invalid Phone Number", description: "Please enter a valid 10-digit Indian phone number.", variant: "destructive" });
-        return;
-      }
-    } else {
-      if (!/^\d{4}$/.test(form.postcode)) {
-        toast({ title: "Invalid Postcode", description: "Australian postcodes must be exactly 4 digits.", variant: "destructive" });
-        return;
-      }
-    }
-
     setPlacing(true);
 
     try {
-      // 1. Verify isolated country stock for each item before placing order
-      const stockField = isIndia ? "inventory_quantity_india" : "inventory_quantity_australia";
+      // 1. Invoke Supabase Edge Function to generate access token
+      const { data, error } = await supabase.functions.invoke("create-shiprocket-checkout-token", {
+        body: {
+          items: items.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity
+          }))
+        }
+      });
 
+      if (error || !data || !data.token) {
+        throw new Error(error?.message || "Failed to create checkout token");
+      }
+
+      const token = data.token;
+      const redirectUrl = data.redirect_url;
+
+      // 2. Call HeadlessCheckout.addToCart or fallback to direct redirect
+      const headless = (window as any).HeadlessCheckout;
+      if (headless && typeof headless.addToCart === "function") {
+        console.log("Loading Shiprocket Checkout via Headless SDK");
+        headless.addToCart({
+          token: token,
+        });
+      } else {
+        console.log("Redirecting to Shiprocket Checkout URL");
+        window.location.href = redirectUrl;
+      }
+      
+      clearCart();
+    } catch (err: any) {
+      toast({ title: "Checkout Error", description: err.message, variant: "destructive" });
+    } finally {
+      setPlacing(false);
+    }
+  };
+
+  const startStripeCheckout = async () => {
+    try {
+      // 1. Verify stock for each item before redirecting
       for (const item of items) {
         const { data: prod, error: prodError } = await supabase
           .from("products")
-          .select(`id, name, ${stockField}`)
+          .select("id, name, inventory_quantity_australia")
           .eq("id", item.productId)
           .single();
 
@@ -167,7 +197,7 @@ const Checkout = () => {
           return;
         }
 
-        const currentStock = (prod as any)[stockField] ?? 0;
+        const currentStock = prod.inventory_quantity_australia ?? 0;
         if (item.quantity > currentStock) {
           toast({
             title: "Insufficient Stock",
@@ -179,23 +209,14 @@ const Checkout = () => {
         }
       }
 
-      // 2. Create the order
-      const { data: order, error } = await supabase
-        .from("orders")
-        .insert({
-          user_id: user.id,
-          country: settings?.country || "Australia",
-          currency: currencyCode,
-          subtotal: total,
-          tax_amount: taxAmount,
-          shipping_amount: shippingAmount,
-          discount_amount: discountAmount,
-          coupon_code: appliedCoupon?.code || null,
-          total_amount: grandTotal,
-          payment_method: paymentMethod,
-          payment_status: "unpaid",
-          order_status: "pending",
-          delivery_estimate: settings?.delivery_time || "5-10 business days",
+      // 2. Call our create-stripe-session Edge Function
+      const { data, error } = await supabase.functions.invoke("create-stripe-session", {
+        body: {
+          items: items.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity
+          })),
+          email: form.email,
           shipping_address: {
             firstName: form.firstName,
             lastName: form.lastName,
@@ -203,57 +224,66 @@ const Checkout = () => {
             city: form.city,
             state: form.state,
             postcode: form.postcode,
-            country: settings?.country || "Australia",
+            country: "Australia",
             phone: form.phone,
             email: form.email,
           },
-        } as any)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // 3. Create order items
-      const orderItems = items.map((item) => ({
-        order_id: order.id,
-        product_id: item.productId,
-        product_name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-        currency: currencyCode,
-      }));
-
-      await supabase.from("order_items").insert(orderItems as any);
-
-      // 4. Increment coupon usage
-      if (appliedCoupon) {
-        const { data: coupon } = await supabase.from("coupons").select("usage_count").eq("code", appliedCoupon.code).single();
-        if (coupon) {
-          await supabase.from("coupons").update({ usage_count: (coupon.usage_count || 0) + 1 } as any).eq("code", appliedCoupon.code);
+          coupon_code: appliedCoupon?.code || null,
+          shipping_type: "standard" // default to standard shipping
         }
+      });
+
+      if (error || !data || !data.sessionId) {
+        throw new Error(error?.message || "Failed to create Stripe Checkout Session");
       }
 
-      // 5. Invoke stripe payment if selected
-      if (paymentMethod === "stripe") {
-        const { data: paymentData, error: paymentError } = await supabase.functions.invoke("create-payment-intent", {
-          body: { orderId: order.id, amount: Math.round(grandTotal * 100), currency: currencyCode.toLowerCase() },
-        });
+      const sessionId = data.sessionId;
+      const checkoutUrl = data.checkoutUrl;
 
-        if (paymentError) {
-          toast({ title: "Payment setup failed", description: "Order created. You can pay later.", variant: "destructive" });
-        } else {
-          await supabase.from("orders").update({ stripe_payment_intent_id: paymentData.paymentIntentId, payment_status: "paid", order_status: "processing" } as any).eq("id", order.id);
-        }
-      }
-
+      // Clear local cart before redirecting so the success page starts with an empty cart
       clearCart();
-      toast({ title: "Order placed!", description: `Order ${order.order_number} confirmed. ${paymentMethod === "cod" ? "Pay on delivery." : ""}` });
-      navigate("/account");
+
+      // 3. Redirect using @stripe/stripe-js
+      const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+      if (!stripePublishableKey) {
+        console.warn("VITE_STRIPE_PUBLISHABLE_KEY is not configured. Redirecting directly using session URL.");
+        window.location.href = checkoutUrl;
+        return;
+      }
+
+      const stripe = await loadStripe(stripePublishableKey);
+      if (stripe) {
+        const { error: redirectError } = await stripe.redirectToCheckout({ sessionId });
+        if (redirectError) {
+          throw redirectError;
+        }
+      } else {
+        window.location.href = checkoutUrl;
+      }
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      console.error("Stripe Checkout error:", err);
+      toast({ title: "Payment redirection failed", description: err.message, variant: "destructive" });
     } finally {
       setPlacing(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      toast({ title: "Please sign in", description: "You need an account to place an order.", variant: "destructive" });
+      navigate("/auth");
+      return;
+    }
+
+    // Pincode/Postcode validation (Australia only)
+    if (!/^\d{4}$/.test(form.postcode)) {
+      toast({ title: "Invalid Postcode", description: "Australian postcodes must be exactly 4 digits.", variant: "destructive" });
+      return;
+    }
+
+    setPlacing(true);
+    await startStripeCheckout();
   };
 
   if (items.length === 0) {
@@ -277,86 +307,111 @@ const Checkout = () => {
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             <div className="space-y-8">
-              <div>
-                <h2 className="text-xs tracking-[0.15em] uppercase mb-6">Contact</h2>
-                <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email address" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
-              </div>
-
-              {/* Dynamic Checkout Header & Fields based on India / Australia */}
-              <div>
-                <h2 className="text-xs tracking-[0.15em] uppercase mb-6">
-                  {isIndia ? "🇮🇳 Shiprocket India Shipping Details" : "🇦🇺 Australian Shipping Details"}
-                </h2>
-                
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder="First name" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
-                    <input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder="Last name" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+              {isIndia ? (
+                <div className="space-y-6 border border-border/80 p-8 bg-secondary/10 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-orange-400 via-neutral-100 to-green-600" />
+                  <h2 className="text-sm tracking-[0.2em] uppercase font-light flex items-center gap-2">🇮🇳 Shiprocket Fast Checkout</h2>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Indian orders are processed securely via Shiprocket. You can complete your purchase using saved addresses, OTP-based login, and multiple payment methods:
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 text-[10px] tracking-[0.1em] uppercase text-muted-foreground font-mono">
+                    <div>✓ UPI (GPay, PhonePe, etc.)</div>
+                    <div>✓ Credit/Debit Cards</div>
+                    <div>✓ Net Banking & Wallets</div>
+                    <div>✓ Cash on Delivery (COD)</div>
+                    <div>✓ EMI / BNPL options</div>
                   </div>
-                  
-                  <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Street Address" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder={isIndia ? "City / Town" : "Suburb / Town"} required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
-                    
-                    {/* Country-specific state selector */}
-                    <select
-                      value={form.state}
-                      onChange={(e) => setForm({ ...form, state: e.target.value })}
-                      className="w-full h-11 px-3 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
-                      required
-                    >
-                      {(isIndia ? INDIA_STATES : AUSTRALIA_STATES).map((state) => (
-                        <option key={state} value={state}>{state}</option>
-                      ))}
-                    </select>
-
-                    <input 
-                      value={form.postcode} 
-                      onChange={(e) => setForm({ ...form, postcode: e.target.value })} 
-                      placeholder={isIndia ? "Pincode (6 digits)" : "Postcode (4 digits)"} 
-                      required 
-                      className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors font-mono" 
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <input 
-                      value={form.phone} 
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })} 
-                      placeholder="Phone number" 
-                      required
-                      className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" 
-                    />
-                    {isIndia && <span className="text-[10px] text-muted-foreground font-light px-1">Required for Shiprocket delivery updates (10 digits).</span>}
+                  <Button 
+                    type="button" 
+                    onClick={handleShiprocketCheckout} 
+                    disabled={placing} 
+                    className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase mt-6 animate-pulse"
+                  >
+                    {placing ? "Launching Shiprocket..." : "Proceed with Shiprocket Checkout"}
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <h2 className="text-xs tracking-[0.15em] uppercase mb-6">Contact</h2>
+                    <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email address" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
                   </div>
 
                   <div>
-                    <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Destination</p>
-                    <div className="w-full h-11 px-4 text-sm bg-secondary border border-border flex items-center text-muted-foreground cursor-not-allowed">
-                      {isIndia ? "🇮🇳 India" : "🇦🇺 Australia"}
+                    <h2 className="text-xs tracking-[0.15em] uppercase mb-6">
+                      🇦🇺 Australian Shipping Details
+                    </h2>
+                    
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder="First name" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+                        <input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder="Last name" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+                      </div>
+                      
+                      <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Street Address" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="Suburb / Town" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+                        
+                        <select
+                          value={form.state}
+                          onChange={(e) => setForm({ ...form, state: e.target.value })}
+                          className="w-full h-11 px-3 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
+                          required
+                        >
+                          {AUSTRALIA_STATES.map((state) => (
+                            <option key={state} value={state}>{state}</option>
+                          ))}
+                        </select>
+
+                        <input 
+                          value={form.postcode} 
+                          onChange={(e) => setForm({ ...form, postcode: e.target.value })} 
+                          placeholder="Postcode (4 digits)" 
+                          required 
+                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors font-mono" 
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <input 
+                          value={form.phone} 
+                          onChange={(e) => setForm({ ...form, phone: e.target.value })} 
+                          placeholder="Phone number" 
+                          required
+                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" 
+                        />
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Destination</p>
+                        <div className="w-full h-11 px-4 text-sm bg-secondary border border-border flex items-center text-muted-foreground cursor-not-allowed">
+                          🇦🇺 Australia
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              <div>
-                <h2 className="text-xs tracking-[0.15em] uppercase mb-6">Payment Options</h2>
-                <div className="space-y-3">
-                  <label className={`flex items-center gap-3 p-4 border cursor-pointer transition-colors ${paymentMethod === "stripe" ? "border-foreground" : "border-border"}`}>
-                    <input type="radio" name="payment" value="stripe" checked={paymentMethod === "stripe"} onChange={() => setPaymentMethod("stripe")} className="accent-foreground" />
-                    <span className="text-sm font-light">Credit / Debit Card (Stripe Security)</span>
-                  </label>
-                  <label className={`flex items-center gap-3 p-4 border cursor-pointer transition-colors ${paymentMethod === "cod" ? "border-foreground" : "border-border"}`}>
-                    <input type="radio" name="payment" value="cod" checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} className="accent-foreground" />
-                    <span className="text-sm font-light">Cash on Delivery (COD)</span>
-                  </label>
-                </div>
-              </div>
+                  <div>
+                    <h2 className="text-xs tracking-[0.15em] uppercase mb-6">Payment Options</h2>
+                    <div className="space-y-3">
+                      <div className="p-4 border border-foreground bg-secondary/10 flex items-center justify-between animate-fade-in">
+                        <div className="space-y-1">
+                          <span className="text-sm font-light block">Credit / Debit Card, Apple Pay, Google Pay</span>
+                          <span className="text-[10px] text-muted-foreground font-light block">Processed securely via Stripe Checkout</span>
+                        </div>
+                        <div className="flex gap-1.5 text-[9px] tracking-wider font-mono text-muted-foreground uppercase">
+                          <span>Visa</span> · <span>MC</span> · <span>Amex</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-              <Button type="submit" disabled={placing} className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase">
-                {placing ? "Processing Order..." : `Place Order — ${formatVal(grandTotal)}`}
-              </Button>
+                  <Button type="submit" disabled={placing} className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase">
+                    {placing ? "Processing Order..." : `Place Order — ${formatVal(grandTotal)}`}
+                  </Button>
+                </>
+              )}
             </div>
 
             <div className="lg:sticky lg:top-32 lg:h-fit">

@@ -19,6 +19,7 @@ const AdminProducts = () => {
     inventory_quantity_india: 0, inventory_quantity_australia: 0,
     is_active_india: true, is_active_australia: true,
     sku_india: "", sku_australia: "",
+    sku: "", weight: 0.0, shiprocket_variant_id: "",
   });
 
   const fetchProducts = async () => {
@@ -36,6 +37,7 @@ const AdminProducts = () => {
       inventory_quantity_india: 0, inventory_quantity_australia: 0,
       is_active_india: true, is_active_australia: true,
       sku_india: "", sku_australia: "",
+      sku: "", weight: 0.0, shiprocket_variant_id: "",
     });
     setEditProduct(null);
     setShowForm(false);
@@ -48,9 +50,10 @@ const AdminProducts = () => {
       how_to_use: p.how_to_use || "", key_ingredients: (p.key_ingredients || []).join(", "), size: p.size || "",
       imageUrls: p.images || [], featured: p.featured, badge: p.badge || "",
       price_aud: Number(prices.price_aud) || 0, price_inr: Number(prices.price_inr) || 0,
-      inventory_quantity_india: p.inventory_quantity_india || 0, inventory_quantity_australia: p.inventory_quantity_australia || 0,
+      inventory_quantity_india: p.inventory_quantity || 0, inventory_quantity_australia: p.inventory_quantity_australia || 0,
       is_active_india: p.is_active_india ?? true, is_active_australia: p.is_active_australia ?? true,
       sku_india: p.sku_india || "", sku_australia: p.sku_australia || "",
+      sku: p.sku || "", weight: Number(p.weight) || 0.0, shiprocket_variant_id: p.shiprocket_variant_id || "",
     });
     setEditProduct(p);
     setShowForm(true);
@@ -95,14 +98,16 @@ const AdminProducts = () => {
       key_ingredients: form.key_ingredients.split(",").map(s => s.trim()).filter(Boolean),
       size: form.size, images: form.imageUrls,
       featured: form.featured, badge: form.badge || null,
-      inventory_quantity_india: form.inventory_quantity_india,
+      inventory_quantity: form.inventory_quantity_india,
       inventory_quantity_australia: form.inventory_quantity_australia,
       is_active_india: form.is_active_india,
       is_active_australia: form.is_active_australia,
       sku_india: form.sku_india || null,
       sku_australia: form.sku_australia || null,
+      sku: form.sku || null,
+      weight: Number(form.weight) || 0.0,
+      shiprocket_variant_id: form.shiprocket_variant_id || null,
       // Fallback fields for legacy compatibility
-      inventory_quantity: form.inventory_quantity_australia,
       is_active: form.is_active_australia,
     };
 
@@ -197,6 +202,21 @@ const AdminProducts = () => {
           <div className="space-y-1">
             <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block">Key ingredients (comma separated)</label>
             <input value={form.key_ingredients} onChange={(e) => setForm({ ...form, key_ingredients: e.target.value })} placeholder="Key ingredients (comma separated)" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block">Global SKU</label>
+              <input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Global SKU" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block">Weight (kg)</label>
+              <input type="number" step="0.001" value={form.weight} onChange={(e) => setForm({ ...form, weight: parseFloat(e.target.value) || 0 })} placeholder="0.5" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block">Shiprocket Variant ID</label>
+              <input value={form.shiprocket_variant_id} onChange={(e) => setForm({ ...form, shiprocket_variant_id: e.target.value })} placeholder="SR Variant ID" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
+            </div>
           </div>
 
           {/* Image Upload */}
@@ -300,7 +320,7 @@ const AdminProducts = () => {
                     </span>
                     <span className="text-border">|</span>
                     <span className="flex items-center gap-1">
-                      🇮🇳 INR: {p.is_active_india ? `₹${Math.round(prices.price_inr || 0)}` : "Inactive"} · Stock: {p.inventory_quantity_india ?? 0}
+                      🇮🇳 INR: {p.is_active_india ? `₹${Math.round(prices.price_inr || 0)}` : "Inactive"} · Stock: {p.inventory_quantity ?? 0}
                     </span>
                   </div>
                 </div>

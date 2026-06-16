@@ -18,6 +18,7 @@ export type CountryType = "india" | "australia";
 interface CountryContextType {
   selectedCountry: CountryType;
   setSelectedCountry: (country: CountryType) => void;
+  market: "IN" | "AU";
   country: string; // "India" | "Australia" (backward compatibility)
   setCountry: (country: string) => void; // (backward compatibility)
   settings: CountrySettings | null; // (backward compatibility)
@@ -139,6 +140,7 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
   const setSelectedCountry = (c: CountryType) => {
     setSelectedCountryState(c);
     localStorage.setItem("scalvea-country", c);
+    localStorage.setItem("scalvea-market", c === "india" ? "IN" : "AU");
   };
 
   // Backward compatibility helpers
@@ -170,11 +172,14 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
     return `${currencySymbol}${price.toFixed(2)}`;
   };
 
+  const market = activeCountry === "india" ? "IN" : "AU";
+
   return (
     <CountryContext.Provider
       value={{
         selectedCountry: activeCountry,
         setSelectedCountry,
+        market,
         country,
         setCountry,
         settings,

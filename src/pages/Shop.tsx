@@ -6,11 +6,21 @@ import ProductCard from "@/components/products/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
 import { useCountry } from "@/contexts/CountryContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSEO } from "@/hooks/useSEO";
 
 const Shop = () => {
   const [searchParams] = useSearchParams();
   const categoryFilter = searchParams.get("category");
   const searchQuery = searchParams.get("search");
+
+  useSEO({
+    title: categoryFilter ? `${categoryFilter} Collection` : "Shop Premium Hair Care",
+    description: categoryFilter 
+      ? `Explore our range of premium ${categoryFilter.toLowerCase()} formulated with active ingredients to restore hair density.` 
+      : "Shop Scalvea's premium clinical hair growth serums, sprays, and treatments. Free shipping globally.",
+    keywords: `hair growth shop, hair serum shop, Scalvea products, Redensyl, Baicapil, AnaGain, hair regrowth${categoryFilter ? `, ${categoryFilter}` : ""}`,
+    canonical: categoryFilter ? `https://scalvea.com/shop?category=${encodeURIComponent(categoryFilter)}` : "https://scalvea.com/shop"
+  });
   const [sortBy, setSortBy] = useState("default");
   const { products, loading } = useProducts();
   const { getPrice } = useCountry();

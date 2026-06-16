@@ -1,6 +1,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useSEO } from "@/hooks/useSEO";
 
 const faqs = [
   {
@@ -40,6 +41,26 @@ const faqs = [
 ];
 
 const FAQ = () => {
+  useSEO({
+    title: "Frequently Asked Questions (FAQs)",
+    description: "Find answers to frequently asked questions about Scalvea products, order tracking, shipping rates, and returns policy.",
+    keywords: "Scalvea FAQ, Scalvea questions, hair growth serum guide, track order, refund status",
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": faqs.flatMap(section => 
+        section.items.map(item => ({
+          "@type": "Question",
+          "name": item.q,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": item.a
+          }
+        }))
+      )
+    }
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Header />

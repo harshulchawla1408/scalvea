@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCountry } from "@/contexts/CountryContext";
 import { toast } from "@/hooks/use-toast";
+import { useSEO } from "@/hooks/useSEO";
 
 // Import beauty/lifestyle assets
 import hero3 from "@/assets/hero3.png";
@@ -165,6 +166,12 @@ const LogoAnimation = () => {
 };
 
 const Auth = () => {
+  useSEO({
+    title: "Sign In / Register",
+    description: "Access your Scalvea account to manage orders and billing.",
+    noindex: true
+  });
+
   const [view, setView] = useState<"signin" | "signup" | "forgot" | "reset">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
