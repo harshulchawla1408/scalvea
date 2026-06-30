@@ -128,13 +128,13 @@ const Checkout = () => {
   // Dynamic load Shiprocket Checkout script
   useEffect(() => {
     if (isIndia) {
-      import("@/utils/shiprocket").then(({ loadShiprocketScript }) => {
-        loadShiprocketScript();
+      import("@/utils/shiprocket").then(({ loadShiprocketAssets }) => {
+        loadShiprocketAssets();
       });
     }
   }, [isIndia]);
 
-  const handleShiprocketCheckout = async () => {
+  const handleShiprocketCheckout = async (e?: any) => {
     if (!user) {
       toast({ title: "Please sign in", description: "You need an account to place an order.", variant: "destructive" });
       navigate("/auth");
@@ -165,8 +165,9 @@ const Checkout = () => {
       const headless = (window as any).HeadlessCheckout;
       if (headless && typeof headless.addToCart === "function") {
         console.log("Loading Shiprocket Checkout via Headless SDK");
-        headless.addToCart({
-          token: token,
+        headless.addToCart(e || null, token, {
+          fallbackUrl: redirectUrl,
+          isInitiatedFromApp: true
         });
       } else {
         console.log("Redirecting to Shiprocket Checkout URL");

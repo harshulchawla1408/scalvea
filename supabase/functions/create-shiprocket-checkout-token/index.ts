@@ -19,9 +19,14 @@ async function generateHmacSha256(secret: string, data: string): Promise<string>
     key,
     new TextEncoder().encode(data)
   );
-  return Array.from(new Uint8Array(signatureBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  const u8 = new Uint8Array(signatureBuffer);
+  
+  // Base64 encode the byte array
+  let binary = "";
+  for (let i = 0; i < u8.length; i++) {
+    binary += String.fromCharCode(u8[i]);
+  }
+  return btoa(binary);
 }
 
 serve(async (req) => {
@@ -30,11 +35,31 @@ serve(async (req) => {
   }
 
   try {
+    const apiKey = Deno.env.get("SHIPROCKET_API_KEY");
+    const secretKey = Deno.env.get("SHIPROCKET_SECRET_KEY");
+
+    // TASK 1 — VERIFY SUPABASE SECRETS
+    console.log("API Key exists:", !!apiKey);
+    console.log("Secret Key exists:", !!secretKey);
+
+    if (!apiKey || !secretKey) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing Shiprocket credentials"
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // TASK 3 — SANITIZE SECRET KEY
+    const cleanSecret = secretKey.trim();
+    console.log("Secret length:", cleanSecret.length);
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { items } = await req.json();
+    const { items, couponCode, discountAmount, catalogData } = await req.json();
     if (!items || !Array.isArray(items) || items.length === 0) {
       return new Response(
         JSON.stringify({ error: "Missing or invalid items in cart" }),
@@ -53,63 +78,93 @@ serve(async (req) => {
       throw prodError;
     }
 
+    // TASK 7 — VERIFY PAYLOAD FORMAT (variant_id MUST be string, nested cart_data and top-level fields)
     const mappedItems = items.map((item: any) => {
       const prod = (products || []).find((p: any) => p.id === item.productId);
+      const rawVariantId = prod?.shiprocket_variant_id || prod?.sku_india || prod?.sku;
+      const finalVariantIdStr = rawVariantId ? String(rawVariantId).trim() : "200001";
+      
       return {
-        variant_id: prod?.shiprocket_variant_id || prod?.sku_india || prod?.sku || item.productId,
+        variant_id: finalVariantIdStr,
         quantity: Number(item.quantity)
       };
     });
 
+    const origin = req.headers.get("origin") || "https://scalvea.com";
+    const callbackRedirectUrl = origin.includes("localhost")
+      ? `${origin}/shiprocket-callback`
+      : "https://scalvea.com/shiprocket-callback";
+
     const payload = {
       cart_data: {
         items: mappedItems
-      }
+      },
+      redirect_url: callbackRedirectUrl,
+      timestamp: new Date().toISOString()
     };
 
-    const apiKey = Deno.env.get("SHIPROCKET_API_KEY") || "mock_key";
-    const secretKey = Deno.env.get("SHIPROCKET_SECRET_KEY") || "mock_secret";
+    // TASK 1 — VERIFY RAW PAYLOAD STRING
+    const payloadString = JSON.stringify(payload);
 
-    let token = "mock_token_" + Math.random().toString(36).substring(2, 15);
-    let redirectUrl = `https://checkout.shiprocket.com/checkout/${token}`;
-    let signature = "";
+    // GENERATE BASE64 HMAC SHA256
+    const signature = await generateHmacSha256(cleanSecret, payloadString);
 
-    if (apiKey !== "mock_key" && secretKey !== "mock_secret") {
-      const bodyText = JSON.stringify(payload);
-      signature = await generateHmacSha256(secretKey, bodyText);
+    // TASK 4 — ADD DEBUG LOGS
+    console.log("Full payload object:", payload);
+    console.log("Full payload string:", payloadString);
+    console.log("BASE64 Signature:", signature);
+    console.log("Headers:", {
+      "X-Api-Key": apiKey ? "present" : "missing",
+      "X-Api-HMAC-SHA256": signature ? "present" : "missing"
+    });
 
-      const response = await fetch("https://checkout-api.shiprocket.com/api/v1/access-token/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "x-signature": signature
-        },
-        body: bodyText
-      });
+    // TASK 3 — SEND EXACT SAME PAYLOAD STRING
+    const response = await fetch("https://checkout-api.shiprocket.com/api/v1/access-token/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Api-Key": apiKey,
+        "X-Api-HMAC-SHA256": signature
+      },
+      body: payloadString
+    });
 
-      if (response.ok) {
-        const resData = await response.json();
-        token = resData.token || token;
-        redirectUrl = resData.redirect_url || redirectUrl;
-      } else {
-        const errText = await response.text();
-        console.error("Shiprocket access token endpoint failed:", errText);
-        throw new Error(`Shiprocket API failure: ${errText}`);
+    console.log("Shiprocket status:", response.status);
+    const responseBody = await response.text();
+    console.log("Shiprocket response body:", responseBody);
+
+    if (response.ok) {
+      const resData = JSON.parse(responseBody);
+      const token = resData.result?.token;
+      const expiresAt = resData.result?.expires_at;
+      const orderId = resData.result?.data?.order_id;
+      
+      let redirectUrl = resData.result?.redirect_url || `https://checkout.shiprocket.in/goto/${token}`;
+      if (redirectUrl.includes("checkout.shiprocket.co")) {
+        redirectUrl = redirectUrl.replace("checkout.shiprocket.co", "checkout.shiprocket.in");
       }
-    } else {
-      console.log("Operating in MOCK mode for create-shiprocket-checkout-token");
-      signature = await generateHmacSha256(secretKey, JSON.stringify(payload));
-    }
 
-    return new Response(
-      JSON.stringify({
-        token,
-        redirect_url: redirectUrl,
-        signature
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+      return new Response(
+        JSON.stringify({
+          token,
+          expires_at: expiresAt,
+          order_id: orderId,
+          redirect_url: redirectUrl,
+          signature
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } else {
+      // TASK 6 — RETURN BETTER ERROR
+      return new Response(
+        JSON.stringify({
+          success: false,
+          status: response.status,
+          shiprocket_error: responseBody
+        }),
+        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
   } catch (error: any) {
     return new Response(
       JSON.stringify({ error: error.message }),

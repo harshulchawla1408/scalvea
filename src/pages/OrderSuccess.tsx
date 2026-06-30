@@ -17,7 +17,7 @@ const OrderSuccess = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const orderId = searchParams.get("order_id");
-  const shiprocketOrderId = searchParams.get("shiprocket_order_id");
+  const shiprocketOrderId = searchParams.get("shiprocket_order_id") || searchParams.get("oid");
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);

@@ -1,23 +1,37 @@
-/**
- * Loads the Shiprocket Headless Checkout SDK script dynamically.
- */
-export const loadShiprocketScript = (): Promise<boolean> => {
+export const loadShiprocketAssets = (): Promise<boolean> => {
   return new Promise((resolve) => {
     if ((window as any).HeadlessCheckout) {
       resolve(true);
       return;
     }
 
+    // CSS
+    if (!document.getElementById("shiprocket-css")) {
+      const css = document.createElement("link");
+      css.id = "shiprocket-css";
+      css.rel = "stylesheet";
+      css.href =
+        "https://checkout-ui.shiprocket.com/assets/styles/shopify.css";
+      document.head.appendChild(css);
+    }
+
+    // JS
     const script = document.createElement("script");
-    script.src = "https://sdk.shiprocket.com/headless-checkout/v1/headless-checkout.js";
+    script.id = "shiprocket-js";
+    script.src =
+      "https://checkout-ui.shiprocket.com/assets/js/channels/shopify.js";
     script.async = true;
+
     script.onload = () => {
+      console.log("Shiprocket SDK loaded");
       resolve(true);
     };
+
     script.onerror = () => {
-      console.error("Failed to load Shiprocket Checkout SDK script.");
+      console.error("Shiprocket SDK failed");
       resolve(false);
     };
+
     document.body.appendChild(script);
   });
 };

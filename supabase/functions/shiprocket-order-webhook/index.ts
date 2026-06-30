@@ -126,21 +126,26 @@ async function generateHmacSha256(secret: string, data: string): Promise<string>
     key,
     new TextEncoder().encode(data)
   );
-  return Array.from(new Uint8Array(signatureBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  const u8 = new Uint8Array(signatureBuffer);
+  let binary = "";
+  for (let i = 0; i < u8.length; i++) {
+    binary += String.fromCharCode(u8[i]);
+  }
+  return btoa(binary);
 }
 
 async function findProductIdByVariantId(supabase: any, variantId: string) {
   if (!variantId) return null;
 
   // 1. Try shiprocket_variant_id
-  let { data } = await supabase
-    .from("products")
-    .select("id, name, inventory_quantity")
-    .eq("shiprocket_variant_id", variantId)
-    .maybeSingle();
-  if (data) return data;
+  if (/^\d+$/.test(variantId)) {
+    const { data } = await supabase
+      .from("products")
+      .select("id, name, inventory_quantity")
+      .eq("shiprocket_variant_id", Number(variantId))
+      .maybeSingle();
+    if (data) return data;
+  }
 
   // 2. Try sku_india
   ({ data } = await supabase
@@ -201,8 +206,16 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const rawBody = await req.text();
-    const apiKey = Deno.env.get("SHIPROCKET_API_KEY") || "mock_key";
-    const secretKey = Deno.env.get("SHIPROCKET_SECRET_KEY") || "mock_secret";
+    const apiKey = Deno.env.get("SHIPROCKET_API_KEY");
+    const secretKey = Deno.env.get("SHIPROCKET_SECRET_KEY");
+
+    if (!apiKey || !secretKey || apiKey === "mock_key" || secretKey === "mock_secret") {
+      console.error("Missing or invalid Shiprocket credentials");
+      return new Response(
+        JSON.stringify({ error: "Missing or invalid Shiprocket credentials" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Webhook Signature Verification
     const signatureHeader = req.headers.get("x-signature") || 
@@ -210,7 +223,7 @@ serve(async (req) => {
                             req.headers.get("x-signature-hmac") || "";
     const computedSignature = await generateHmacSha256(secretKey, rawBody);
 
-    if (secretKey !== "mock_secret" && signatureHeader !== "mock_signature" && signatureHeader !== computedSignature) {
+    if (signatureHeader !== computedSignature) {
       console.error("Signature verification failed. Expected:", computedSignature, "Got:", signatureHeader);
       return new Response(
         JSON.stringify({ error: "Invalid webhook signature" }),
@@ -277,29 +290,31 @@ serve(async (req) => {
     // Order does not exist, let's fetch details from Shiprocket Checkout
     let orderDetails: any = null;
 
-    if (apiKey !== "mock_key" && secretKey !== "mock_secret") {
-      try {
-        const detailPayload = { order_id: String(shiprocketOrderId) };
-        const sig = await generateHmacSha256(secretKey, JSON.stringify(detailPayload));
+    try {
+      const detailPayload = {
+        order_id: String(shiprocketOrderId),
+        timestamp: new Date().toISOString()
+      };
+      const sig = await generateHmacSha256(secretKey, JSON.stringify(detailPayload));
 
-        const res = await fetch("https://checkout-api.shiprocket.com/api/v1/custom-platform-order/details", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": apiKey,
-            "x-signature": sig
-          },
-          body: JSON.stringify(detailPayload)
-        });
+      const res = await fetch("https://checkout-api.shiprocket.com/api/v1/custom-platform-order/details", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "x-signature": sig,
+          "X-Api-HMAC-SHA256": sig
+        },
+        body: JSON.stringify(detailPayload)
+      });
 
-        if (res.ok) {
-          orderDetails = await res.json();
-        } else {
-          console.error("Failed to fetch order details from Shiprocket. Using webhook payload fallbacks.");
-        }
-      } catch (err) {
-        console.error("Error calling Shiprocket Order Details API:", err);
+      if (res.ok) {
+        orderDetails = await res.json();
+      } else {
+        console.error("Failed to fetch order details from Shiprocket. Using webhook payload fallbacks.");
       }
+    } catch (err) {
+      console.error("Error calling Shiprocket Order Details API:", err);
     }
 
     if (!orderDetails) {
@@ -384,6 +399,11 @@ serve(async (req) => {
     const discountVal = Number(orderDetails.discount_amount || 0);
     const subtotalVal = totalVal - taxVal - shippingVal + discountVal;
 
+    // Map billing address
+    const billingAddr = orderDetails.billing_address || orderDetails.shipping_address || null;
+    const fastrrId = orderDetails.fastrr_order_id || orderDetails.order_id || null;
+    const totalPayable = Number(orderDetails.total_amount_payable || orderDetails.amount || 0);
+
     // Create the order record in public.orders
     const { data: newOrder, error: orderCreateError } = await supabase
       .from("orders")
@@ -401,6 +421,9 @@ serve(async (req) => {
         payment_status: localPaymentStatus,
         payment_method: mappedPayment,
         delivery_estimate: "3-5 business days",
+        fastrr_order_id: fastrrId,
+        billing_address: billingAddr,
+        total_amount_payable: totalPayable,
         shipping_address: {
           firstName: orderDetails.shipping_address.first_name,
           lastName: orderDetails.shipping_address.last_name,
@@ -418,6 +441,27 @@ serve(async (req) => {
 
     if (orderCreateError) {
       throw orderCreateError;
+    }
+
+    // Save detailed payment transaction idempotently
+    const { data: existingPayment } = await supabase
+      .from("payments")
+      .select("id")
+      .eq("transaction_id", fastrrId)
+      .eq("payment_status", localPaymentStatus)
+      .maybeSingle();
+
+    if (!existingPayment) {
+      await supabase
+        .from("payments")
+        .insert({
+          order_id: newOrder.id,
+          payment_method: mappedPayment,
+          payment_status: localPaymentStatus,
+          amount: totalPayable,
+          transaction_id: fastrrId,
+          raw_response: orderDetails
+        });
     }
 
     // Create order items & update product inventories
