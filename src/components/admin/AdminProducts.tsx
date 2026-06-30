@@ -19,7 +19,7 @@ const AdminProducts = () => {
     inventory_quantity_india: 0, inventory_quantity_australia: 0,
     is_active_india: true, is_active_australia: true,
     sku_india: "", sku_australia: "",
-    sku: "", weight: 0.0, shiprocket_variant_id: "",
+    sku: "", weight: 0.0, shiprocket_product_id: "", shiprocket_variant_id: "",
   });
 
   const fetchProducts = async () => {
@@ -37,7 +37,7 @@ const AdminProducts = () => {
       inventory_quantity_india: 0, inventory_quantity_australia: 0,
       is_active_india: true, is_active_australia: true,
       sku_india: "", sku_australia: "",
-      sku: "", weight: 0.0, shiprocket_variant_id: "",
+      sku: "", weight: 0.0, shiprocket_product_id: "", shiprocket_variant_id: "",
     });
     setEditProduct(null);
     setShowForm(false);
@@ -53,7 +53,9 @@ const AdminProducts = () => {
       inventory_quantity_india: p.inventory_quantity || 0, inventory_quantity_australia: p.inventory_quantity_australia || 0,
       is_active_india: p.is_active_india ?? true, is_active_australia: p.is_active_australia ?? true,
       sku_india: p.sku_india || "", sku_australia: p.sku_australia || "",
-      sku: p.sku || "", weight: Number(p.weight) || 0.0, shiprocket_variant_id: p.shiprocket_variant_id || "",
+      sku: p.sku || "", weight: Number(p.weight) || 0.0,
+      shiprocket_product_id: p.shiprocket_product_id || "",
+      shiprocket_variant_id: p.shiprocket_variant_id || "",
     });
     setEditProduct(p);
     setShowForm(true);
@@ -106,7 +108,8 @@ const AdminProducts = () => {
       sku_australia: form.sku_australia || null,
       sku: form.sku || null,
       weight: Number(form.weight) || 0.0,
-      shiprocket_variant_id: form.shiprocket_variant_id || null,
+      shiprocket_product_id: form.shiprocket_product_id ? Number(form.shiprocket_product_id) : null,
+      shiprocket_variant_id: form.shiprocket_variant_id ? Number(form.shiprocket_variant_id) : null,
       // Fallback fields for legacy compatibility
       is_active: form.is_active_australia,
     };
@@ -204,7 +207,7 @@ const AdminProducts = () => {
             <input value={form.key_ingredients} onChange={(e) => setForm({ ...form, key_ingredients: e.target.value })} placeholder="Key ingredients (comma separated)" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-1">
               <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block">Global SKU</label>
               <input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Global SKU" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
@@ -214,8 +217,12 @@ const AdminProducts = () => {
               <input type="number" step="0.001" value={form.weight} onChange={(e) => setForm({ ...form, weight: parseFloat(e.target.value) || 0 })} placeholder="0.5" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
             </div>
             <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block">Shiprocket Product ID</label>
+              <input type="number" value={form.shiprocket_product_id} onChange={(e) => setForm({ ...form, shiprocket_product_id: e.target.value })} placeholder="SR Product ID" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
+            </div>
+            <div className="space-y-1">
               <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block">Shiprocket Variant ID</label>
-              <input value={form.shiprocket_variant_id} onChange={(e) => setForm({ ...form, shiprocket_variant_id: e.target.value })} placeholder="SR Variant ID" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
+              <input type="number" value={form.shiprocket_variant_id} onChange={(e) => setForm({ ...form, shiprocket_variant_id: e.target.value })} placeholder="SR Variant ID" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
             </div>
           </div>
 
