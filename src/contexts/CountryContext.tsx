@@ -40,8 +40,8 @@ const COUNTRY_FALLBACKS: Record<CountryType, CountrySettings> = {
     country: "India",
     currency: "INR",
     currency_symbol: "₹",
-    tax_percentage: 18.00,
-    shipping_charge: 100.00,
+    tax_percentage: 0,
+    shipping_charge: 50.00,
     free_shipping_above: 999.00,
     delivery_time: "3-5 business days",
     is_enabled: true
@@ -50,8 +50,8 @@ const COUNTRY_FALLBACKS: Record<CountryType, CountrySettings> = {
     country: "Australia",
     currency: "AUD",
     currency_symbol: "A$",
-    tax_percentage: 10.00,
-    shipping_charge: 10.00,
+    tax_percentage: 0,
+    shipping_charge: 7.50,
     free_shipping_above: 100.00,
     delivery_time: "5-7 business days",
     is_enabled: true
@@ -121,10 +121,28 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
       .eq("is_enabled", true)
       .then(({ data }) => {
         if (data && data.length > 0) {
-          // Keep only India and Australia in the settings list
-          const filtered = (data as unknown as CountrySettings[]).filter(
-            (c) => c.country === "India" || c.country === "Australia"
-          );
+          // Keep only India and Australia in the settings list and override tax & shipping
+          const filtered = (data as unknown as CountrySettings[])
+            .map((c) => {
+              const countryLower = c.country.toLowerCase();
+              if (countryLower === "india") {
+                return {
+                  ...c,
+                  tax_percentage: 0,
+                  shipping_charge: 50.00,
+                };
+              } else if (countryLower === "australia") {
+                return {
+                  ...c,
+                  tax_percentage: 0,
+                  shipping_charge: 7.50,
+                };
+              }
+              return c;
+            })
+            .filter(
+              (c) => c.country.toLowerCase() === "india" || c.country.toLowerCase() === "australia"
+            );
           setAllCountries(filtered);
         } else {
           setAllCountries([COUNTRY_FALLBACKS.australia, COUNTRY_FALLBACKS.india]);
@@ -152,11 +170,16 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const activeCountry = selectedCountry || "australia";
-  const settings = allCountries.find((s) => s.country.toLowerCase() === activeCountry) || COUNTRY_FALLBACKS[activeCountry];
+  const rawSettings = allCountries.find((s) => s.country.toLowerCase() === activeCountry) || COUNTRY_FALLBACKS[activeCountry];
+  const settings = rawSettings ? {
+    ...rawSettings,
+    tax_percentage: 0,
+    shipping_charge: activeCountry === "india" ? 50.00 : 7.50
+  } : null;
   const countryConfig = settings;
 
-  const currencySymbol = settings.currency_symbol;
-  const currency = settings.currency;
+  const currencySymbol = settings?.currency_symbol || (activeCountry === "india" ? "₹" : "A$");
+  const currency = settings?.currency || (activeCountry === "india" ? "INR" : "AUD");
   const currencyCode = currency;
 
   const getPrice = (priceAud: number, priceInr: number, priceUsd?: number) => {

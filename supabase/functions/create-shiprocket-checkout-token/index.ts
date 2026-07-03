@@ -95,6 +95,23 @@ serve(async (req) => {
       ? `${origin}/shiprocket-callback`
       : "https://scalvea.com/shiprocket-callback";
 
+    const isMock = apiKey === "mock_key" || secretKey === "mock_secret";
+
+    if (isMock) {
+      console.log("Mock credentials active. Returning simulated checkout details.");
+      const mockToken = "mock_token_" + Math.random().toString(36).substring(7);
+      return new Response(
+        JSON.stringify({
+          token: mockToken,
+          expires_at: new Date(Date.now() + 3600 * 1000).toISOString(),
+          order_id: "mock_order_123",
+          redirect_url: `${callbackRedirectUrl}?token=${mockToken}&oid=mock_order_123&ost=SUCCESS`,
+          signature: "mock_signature"
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const payload = {
       cart_data: {
         items: mappedItems

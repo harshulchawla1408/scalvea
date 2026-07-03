@@ -85,8 +85,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <Heart className={`h-3.5 w-3.5 transition-colors ${isFavorited ? "fill-current text-black" : ""}`} />
         </button>
 
-        {/* Sliding Add-to-Cart Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-500 cubic-bezier(0.16, 1, 0.3, 1) bg-gradient-to-t from-black/20 to-transparent">
+        {/* Sliding Add-to-Cart Overlay (Desktop only) */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-500 cubic-bezier(0.16, 1, 0.3, 1) bg-gradient-to-t from-black/20 to-transparent hidden lg:block">
           <button
             onClick={handleAddToCart}
             className="w-full bg-black text-white hover:bg-neutral-900 transition-colors text-[9px] tracking-[0.2em] uppercase h-10 flex items-center justify-center gap-2 font-medium shadow-md"
@@ -108,6 +108,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <p className="text-xs font-mono font-medium text-neutral-900 pt-0.5">
           {formatPrice(priceAud, priceInr, priceUsd)}
         </p>
+      </div>
+
+      {/* Mobile/Tablet Add-to-Cart Button */}
+      <div className="px-4 pb-4 block lg:hidden">
+        <button
+          onClick={handleAddToCart}
+          className="w-full bg-black text-white hover:bg-neutral-900 transition-colors text-[9px] tracking-[0.2em] uppercase h-9 flex items-center justify-center gap-2 font-medium shadow-sm"
+        >
+          <ShoppingBag className="h-3 w-3" />
+          Add to Bag
+        </button>
       </div>
     </Link>
   );

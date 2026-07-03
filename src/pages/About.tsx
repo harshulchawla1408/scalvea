@@ -141,7 +141,7 @@ const About = () => {
         </section>
 
         {/* 2. BRAND STORY SECTION */}
-        <section className="bg-white py-24 md:py-32 overflow-hidden relative">
+        <section className="bg-white py-16 md:py-24 lg:py-32 overflow-hidden relative">
           <div className="max-w-7xl mx-auto px-6 lg:px-16">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
               
@@ -193,7 +193,7 @@ const About = () => {
         </section>
 
         {/* 3. AUSTRALIA + INDIA GLOBAL PRESENCE SECTION */}
-        <section className="bg-black text-white py-24 md:py-32 relative overflow-hidden">
+        <section className="bg-black text-white py-16 md:py-24 lg:py-32 relative overflow-hidden">
           {/* Subtle world map ambient layout */}
           <div className="absolute inset-0 bg-neutral-950/40" />
           <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full bg-amber-500/[0.015] blur-[150px] pointer-events-none" />
@@ -226,10 +226,10 @@ const About = () => {
               </div>
 
               {/* Asymmetric Map Visual Frame */}
-              <div className="lg:col-span-7 relative h-[380px] md:h-[450px] border border-neutral-800 bg-neutral-900/20 backdrop-blur-md flex flex-col justify-between p-8 md:p-12 overflow-hidden shadow-2xl">
+              <div className="lg:col-span-7 relative h-[380px] md:h-[450px] border border-neutral-800 bg-neutral-900/20 backdrop-blur-md flex flex-col justify-between p-6 sm:p-8 md:p-12 overflow-hidden shadow-2xl">
                 
                 {/* Visual coordinate graphics */}
-                <div className="absolute top-6 right-6 font-mono text-[9px] text-neutral-600 space-y-1 select-none">
+                <div className="absolute top-4 right-4 sm:top-6 sm:right-6 font-mono text-[8px] sm:text-[9px] text-neutral-600 space-y-1 select-none">
                   <p>LAT: -37.8136° S (MEL)</p>
                   <p>LAT: 19.0760° N (BOM)</p>
                 </div>
@@ -270,7 +270,7 @@ const About = () => {
         </section>
 
         {/* 4. SCIENTIFIC PHILOSOPHY SECTION */}
-        <section className="bg-[#fafafa] py-24 md:py-32 overflow-hidden relative">
+        <section className="bg-[#fafafa] py-16 md:py-24 lg:py-32 overflow-hidden relative">
           <div className="max-w-7xl mx-auto px-6 lg:px-16">
             <div className="text-center max-w-xl mx-auto mb-20">
               <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-light block mb-3">
@@ -348,7 +348,8 @@ const About = () => {
         </section>
 
         {/* 5. MANUFACTURING & QUALITY SECTION */}
-        <section className="bg-white py-24 md:py-32 overflow-hidden border-t border-neutral-100">
+        {/* 5. QUALITY METRICS SECTION */}
+        <section className="bg-white py-16 md:py-24 lg:py-32 overflow-hidden border-t border-neutral-100">
           <div className="max-w-7xl mx-auto px-6 lg:px-16">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
               
@@ -409,7 +410,7 @@ const About = () => {
         </section>
 
         {/* 6. REAL PEOPLE / COMMUNITY SECTION */}
-        <section className="bg-[#fafafa] py-24 md:py-32 overflow-hidden border-y border-neutral-100">
+        <section className="bg-[#fafafa] py-16 md:py-24 lg:py-32 overflow-hidden border-y border-neutral-100">
           <div className="max-w-7xl mx-auto px-6 lg:px-16">
             <div className="text-center max-w-xl mx-auto mb-20">
               <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-light block mb-3">
@@ -486,7 +487,7 @@ const About = () => {
         </section>
 
         {/* 8. FINAL MANIFESTO SECTION */}
-        <section className="bg-black text-white py-28 md:py-36 relative overflow-hidden text-center">
+        <section className="bg-black text-white py-20 md:py-28 lg:py-36 relative overflow-hidden text-center">
           {/* Subtle glowing light streak */}
           <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-neutral-950 to-transparent pointer-events-none" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] rounded-full bg-amber-500/[0.015] blur-[120px] pointer-events-none" />

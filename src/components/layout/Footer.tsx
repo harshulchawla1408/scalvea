@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getStoreSettings, StoreSettings, DEFAULT_SETTINGS } from "@/utils/settingsService";
 
 const FooterLogo = () => {
   const [isHovered, setIsHovered] = useState(false);
@@ -59,16 +60,21 @@ const FooterLogo = () => {
 };
 
 const Footer = () => {
+  const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    getStoreSettings().then(setSettings);
+  }, []);
   return (
     <footer className="bg-black text-white pt-24 pb-12 overflow-hidden relative border-t border-neutral-900 z-20">
       {/* Global Grain/Noise Overlay */}
       <div className="absolute inset-0 noise-bg pointer-events-none opacity-[0.015]" />
       
       <div className="max-w-7xl mx-auto px-6 lg:px-16 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8 pb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 lg:gap-8 pb-16">
           
           {/* Brand Logo & Info */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 flex flex-col items-center md:items-start text-center md:text-left">
             <FooterLogo />
             <p className="text-xs text-neutral-400 font-light leading-relaxed max-w-xs">
               Premium hair growth solutions backed by clinical research. High concentrations of Redensyl, Baicapil, Procapil, and Anagain.
@@ -81,9 +87,9 @@ const Footer = () => {
           </div>
 
           {/* Shop */}
-          <div>
+          <div className="flex flex-col items-center md:items-start text-center md:text-left">
             <h4 className="text-[10px] tracking-[0.2em] uppercase font-semibold text-neutral-300 mb-5">Shop</h4>
-            <ul className="space-y-3 text-xs text-neutral-400 font-light">
+            <ul className="space-y-3 text-xs text-neutral-400 font-light flex flex-col items-center md:items-start">
               <li><Link to="/shop" className="hover:text-white transition-colors relative group block w-fit">
                 All Products
                 <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all group-hover:w-full" />
@@ -100,9 +106,9 @@ const Footer = () => {
           </div>
 
           {/* Help */}
-          <div>
+          <div className="flex flex-col items-center md:items-start text-center md:text-left">
             <h4 className="text-[10px] tracking-[0.2em] uppercase font-semibold text-neutral-300 mb-5">Help</h4>
-            <ul className="space-y-3 text-xs text-neutral-400 font-light">
+            <ul className="space-y-3 text-xs text-neutral-400 font-light flex flex-col items-center md:items-start">
               <li><Link to="/support" className="hover:text-white transition-colors relative group block w-fit">
                 Support Center
                 <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all group-hover:w-full" />
@@ -118,11 +124,33 @@ const Footer = () => {
             </ul>
           </div>
 
+          {/* Contact / Locations */}
+          <div className="flex flex-col items-center md:items-start text-center md:text-left">
+            <h4 className="text-[10px] tracking-[0.2em] uppercase font-semibold text-neutral-300 mb-5">Locations</h4>
+            <div className="space-y-4 text-xs text-neutral-400 font-light flex flex-col items-center md:items-start">
+              <div>
+                <p className="text-neutral-300 font-medium tracking-wider text-[10px] uppercase">Australia Office</p>
+                <p className="text-[10px] leading-relaxed text-neutral-400">{settings.au_business_name}</p>
+                <p className="text-[10px] leading-relaxed text-neutral-500">Craigieburn, VIC 3064</p>
+              </div>
+              <div>
+                <p className="text-neutral-300 font-medium tracking-wider text-[10px] uppercase">India Operations</p>
+                <p className="text-[10px] leading-relaxed text-neutral-500">Patiala, Punjab</p>
+              </div>
+              <div className="pt-1">
+                <p className="text-neutral-300 font-medium tracking-wider text-[10px] uppercase">Email</p>
+                <a href={`mailto:${settings.in_email}`} className="hover:text-white transition-colors text-[10px] break-all">
+                  {settings.in_email}
+                </a>
+              </div>
+            </div>
+          </div>
+
           {/* Mini newsletter */}
-          <div>
+          <div className="flex flex-col items-center md:items-start text-center md:text-left">
             <h4 className="text-[10px] tracking-[0.2em] uppercase font-semibold text-neutral-300 mb-5">Newsletter</h4>
             <p className="text-[10px] text-neutral-400 font-light mb-4">Sign up for exclusive notifications.</p>
-            <form onSubmit={(e) => e.preventDefault()} className="flex">
+            <form onSubmit={(e) => e.preventDefault()} className="flex w-full max-w-sm">
               <input 
                 type="email" 
                 placeholder="Email" 
@@ -139,9 +167,12 @@ const Footer = () => {
           <span className="text-[9px] tracking-[0.2em] text-neutral-500 uppercase">
             © 2026 SCALVEA. NOTHING TO HIDE.
           </span>
-          <div className="flex gap-4 text-[9px] tracking-[0.15em] text-neutral-500 uppercase">
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-[9px] tracking-[0.15em] text-neutral-500 uppercase justify-center sm:justify-end">
             <Link to="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link to="/terms-of-service" className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link to="/shipping-policy" className="hover:text-white transition-colors">Shipping Policy</Link>
+            <Link to="/returns-policy" className="hover:text-white transition-colors">Returns & Refunds</Link>
+            <Link to="/cancellation-policy" className="hover:text-white transition-colors">Cancellation Policy</Link>
           </div>
         </div>
       </div>

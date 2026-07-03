@@ -215,9 +215,9 @@ serve(async (req) => {
     const apiKey = Deno.env.get("SHIPROCKET_API_KEY");
     const secretKey = Deno.env.get("SHIPROCKET_SECRET_KEY");
 
-    if (!apiKey || !secretKey || apiKey === "mock_key" || secretKey === "mock_secret") {
+    if (!apiKey || !secretKey) {
       return new Response(
-        JSON.stringify({ error: "Missing or invalid Shiprocket credentials" }),
+        JSON.stringify({ error: "Missing Shiprocket credentials" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -244,32 +244,67 @@ serve(async (req) => {
       console.log(`Mapping not found for orderId: ${orderId}. Attempting self-healing order creation.`);
 
       const shiprocketOrderId = String(orderId);
-      const detailPayload = {
-        order_id: shiprocketOrderId,
-        timestamp: new Date().toISOString()
-      };
-      const sig = await generateHmacSha256(secretKey, JSON.stringify(detailPayload));
+      const isMock = apiKey === "mock_key" || secretKey === "mock_secret";
+      let orderDetails: any = null;
 
-      const res = await fetch("https://checkout-api.shiprocket.com/api/v1/custom-platform-order/details", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "x-signature": sig,
-          "X-Api-HMAC-SHA256": sig
-        },
-        body: JSON.stringify(detailPayload)
-      });
+      if (isMock) {
+        console.log("Mock keys active. Creating mock orderDetails for self-healing.");
+        orderDetails = {
+          order_id: shiprocketOrderId,
+          status: "completed",
+          amount: 749,
+          payment_method: "cod",
+          tax_amount: 0,
+          shipping_amount: 50,
+          discount_amount: 0,
+          shipping_address: {
+            first_name: "Mock",
+            last_name: "Customer",
+            address_line1: "123 Mock Street",
+            address_line2: "",
+            city: "Mumbai",
+            state: "Maharashtra",
+            postcode: "400001",
+            phone: "9999999999",
+            email: "mockcustomer@example.com"
+          },
+          items: [
+            {
+              variant_id: "default",
+              quantity: 1,
+              price: 749,
+              name: "Follicle 8 Hair Growth Serum"
+            }
+          ]
+        };
+      } else {
+        const detailPayload = {
+          order_id: shiprocketOrderId,
+          timestamp: new Date().toISOString()
+        };
+        const sig = await generateHmacSha256(secretKey, JSON.stringify(detailPayload));
 
-      if (!res.ok) {
-        console.error("Failed to fetch order details from Shiprocket during self-healing:", await res.text());
-        return new Response(
-          JSON.stringify({ error: `No Shiprocket mapping found and failed to fetch details from Shiprocket (Status: ${res.status})` }),
-          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        const res = await fetch("https://checkout-api.shiprocket.com/api/v1/custom-platform-order/details", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+            "x-signature": sig,
+            "X-Api-HMAC-SHA256": sig
+          },
+          body: JSON.stringify(detailPayload)
+        });
+
+        if (!res.ok) {
+          console.error("Failed to fetch order details from Shiprocket during self-healing:", await res.text());
+          return new Response(
+            JSON.stringify({ error: `No Shiprocket mapping found and failed to fetch details from Shiprocket (Status: ${res.status})` }),
+            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        orderDetails = await res.json();
       }
-
-      const orderDetails = await res.json();
 
       // Double check if mapping was created by webhook in the meantime
       const { data: doubleCheckMap } = await supabase
@@ -287,7 +322,7 @@ serve(async (req) => {
           const { data: pEmail } = await supabase
             .from("profiles")
             .select("id")
-            .eq("email", orderDetails.shipping_address.email)
+            .ilike("email", orderDetails.shipping_address.email.trim())
             .maybeSingle();
           if (pEmail) userId = pEmail.id;
         }
@@ -436,31 +471,59 @@ serve(async (req) => {
     }
 
     const shiprocketOrderId = mapping.shiprocket_order_id;
-    const detailPayload = {
-      order_id: String(shiprocketOrderId),
-      timestamp: new Date().toISOString()
-    };
-    const sig = await generateHmacSha256(secretKey, JSON.stringify(detailPayload));
+    const isMock = apiKey === "mock_key" || secretKey === "mock_secret";
+    let orderDetails: any = null;
 
-    const res = await fetch("https://checkout-api.shiprocket.com/api/v1/custom-platform-order/details", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "x-signature": sig,
-        "X-Api-HMAC-SHA256": sig
-      },
-      body: JSON.stringify(detailPayload)
-    });
+    if (isMock) {
+      console.log("Mock keys active. Generating mock order details for mapped retrieval.");
+      orderDetails = {
+        order_id: String(shiprocketOrderId),
+        status: "completed",
+        amount: 749,
+        payment_method: "cod",
+        tax_amount: 0,
+        shipping_amount: 50,
+        discount_amount: 0,
+        shipping_address: {
+          first_name: "Mock",
+          last_name: "Customer",
+          address_line1: "123 Mock Street",
+          address_line2: "",
+          city: "Mumbai",
+          state: "Maharashtra",
+          postcode: "400001",
+          phone: "9999999999",
+          email: "mockcustomer@example.com"
+        },
+        items: []
+      };
+    } else {
+      const detailPayload = {
+        order_id: String(shiprocketOrderId),
+        timestamp: new Date().toISOString()
+      };
+      const sig = await generateHmacSha256(secretKey, JSON.stringify(detailPayload));
 
-    if (!res.ok) {
-      return new Response(
-        JSON.stringify({ error: "Failed to fetch order details from Shiprocket" }),
-        { status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      const res = await fetch("https://checkout-api.shiprocket.com/api/v1/custom-platform-order/details", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "x-signature": sig,
+          "X-Api-HMAC-SHA256": sig
+        },
+        body: JSON.stringify(detailPayload)
+      });
+
+      if (!res.ok) {
+        return new Response(
+          JSON.stringify({ error: "Failed to fetch order details from Shiprocket" }),
+          { status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      orderDetails = await res.json();
     }
-
-    const orderDetails = await res.json();
 
     let localStatus = "processing";
     if (orderDetails.status === "shipped") localStatus = "shipped";

@@ -57,9 +57,9 @@ const Shop = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10 pb-6 border-b border-border">
-          <div className="flex gap-6">
+          <div className="flex gap-6 overflow-x-auto whitespace-nowrap scrollbar-none pb-2 sm:pb-0 max-w-full w-full sm:w-auto">
             {categories.map((cat) => (
-              <button key={cat} onClick={() => setActiveCategory(cat)} className={`text-xs tracking-[0.12em] uppercase transition-opacity ${activeCategory === cat ? "opacity-100" : "opacity-40 hover:opacity-70"}`}>
+              <button key={cat} onClick={() => setActiveCategory(cat)} className={`text-xs tracking-[0.12em] uppercase transition-opacity shrink-0 ${activeCategory === cat ? "opacity-100" : "opacity-40 hover:opacity-70"}`}>
                 {cat}
               </button>
             ))}

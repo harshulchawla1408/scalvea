@@ -113,7 +113,7 @@ async function sendOrderEmails(supabase: any, order: any, orderItems: any[]) {
   }
 }
 
-async function generateHmacSha256(secret: string, data: string): Promise<string> {
+async function generateHmacSha256(secret: string, data: string, encoding: "base64" | "hex" = "base64"): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
@@ -127,6 +127,9 @@ async function generateHmacSha256(secret: string, data: string): Promise<string>
     new TextEncoder().encode(data)
   );
   const u8 = new Uint8Array(signatureBuffer);
+  if (encoding === "hex") {
+    return Array.from(u8).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
   let binary = "";
   for (let i = 0; i < u8.length; i++) {
     binary += String.fromCharCode(u8[i]);
@@ -209,22 +212,40 @@ serve(async (req) => {
     const apiKey = Deno.env.get("SHIPROCKET_API_KEY");
     const secretKey = Deno.env.get("SHIPROCKET_SECRET_KEY");
 
-    if (!apiKey || !secretKey || apiKey === "mock_key" || secretKey === "mock_secret") {
-      console.error("Missing or invalid Shiprocket credentials");
+    if (!apiKey || !secretKey) {
+      console.error("Missing Shiprocket credentials");
       return new Response(
-        JSON.stringify({ error: "Missing or invalid Shiprocket credentials" }),
+        JSON.stringify({ error: "Missing Shiprocket credentials" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Webhook Signature Verification
+    console.log("Incoming Shiprocket webhook body length:", rawBody.length);
+
+    // Webhook Signature Verification with mock/dev support
+    const isMock = apiKey === "mock_key" || secretKey === "mock_secret";
     const signatureHeader = req.headers.get("x-signature") || 
                             req.headers.get("x-signature-sha256") || 
-                            req.headers.get("x-signature-hmac") || "";
-    const computedSignature = await generateHmacSha256(secretKey, rawBody);
+                            req.headers.get("x-signature-hmac") || 
+                            req.headers.get("x-api-hmac-sha256") || "";
+    
+    let signatureVerified = false;
+    if (isMock) {
+      console.log("Mock keys active. Bypassing signature verification.");
+      signatureVerified = true;
+    } else {
+      const computedSignatureBase64 = await generateHmacSha256(secretKey, rawBody, "base64");
+      const computedSignatureHex = await generateHmacSha256(secretKey, rawBody, "hex");
+      
+      if (signatureHeader === computedSignatureBase64 || 
+          signatureHeader.toLowerCase() === computedSignatureHex.toLowerCase()) {
+        signatureVerified = true;
+        console.log("Signature verified successfully.");
+      }
+    }
 
-    if (signatureHeader !== computedSignature) {
-      console.error("Signature verification failed. Expected:", computedSignature, "Got:", signatureHeader);
+    if (!signatureVerified) {
+      console.error("Signature verification failed. Got header:", signatureHeader);
       return new Response(
         JSON.stringify({ error: "Invalid webhook signature" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -291,27 +312,31 @@ serve(async (req) => {
     let orderDetails: any = null;
 
     try {
-      const detailPayload = {
-        order_id: String(shiprocketOrderId),
-        timestamp: new Date().toISOString()
-      };
-      const sig = await generateHmacSha256(secretKey, JSON.stringify(detailPayload));
-
-      const res = await fetch("https://checkout-api.shiprocket.com/api/v1/custom-platform-order/details", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "x-signature": sig,
-          "X-Api-HMAC-SHA256": sig
-        },
-        body: JSON.stringify(detailPayload)
-      });
-
-      if (res.ok) {
-        orderDetails = await res.json();
+      if (isMock) {
+        console.log("Mock mode active. Bypassing custom order details fetch from Shiprocket.");
       } else {
-        console.error("Failed to fetch order details from Shiprocket. Using webhook payload fallbacks.");
+        const detailPayload = {
+          order_id: String(shiprocketOrderId),
+          timestamp: new Date().toISOString()
+        };
+        const sig = await generateHmacSha256(secretKey, JSON.stringify(detailPayload));
+
+        const res = await fetch("https://checkout-api.shiprocket.com/api/v1/custom-platform-order/details", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+            "x-signature": sig,
+            "X-Api-HMAC-SHA256": sig
+          },
+          body: JSON.stringify(detailPayload)
+        });
+
+        if (res.ok) {
+          orderDetails = await res.json();
+        } else {
+          console.error("Failed to fetch order details from Shiprocket. Using webhook payload fallbacks.");
+        }
       }
     } catch (err) {
       console.error("Error calling Shiprocket Order Details API:", err);
@@ -364,13 +389,13 @@ serve(async (req) => {
       }
     }
 
-    // Lookup customer profile by email or phone
+    // Lookup customer profile by email or phone (case-insensitive search)
     let userId = null;
     if (orderDetails.shipping_address.email) {
       const { data: pEmail } = await supabase
         .from("profiles")
         .select("id")
-        .eq("email", orderDetails.shipping_address.email)
+        .ilike("email", orderDetails.shipping_address.email.trim())
         .maybeSingle();
       if (pEmail) userId = pEmail.id;
     }
@@ -405,6 +430,7 @@ serve(async (req) => {
     const totalPayable = Number(orderDetails.total_amount_payable || orderDetails.amount || 0);
 
     // Create the order record in public.orders
+    console.log("Inserting new Indian Order record into database. Payload:", JSON.stringify(orderDetails));
     const { data: newOrder, error: orderCreateError } = await supabase
       .from("orders")
       .insert({
@@ -440,8 +466,11 @@ serve(async (req) => {
       .single();
 
     if (orderCreateError) {
+      console.error("Failed to insert India order:", orderCreateError);
       throw orderCreateError;
     }
+
+    console.log(`India Order created successfully: ${newOrder.order_number}. Order ID: ${newOrder.id}`);
 
     // Save detailed payment transaction idempotently
     const { data: existingPayment } = await supabase
@@ -488,6 +517,7 @@ serve(async (req) => {
       if (prod) {
         const prevQty = prod.inventory_quantity ?? 0;
         const newQty = Math.max(0, prevQty - item.quantity);
+        console.log(`Deducting India stock for product ${prod.id}. Prev Qty: ${prevQty}, New Qty: ${newQty}`);
 
         await supabase
           .from("products")

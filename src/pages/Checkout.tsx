@@ -428,6 +428,7 @@ const Checkout = () => {
                       <div className="flex-1">
                         <p className="text-xs font-medium">{item.name}</p>
                         <p className="text-xs text-muted-foreground mt-1 font-mono">{formatVal(item.price * item.quantity)}</p>
+                        <p className="text-[9px] text-emerald-600 dark:text-emerald-500 font-light mt-0.5 tracking-wide">Inclusive of all taxes</p>
                       </div>
                     </div>
                   ))}
@@ -462,8 +463,28 @@ const Checkout = () => {
                     <div className="flex justify-between text-xs text-green-600"><span>Discount ({appliedCoupon.discount_percentage}%)</span><span className="font-mono">-{formatVal(discountAmount)}</span></div>
                   )}
                   {taxAmount > 0 && <div className="flex justify-between text-xs"><span className="text-muted-foreground font-light">Tax ({settings?.tax_percentage}%)</span><span className="font-mono">{formatVal(taxAmount)}</span></div>}
-                  <div className="flex justify-between text-xs"><span className="text-muted-foreground font-light">Shipping Charge</span><span className="font-mono">{shippingAmount === 0 ? "Free Shipping" : formatVal(shippingAmount)}</span></div>
-                  <div className="border-t border-border pt-3 flex justify-between text-sm font-medium"><span>Total Due</span><span className="font-mono">{formatVal(grandTotal)}</span></div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground font-light">Shipping Charge</span>
+                    <span className="font-mono">
+                      {shippingAmount === 0 ? (
+                        "Free Shipping"
+                      ) : (
+                        <span>
+                          <span className="line-through text-muted-foreground/60 mr-1.5">
+                            {isIndia ? "₹100" : "A$10.00"}
+                          </span>
+                          <span className="font-medium text-foreground">{formatVal(shippingAmount)}</span>
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div className="border-t border-border pt-3 flex justify-between text-sm font-medium">
+                    <span>Total Due</span>
+                    <div className="text-right font-mono">
+                      <span className="block font-medium">{formatVal(grandTotal)}</span>
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5 font-sans">Inclusive of all taxes</span>
+                    </div>
+                  </div>
                 </div>
                 {settings && <p className="text-[10px] text-muted-foreground">Estimated Delivery Time: {settings.delivery_time}</p>}
               </div>

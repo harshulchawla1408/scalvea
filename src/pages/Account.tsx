@@ -186,11 +186,11 @@ ${addr.city || ""} ${addr.state || ""} ${addr.postcode || ""}<br>${addr.country 
 <table><tr><th>Item</th><th>Qty</th><th>Price</th></tr>
 <tr><td colspan="3" style="font-size:12px;color:#888">Order items — see order confirmation email for details</td></tr></table>
 <table><tr><td>Subtotal</td><td class="total">${order.currency === "INR" ? "₹" : "$"}${Number(order.subtotal).toFixed(2)}</td></tr>
-<tr><td>Tax</td><td>${order.currency === "INR" ? "₹" : "$"}${Number(order.tax_amount).toFixed(2)}</td></tr>
+${Number(order.tax_amount) > 0 ? `<tr><td>Tax</td><td>${order.currency === "INR" ? "₹" : "$"}${Number(order.tax_amount).toFixed(2)}</td></tr>` : ""}
 <tr><td>Shipping</td><td>${order.currency === "INR" ? "₹" : "$"}${Number(order.shipping_amount).toFixed(2)}</td></tr>
 ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "INR" ? "₹" : "$"}${Number(order.discount_amount).toFixed(2)}</td></tr>` : ""}
 <tr><td><strong>Total</strong></td><td class="total">${order.currency === "INR" ? "₹" : "$"}${Number(order.total_amount).toFixed(2)} ${order.currency}</td></tr></table>
-<p style="font-size:11px;color:#888;margin-top:30px;text-align:center">SCALVEA · 263 Heaths Rd, Werribee VIC 3030, Australia · scalvea.com</p>
+<p style="font-size:11px;color:#888;margin-top:30px;text-align:center">SCALVEA GROUPS PTY LTD · ABN: 99 696 417 679 · 17 Travers St, Craigieburn VIC 3064, Australia · scalvea.com</p>
 </body></html>`;
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
@@ -319,7 +319,7 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
           </div>
 
           <Tabs defaultValue="orders" className="space-y-8">
-            <TabsList className="bg-transparent border-b border-border w-full justify-start rounded-none h-auto p-0 gap-0">
+            <TabsList className="bg-transparent border-b border-border w-full justify-start rounded-none h-auto p-0 gap-0 overflow-x-auto flex flex-nowrap whitespace-nowrap scrollbar-none">
               {[
                 { value: "orders", label: "Orders", icon: Package },
                 { value: "addresses", label: "Addresses", icon: MapPin },
@@ -328,7 +328,7 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
                 { value: "country", label: "Country", icon: Globe },
               ].map(({ value, label, icon: Icon }) => (
                 <TabsTrigger key={value} value={value}
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs tracking-[0.1em] uppercase px-4 py-3">
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs tracking-[0.1em] uppercase px-4 py-3 shrink-0">
                   <Icon className="h-3.5 w-3.5 mr-1.5" /> {label}
                 </TabsTrigger>
               ))}
@@ -396,10 +396,12 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
                             <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Subtotal</p>
                             <p>{order.currency === "INR" ? "₹" : "$"}{Number(order.subtotal).toFixed(2)}</p>
                           </div>
-                          <div>
-                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Tax</p>
-                            <p>{order.currency === "INR" ? "₹" : "$"}{Number(order.tax_amount).toFixed(2)}</p>
-                          </div>
+                          {Number(order.tax_amount) > 0 && (
+                            <div>
+                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Tax</p>
+                              <p>{order.currency === "INR" ? "₹" : "$"}{Number(order.tax_amount).toFixed(2)}</p>
+                            </div>
+                          )}
                           <div>
                             <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping</p>
                             <p>{order.currency === "INR" ? "₹" : "$"}{Number(order.shipping_amount).toFixed(2)}</p>

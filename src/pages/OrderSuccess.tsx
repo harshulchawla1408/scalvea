@@ -177,7 +177,10 @@ const OrderSuccess = () => {
                       <span>
                         {item.product_name} <span className="text-muted-foreground font-normal ml-1">× {item.quantity}</span>
                       </span>
-                      <span className="font-mono font-medium">{formatVal(item.price * item.quantity)}</span>
+                      <div className="text-right">
+                        <span className="font-mono font-medium block">{formatVal(item.price * item.quantity)}</span>
+                        <span className="text-[9px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5">Inclusive of all taxes</span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -213,15 +216,26 @@ const OrderSuccess = () => {
                   </div>
                 )}
 
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground font-light">GST (10% Included)</span>
-                  <span className="font-mono font-light">{formatVal(order.gst || order.tax_amount)}</span>
-                </div>
+                {Number(order.gst || order.tax_amount) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground font-light">GST (10% Included)</span>
+                    <span className="font-mono font-light">{formatVal(order.gst || order.tax_amount)}</span>
+                  </div>
+                )}
 
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-light">Shipping Cost</span>
                   <span className="font-mono font-light">
-                    {Number(order.shipping_cost || order.shipping_amount) === 0 ? "Free Shipping" : formatVal(order.shipping_cost || order.shipping_amount)}
+                    {Number(order.shipping_cost || order.shipping_amount) === 0 ? (
+                      "Free Shipping"
+                    ) : (
+                      <span>
+                        <span className="line-through text-muted-foreground/60 mr-1.5">
+                          {order.currency === "INR" ? "₹100" : "A$10.00"}
+                        </span>
+                        <span>{formatVal(Number(order.shipping_cost || order.shipping_amount))}</span>
+                      </span>
+                    )}
                   </span>
                 </div>
 
@@ -229,7 +243,10 @@ const OrderSuccess = () => {
                   <span className="uppercase tracking-[0.05em] flex items-center gap-1.5">
                     <CreditCard className="h-3.5 w-3.5" /> Total Paid
                   </span>
-                  <span className="font-mono text-base">{formatVal(order.total || order.total_amount)}</span>
+                  <div className="text-right">
+                    <span className="font-mono text-base block">{formatVal(order.total || order.total_amount)}</span>
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5 font-sans">Inclusive of all taxes</span>
+                  </div>
                 </div>
               </div>
 

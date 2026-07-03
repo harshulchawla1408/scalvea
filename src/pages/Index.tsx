@@ -265,7 +265,7 @@ const Index = () => {
             </p>
 
             {/* Heading Editorial */}
-            <h2 className="text-[52px] md:text-[72px] lg:text-[88px] leading-[0.9] text-white editorial-heading flex flex-col">
+            <h2 className="text-[38px] sm:text-[48px] md:text-[72px] lg:text-[88px] leading-[0.9] text-white editorial-heading flex flex-col">
               <span className="opacity-0 animate-fade-up-soft" style={{ animationDelay: "0.9s" }}>Nothing</span>
               <span className="opacity-0 animate-fade-up-soft mt-1" style={{ animationDelay: "1.2s" }}>To</span>
               <span className="opacity-0 animate-blur-to-clear italic text-amber-50/90 font-light mt-1" style={{ animationDelay: "1.5s" }}>Hide</span>
@@ -281,12 +281,12 @@ const Index = () => {
 
             {/* Staggered buttons with slide-reveal hovers */}
             <div 
-              className="flex gap-4 pt-4 opacity-0 animate-scale-up-soft" 
+              className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 opacity-0 animate-scale-up-soft w-full sm:w-auto" 
               style={{ animationDelay: "2.4s" }}
             >
               <Link 
                 to="/shop" 
-                className="group relative overflow-hidden h-11 px-8 flex items-center justify-center text-[10px] tracking-[0.2em] uppercase font-medium bg-white text-black border border-white hover:text-white transition-all duration-500 hover:-translate-y-0.5 transform shadow-lg"
+                className="group relative overflow-hidden h-11 px-8 flex items-center justify-center text-[10px] tracking-[0.2em] uppercase font-medium bg-white text-black border border-white hover:text-white transition-all duration-500 hover:-translate-y-0.5 transform shadow-lg w-full sm:w-auto"
               >
                 <span className="absolute inset-0 w-0 bg-black transition-all duration-500 ease-out group-hover:w-full" />
                 <span className="relative z-10">Shop Now</span>
@@ -294,7 +294,7 @@ const Index = () => {
               
               <Link 
                 to="/about" 
-                className="group relative overflow-hidden h-11 px-8 flex items-center justify-center text-[10px] tracking-[0.2em] uppercase font-light text-white border border-white/30 hover:border-white transition-all duration-500 hover:-translate-y-0.5 transform bg-white/5 backdrop-blur-sm"
+                className="group relative overflow-hidden h-11 px-8 flex items-center justify-center text-[10px] tracking-[0.2em] uppercase font-light text-white border border-white/30 hover:border-white transition-all duration-500 hover:-translate-y-0.5 transform bg-white/5 backdrop-blur-sm w-full sm:w-auto"
               >
                 <span className="absolute inset-0 w-0 bg-white/10 transition-all duration-500 ease-out group-hover:w-full" />
                 <span className="relative z-10">Our Story</span>
@@ -308,14 +308,14 @@ const Index = () => {
       {/* Trust bar */}
       <section className="border-b border-border relative z-20 bg-background py-6">
         <div className="max-w-7xl mx-auto px-6 lg:px-16">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-0 divide-x divide-border">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4 md:gap-0 md:divide-x divide-border">
             {[
               { icon: Truck, label: "Free Shipping", sub: "On regional orders" },
               { icon: Shield, label: "Clinically Proven", sub: "4 key active ingredients" },
               { icon: Leaf, label: "Clean Formulation", sub: "Transparent dosing" },
               { icon: Check, label: "Made in Australia", sub: "Lab certified results" },
             ].map((item, idx) => (
-              <div key={idx} className="flex items-center gap-3 px-6">
+              <div key={idx} className="flex items-center gap-3 px-2 sm:px-6">
                 <item.icon className="h-4 w-4 text-neutral-400 flex-shrink-0" />
                 <div>
                   <p className="text-[9px] tracking-[0.1em] uppercase font-medium text-neutral-800">{item.label}</p>
@@ -328,7 +328,7 @@ const Index = () => {
       </section>
 
       {/* 2. BEST SELLERS / PRODUCTS SECTION */}
-      <section className="bg-white py-24 md:py-32 overflow-hidden relative z-20">
+      <section className="bg-white py-16 md:py-24 lg:py-32 overflow-hidden relative z-20">
         <div className="max-w-7xl mx-auto px-6 lg:px-16">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
             <div>
@@ -371,7 +371,7 @@ const Index = () => {
       </section>
 
       {/* 3. PHILOSOPHY SECTION */}
-      <section className="bg-[#fafafa] py-24 md:py-32 overflow-hidden border-t border-border/30 relative">
+      <section className="bg-[#fafafa] py-16 md:py-24 lg:py-32 overflow-hidden border-t border-border/30 relative">
         <div className="max-w-7xl mx-auto px-6 lg:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             {/* Image Container (Left side) */}
@@ -462,7 +462,7 @@ const Index = () => {
       </section>
 
       {/* 4. INGREDIENTS / SCIENCE SECTION */}
-      <section className="relative py-24 md:py-32 overflow-hidden bg-white border-y border-border/30">
+      <section className="relative py-16 md:py-24 lg:py-32 overflow-hidden bg-white border-y border-border/30">
         {/* Faded Scientific Background Image */}
         <div className="absolute inset-0 z-0 opacity-15 select-none pointer-events-none">
           <img
@@ -486,7 +486,7 @@ const Index = () => {
           <motion.div
             onViewportEnter={() => setScienceInView(true)}
             viewport={{ once: true, amount: 0.2 }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 max-w-5xl mx-auto"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 md:gap-12 max-w-5xl mx-auto"
           >
             {[
               { name: "Redensyl", pct: 3, desc: "Targets hair follicle stem cells to reactivate growth" },
@@ -500,7 +500,7 @@ const Index = () => {
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, delay: i * 0.15 }}
-                className="text-center flex flex-col items-center p-6 border border-neutral-100 bg-white/60 backdrop-blur-sm shadow-sm"
+                className="text-center flex flex-col items-center p-3 sm:p-6 border border-neutral-100 bg-white/60 backdrop-blur-sm shadow-sm"
               >
                 <div className="text-4xl md:text-5xl font-light text-neutral-900 mb-3 flex items-baseline">
                   {scienceInView ? <CountUp value={ingredient.pct} /> : "0"}
@@ -519,7 +519,7 @@ const Index = () => {
       </section>
 
       {/* 5. TESTIMONIAL MARQUEE SECTION */}
-      <section className="bg-black text-white py-24 md:py-32 overflow-hidden relative">
+      <section className="bg-black text-white py-16 md:py-24 lg:py-32 overflow-hidden relative">
         <div className="absolute inset-0 noise-bg opacity-[0.02] pointer-events-none" />
         
         <div className="max-w-7xl mx-auto px-6 lg:px-16 mb-16">
@@ -570,7 +570,7 @@ const Index = () => {
       </section>
 
       {/* 6. HOW TO USE TIMELINE */}
-      <section className="bg-white py-24 md:py-32 overflow-hidden relative">
+      <section className="bg-white py-16 md:py-24 lg:py-32 overflow-hidden relative">
         <div className="max-w-7xl mx-auto px-6 lg:px-16">
           <div className="text-center max-w-xl mx-auto mb-20">
             <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-light block mb-3">
@@ -630,7 +630,7 @@ const Index = () => {
       </section>
 
       {/* 7. LIFESTYLE / CTA SECTION */}
-      <section className="bg-[#fafafa] py-24 md:py-32 overflow-hidden border-t border-border/30 relative">
+      <section className="bg-[#fafafa] py-16 md:py-24 lg:py-32 overflow-hidden border-t border-border/30 relative">
         <div className="max-w-7xl mx-auto px-6 lg:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Text details (Left side) */}
@@ -683,7 +683,7 @@ const Index = () => {
       </section>
 
       {/* 8. NEWSLETTER SIGNUP SECTION */}
-      <section className="bg-white py-24 md:py-32 overflow-hidden relative">
+      <section className="bg-white py-16 md:py-24 lg:py-32 overflow-hidden relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#fafafa] to-transparent pointer-events-none" />
         
         <div className="relative z-10 max-w-lg mx-auto text-center px-6">

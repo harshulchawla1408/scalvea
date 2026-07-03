@@ -15,7 +15,15 @@ const Cart = () => {
   });
 
   const { items, removeItem, updateQuantity, total } = useCart();
-  const { currencySymbol, currencyCode, settings } = useCountry();
+  const { currencySymbol, currencyCode, settings, selectedCountry } = useCountry();
+
+  const isIndia = selectedCountry === "india";
+  const formatVal = (val: number) => {
+    if (isIndia) {
+      return `₹${Math.round(val).toLocaleString("en-IN")}`;
+    }
+    return `A$${val.toFixed(2)}`;
+  };
 
   const freeShippingThreshold = settings?.free_shipping_above || 75;
   const shipping = total >= freeShippingThreshold ? 0 : (settings?.shipping_charge || 9.95);
@@ -56,8 +64,14 @@ const Cart = () => {
                       <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="h-8 w-8 flex items-center justify-center"><Plus className="h-3 w-3" /></button>
                     </div>
                   </div>
-                  <p className="col-span-4 sm:col-span-2 text-sm text-right">{currencySymbol}{item.price.toFixed(2)}</p>
-                  <p className="col-span-4 sm:col-span-2 text-sm text-right">{currencySymbol}{(item.price * item.quantity).toFixed(2)}</p>
+                  <div className="col-span-4 sm:col-span-2 text-right">
+                    <p className="text-sm">{formatVal(item.price)}</p>
+                    <p className="text-[9px] text-emerald-600 dark:text-emerald-500 font-light mt-0.5 tracking-wide">Inclusive of all taxes</p>
+                  </div>
+                  <div className="col-span-4 sm:col-span-2 text-right">
+                    <p className="text-sm font-medium">{formatVal(item.price * item.quantity)}</p>
+                    <p className="text-[9px] text-emerald-600 dark:text-emerald-500 font-light mt-0.5 tracking-wide">Inclusive of all taxes</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -65,9 +79,32 @@ const Cart = () => {
             <div className="lg:sticky lg:top-32 lg:h-fit bg-secondary p-8 space-y-6">
               <h2 className="text-xs tracking-[0.15em] uppercase">Order Summary</h2>
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{currencySymbol}{total.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>{shipping === 0 ? "Free" : `${currencySymbol}${shipping.toFixed(2)}`}</span></div>
-                <div className="border-t border-border pt-3 flex justify-between font-normal"><span>Total</span><span>{currencySymbol}{(total + shipping).toFixed(2)} {currencyCode}</span></div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground font-light">Subtotal</span>
+                  <span className="font-mono">{formatVal(total)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground font-light">Shipping</span>
+                  <span className="font-mono">
+                    {shipping === 0 ? (
+                      "Free"
+                    ) : (
+                      <span>
+                        <span className="line-through text-muted-foreground/60 mr-1.5">
+                          {isIndia ? "₹100" : "A$10.00"}
+                        </span>
+                        <span className="font-medium text-foreground">{formatVal(shipping)}</span>
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="border-t border-border pt-3 flex justify-between font-normal">
+                  <span>Total</span>
+                  <div className="text-right font-mono">
+                    <span className="block font-medium">{formatVal(total + shipping)} {currencyCode}</span>
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5 font-sans">Inclusive of all taxes</span>
+                  </div>
+                </div>
               </div>
               <Button asChild className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase"><Link to="/checkout">Checkout</Link></Button>
               <Link to="/shop" className="block text-center text-xs tracking-[0.08em] uppercase text-muted-foreground hover:text-foreground transition-colors">Continue Shopping</Link>

@@ -238,7 +238,7 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="px-6 lg:px-12 py-8">
+      <main className="px-6 lg:px-12 py-8 pb-24 lg:pb-8">
         <nav className="mb-8 text-[10px] tracking-[0.1em] uppercase text-muted-foreground">
           <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
           <span className="mx-2">/</span>
@@ -274,7 +274,7 @@ const ProductDetail = () => {
               <p className="text-[10px] tracking-[0.15em] uppercase text-muted-foreground mb-2">{product.category}</p>
               <h1 className="text-2xl md:text-3xl font-light tracking-[0.02em] mb-3">{product.name}</h1>
               <div className="flex items-center gap-4 mb-1">
-                <p className="text-lg">{formatPrice(product.price_aud, product.price_inr, product.price_usd)}</p>
+                <p className="text-lg font-medium">{formatPrice(product.price_aud, product.price_inr, product.price_usd)}</p>
                 {reviews.length > 0 && (
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <Star className="h-3.5 w-3.5 fill-foreground text-foreground" />
@@ -283,6 +283,7 @@ const ProductDetail = () => {
                   </div>
                 )}
               </div>
+              <p className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light mt-0.5 tracking-wide">Inclusive of all taxes</p>
             </div>
 
             {/* Stock status */}
@@ -438,6 +439,20 @@ const ProductDetail = () => {
           </section>
         )}
       </main>
+
+      {/* Sticky Mobile Add to Cart Panel */}
+      {inStock && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border p-4 flex gap-4 lg:hidden shadow-lg animate-fade-in pb-safe">
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
+            <span className="text-[10px] tracking-wider text-muted-foreground uppercase truncate">{product.name}</span>
+            <span className="text-sm font-medium font-mono mt-0.5">{formatPrice(product.price_aud, product.price_inr, product.price_usd)}</span>
+          </div>
+          <Button onClick={handleAddToCart} className="h-11 bg-foreground text-background hover:bg-foreground/90 text-[10px] tracking-[0.15em] uppercase px-6 font-medium">
+            Add to Bag
+          </Button>
+        </div>
+      )}
+
       <Footer />
     </div>
   );

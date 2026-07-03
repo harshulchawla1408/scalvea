@@ -1,12 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { Truck, RefreshCw, Clock, ShieldCheck } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
+import { getStoreSettings, StoreSettings, DEFAULT_SETTINGS } from "@/utils/settingsService";
 
 const ShippingReturns = () => {
   const [activeTab, setActiveTab] = useState<"shipping" | "returns">("shipping");
+  const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    getStoreSettings().then(setSettings);
+  }, []);
 
   useSEO({
     title: "Shipping & Returns",
@@ -102,7 +108,7 @@ const ShippingReturns = () => {
                   <div>
                     <h2 className="text-foreground text-xs tracking-[0.12em] uppercase mb-3 font-semibold">Domestic Shipping (Australia)</h2>
                     <ul className="space-y-2 border-l border-border pl-4">
-                      <li><strong className="text-foreground">Standard Delivery:</strong> 3-7 business days — $9.95 AUD</li>
+                      <li><strong className="text-foreground">Standard Delivery:</strong> 3-7 business days — <span className="line-through text-muted-foreground/60 mr-1">$10.00 AUD</span> <strong className="font-semibold text-foreground">$7.50 AUD</strong></li>
                       <li><strong className="text-foreground">Express Delivery:</strong> 1-3 business days — $14.95 AUD</li>
                       <li>Free standard shipping applies automatically to all orders over $75 AUD.</li>
                     </ul>
@@ -111,6 +117,7 @@ const ShippingReturns = () => {
                   <div>
                     <h2 className="text-foreground text-xs tracking-[0.12em] uppercase mb-3 font-semibold">International Shipping & India</h2>
                     <ul className="space-y-2 border-l border-border pl-4">
+                      <li><strong className="text-foreground">Standard Delivery (India):</strong> 3-5 business days — <span className="line-through text-muted-foreground/60 mr-1">₹100</span> <strong className="font-semibold text-foreground">₹50</strong></li>
                       <li><strong className="text-foreground">Standard International:</strong> 7-14 business days — $19.95 AUD / Regional equivalent</li>
                       <li><strong className="text-foreground">Express International:</strong> 3-7 business days — $29.95 AUD</li>
                       <li>We ship directly to Australia, India, and the USA with local courier integrations.</li>
@@ -163,7 +170,7 @@ const ShippingReturns = () => {
                   <div>
                     <h2 className="text-foreground text-xs tracking-[0.12em] uppercase mb-3 font-semibold">How to Initiate a Return</h2>
                     <ul className="space-y-2 border-l border-border pl-4">
-                      <li>1. Contact our customer care team at <strong className="text-foreground">contact@scalvea.com</strong> or call us at <strong className="text-foreground">+61 460 309 333</strong>.</li>
+                      <li>1. Contact our customer care team at <strong className="text-foreground">{settings.in_email}</strong> or call us at <strong className="text-foreground">{settings.in_phone}</strong> (India Operations) or <strong className="text-foreground">{settings.au_phone}</strong> (Australia Office).</li>
                       <li>2. Provide your order number, purchase receipt, and reason for return.</li>
                       <li>3. If eligible, we will send you a pre-paid return shipping label and package drop-off instructions.</li>
                     </ul>

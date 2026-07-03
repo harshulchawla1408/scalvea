@@ -1,8 +1,16 @@
+import { useState, useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useSEO } from "@/hooks/useSEO";
+import { getStoreSettings, StoreSettings, DEFAULT_SETTINGS } from "@/utils/settingsService";
 
 const PrivacyPolicy = () => {
+  const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    getStoreSettings().then(setSettings);
+  }, []);
+
   useSEO({
     title: "Privacy Policy",
     description: "Learn how Scalvea collects, uses, and safeguards your personal data under global data protection standards.",
@@ -30,7 +38,7 @@ const PrivacyPolicy = () => {
           </div>
           <div>
             <h2 className="text-foreground text-xs tracking-[0.12em] uppercase mb-2">Contact</h2>
-            <p>For privacy inquiries, contact us at 263 Heaths Rd, Werribee VIC 3030, Australia or call +61 460 309 333.</p>
+            <p>For privacy inquiries, contact us at {settings.au_address} or call {settings.au_phone}.</p>
           </div>
         </div>
       </main>

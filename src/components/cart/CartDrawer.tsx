@@ -12,7 +12,15 @@ interface CartDrawerProps {
 
 const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
   const { items, removeItem, updateQuantity, total, itemCount } = useCart();
-  const { currencySymbol, currencyCode } = useCountry();
+  const { currencySymbol, currencyCode, selectedCountry } = useCountry();
+
+  const isIndia = selectedCountry === "india";
+  const formatVal = (val: number) => {
+    if (isIndia) {
+      return `₹${Math.round(val).toLocaleString("en-IN")}`;
+    }
+    return `A$${val.toFixed(2)}`;
+  };
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
@@ -34,7 +42,8 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                   <div className="w-20 h-20 bg-secondary flex-shrink-0"><img src={item.image} alt={item.name} className="w-full h-full object-cover" /></div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-normal truncate">{item.name}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{currencySymbol}{item.price.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{formatVal(item.price)}</p>
+                    <p className="text-[9px] text-emerald-600 dark:text-emerald-500 font-light mt-0.5 tracking-wide">Inclusive of all taxes</p>
                     <div className="flex items-center gap-3 mt-2">
                       <button onClick={() => updateQuantity(item.productId, item.quantity - 1)}><Minus className="h-3 w-3" /></button>
                       <span className="text-xs w-4 text-center">{item.quantity}</span>
@@ -48,7 +57,10 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
             <div className="border-t border-border pt-4 space-y-4">
               <div className="flex justify-between text-sm">
                 <span className="tracking-[0.08em] uppercase">Subtotal</span>
-                <span>{currencySymbol}{total.toFixed(2)} {currencyCode}</span>
+                <div className="text-right">
+                  <span className="block font-medium">{formatVal(total)} {currencyCode}</span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5">Inclusive of all taxes</span>
+                </div>
               </div>
               <p className="text-[10px] text-muted-foreground">Shipping & taxes calculated at checkout</p>
               <Button asChild className="w-full bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase h-12"><Link to="/checkout" onClick={onClose}>Checkout</Link></Button>

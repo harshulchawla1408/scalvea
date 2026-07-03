@@ -26,7 +26,7 @@ const faqs = [
     category: "Returns & Refunds",
     items: [
       { q: "What is your return policy?", a: "We accept returns within 30 days of delivery for unopened products in their original packaging. Please visit our Returns Policy page for full details." },
-      { q: "How do I initiate a return?", a: "Contact us at contact@scalvea.com with your order number and reason for return. Our team will provide return instructions within 24 hours." },
+      { q: "How do I initiate a return?", a: "Contact us at scalvea.operations@gmail.com with your order number and reason for return. Our team will provide return instructions within 24 hours." },
       { q: "When will I receive my refund?", a: "Refunds are processed within 5–7 business days after we receive and inspect the returned product. The refund will be credited to your original payment method." },
     ],
   },

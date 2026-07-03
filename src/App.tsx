@@ -25,6 +25,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ShippingPolicy from "./pages/ShippingPolicy";
 import ReturnsPolicy from "./pages/ReturnsPolicy";
+import CancellationPolicy from "./pages/CancellationPolicy";
 import ShippingReturns from "./pages/ShippingReturns";
 import FAQ from "./pages/FAQ";
 import NotFound from "./pages/NotFound";
@@ -60,6 +61,7 @@ const App = () => (
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/shipping-policy" element={<ShippingPolicy />} />
                 <Route path="/returns-policy" element={<ReturnsPolicy />} />
+                <Route path="/cancellation-policy" element={<CancellationPolicy />} />
                 <Route path="/shipping-returns" element={<ShippingReturns />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/faqs" element={<FAQ />} />

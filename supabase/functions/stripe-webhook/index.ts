@@ -134,12 +134,14 @@ serve(async (req) => {
     }
 
     const rawBody = await req.text();
+    console.log("Stripe Webhook raw body received, length:", rawBody.length);
     let event;
 
     // Verify webhook signature if secret is configured
     if (webhookSecret) {
       try {
         event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+        console.log("Stripe webhook signature verified successfully.");
       } catch (err: any) {
         console.error("Stripe signature verification failed:", err.message);
         return new Response(JSON.stringify({ error: `Signature verification failed: ${err.message}` }), { status: 400 });
@@ -168,6 +170,7 @@ serve(async (req) => {
       const stripePaymentIntentId = session.payment_intent || null;
 
       // 1. Prevent duplicate order creation by checking stripe_session_id
+      console.log(`Checking duplicate order for Stripe session ID: ${stripeSessionId}`);
       const { data: existingOrder } = await supabase
         .from("orders")
         .select("id, order_number")
@@ -175,10 +178,11 @@ serve(async (req) => {
         .maybeSingle();
 
       if (existingOrder) {
-        console.log(`Order already exists for session ${stripeSessionId}: Order ID ${existingOrder.id}`);
+        console.log(`Order already exists for session ${stripeSessionId}: Order ID ${existingOrder.id}. Skipping creation.`);
         
         // If payment intent was populated late, make sure it is updated
         if (stripePaymentIntentId) {
+          console.log(`Updating late payment intent ID ${stripePaymentIntentId} for Order ID ${existingOrder.id}`);
           await supabase
             .from("orders")
             .update({ stripe_payment_intent_id: stripePaymentIntentId, payment_status: "paid", order_status: "processing" })
@@ -267,6 +271,7 @@ serve(async (req) => {
         shipping_address: parsedShippingAddress,
       };
 
+      console.log("Inserting new Order record into database. Payload:", JSON.stringify(orderPayload));
       const { data: newOrder, error: orderError } = await supabase
         .from("orders")
         .insert(orderPayload as any)
@@ -274,10 +279,11 @@ serve(async (req) => {
         .single();
 
       if (orderError || !newOrder) {
+        console.error("Order insertion failed. Error:", orderError);
         throw new Error(`Failed to create order: ${orderError?.message}`);
       }
 
-      console.log(`Order created successfully: ${newOrder.order_number}`);
+      console.log(`Order created successfully: ${newOrder.order_number}. Order ID: ${newOrder.id}`);
 
       // 4. Create Order Items & Deduct Australia Stock
       const createdItems = [];
@@ -298,6 +304,7 @@ serve(async (req) => {
         };
 
         // Create Order Item
+        console.log("Creating Order Item:", JSON.stringify(orderItemPayload));
         await supabase
           .from("order_items")
           .insert(orderItemPayload as any);
@@ -307,6 +314,7 @@ serve(async (req) => {
         // Deduct inventory from Australia specific inventory column
         const prevQty = prod.inventory_quantity_australia ?? 0;
         const newQty = Math.max(0, prevQty - item.quantity);
+        console.log(`Deducting Australia stock for product ${prod.id}. Prev Qty: ${prevQty}, New Qty: ${newQty}`);
 
         await supabase
           .from("products")

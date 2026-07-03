@@ -137,21 +137,21 @@ serve(async (req) => {
 
     const subtotalAfterDiscountCents = subtotalCents - discountCents;
 
-    // 4. Calculate GST (10% on subtotal after discount)
-    const gstCents = Math.round(subtotalAfterDiscountCents * 0.10);
+    // 4. Calculate GST (0% as requested)
+    const gstCents = 0;
 
-    // 5. Calculate Shipping (standard: 9.95, express: 14.95, freeAbove: 80)
-    let shippingCents = 995; // default standard shipping
+    // 5. Calculate Shipping (standard: 7.50, express: 14.95, freeAbove: 100)
+    let shippingCents = 750; // standard shipping charge A$7.50
     if (shipping_type === "express") {
       shippingCents = 1495;
     } else {
       // standard shipping
-      if (subtotalAfterDiscountCents >= 8000) {
+      if (subtotalAfterDiscountCents >= 10000) { // Free shipping above A$100 (10000 cents)
         shippingCents = 0;
       }
     }
 
-    // Add GST as a custom line item
+    // Add GST as a custom line item (only if > 0)
     if (gstCents > 0) {
       stripeLineItems.push({
         price_data: {
@@ -165,8 +165,103 @@ serve(async (req) => {
       });
     }
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const origin = req.headers.get("origin") || "http://localhost:5173";
+    const isMock = stripeKey === "mock_key" || stripeKey === "mock_secret";
+
+    if (isMock) {
+      console.log("Mock Stripe key active. Immediately inserting order into database to simulate webhook.");
+      const mockSessionId = "cs_test_" + Math.random().toString(36).substring(7);
+
+      const discountAmount = discountCents / 100;
+      const gstAmount = gstCents / 100;
+      const shippingAmount = shippingCents / 100;
+      const totalAmount = (subtotalAfterDiscountCents + gstCents + shippingCents) / 100;
+      const subtotalVal = subtotalCents / 100;
+
+      // Insert Order record
+      const { data: newOrder, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          user_id: userId,
+          country: "Australia",
+          currency: "AUD",
+          subtotal: subtotalVal,
+          tax_amount: gstAmount,
+          shipping_amount: shippingAmount,
+          discount_amount: discountAmount,
+          coupon_code: validCouponCode || null,
+          total_amount: totalAmount,
+          order_status: "processing",
+          payment_status: "paid",
+          payment_method: "stripe",
+          payment_provider: "stripe",
+          market: "AU",
+          gst: gstAmount,
+          shipping_cost: shippingAmount,
+          total: totalAmount,
+          stripe_session_id: mockSessionId,
+          delivery_estimate: shipping_type === "express" ? "2-4 business days" : "5-7 business days",
+          shipping_address: shipping_address,
+        } as any)
+        .select()
+        .single();
+
+      if (orderError || !newOrder) {
+        throw new Error(`Failed to create mock order: ${orderError?.message}`);
+      }
+
+      console.log("Mock Order created successfully:", newOrder.order_number);
+
+      // Insert Order Items and update inventory
+      for (const item of items) {
+        const prod = dbProducts.find((p: any) => p.id === item.productId);
+        if (prod) {
+          const prices = Array.isArray(prod.product_prices) ? prod.product_prices[0] : prod.product_prices || {};
+          const priceAud = Number(prices.price_aud) || 0;
+
+          await supabase
+            .from("order_items")
+            .insert({
+              order_id: newOrder.id,
+              product_id: prod.id,
+              product_name: prod.name,
+              quantity: item.quantity,
+              price: priceAud,
+              currency: "AUD",
+            } as any);
+
+          // Deduct inventory
+          const prevQty = prod.inventory_quantity_australia ?? 0;
+          const newQty = Math.max(0, prevQty - item.quantity);
+          await supabase
+            .from("products")
+            .update({ inventory_quantity_australia: newQty })
+            .eq("id", prod.id);
+
+          await supabase
+            .from("inventory_logs")
+            .insert({
+              product_id: prod.id,
+              change_amount: -item.quantity,
+              previous_quantity: prevQty,
+              new_quantity: newQty,
+              reason: `Mock Stripe Order ${newOrder.order_number}`,
+            } as any);
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          sessionId: mockSessionId,
+          checkoutUrl: `${origin}/order-success?session_id=${mockSessionId}`,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+
+    console.log("Stripe Session Creation Initiated. Total cents:", subtotalAfterDiscountCents + gstCents + shippingCents);
 
     // 6. Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
@@ -203,6 +298,8 @@ serve(async (req) => {
         shipping_address: JSON.stringify(shipping_address),
       },
     });
+
+    console.log("Stripe Session Created Successfully. Session ID:", session.id);
 
     return new Response(
       JSON.stringify({

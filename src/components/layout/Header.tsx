@@ -5,6 +5,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useCountry } from "@/contexts/CountryContext";
 import CartDrawer from "@/components/cart/CartDrawer";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -52,16 +53,16 @@ const Header = () => {
             ? "bg-black/10 text-white/80 border-b border-white/5" 
             : "bg-foreground text-primary-foreground"
         }`}>
-          <p className="text-[10px] tracking-[0.15em] uppercase font-light">
+          <p className="text-[9px] sm:text-[10px] tracking-[0.15em] uppercase font-light">
             Free shipping on orders over {settings?.currency_symbol}{settings?.free_shipping_above} {settings?.currency}
           </p>
         </div>
 
-        <nav className="flex items-center justify-between px-6 lg:px-12 py-4">
+        <nav className="flex items-center justify-between px-4 sm:px-6 lg:px-12 py-4">
           {/* Left */}
-          <div className="flex items-center gap-6">
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="lg:hidden" aria-label="Toggle menu">
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          <div className="flex items-center gap-4 sm:gap-6">
+            <button onClick={() => setIsMobileMenuOpen(true)} className="lg:hidden" aria-label="Open menu">
+              <Menu className="h-5 w-5" />
             </button>
             <div className="hidden lg:flex items-center gap-8">
               <Link to="/shop" className="text-xs tracking-[0.12em] uppercase hover:opacity-60 transition-opacity">Shop</Link>
@@ -72,22 +73,22 @@ const Header = () => {
 
           {/* Center: Logo */}
           <Link to="/" className="absolute left-1/2 -translate-x-1/2">
-            <h1 className="text-xl md:text-2xl tracking-[0.2em] uppercase font-normal">Scalvea</h1>
+            <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl tracking-[0.15em] sm:tracking-[0.2em] uppercase font-normal select-none">Scalvea</h1>
           </Link>
 
           {/* Right */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-4">
             {/* Country selector */}
             <div className="relative">
               <button 
                 onClick={() => setIsCountryOpen(!isCountryOpen)} 
-                className={`hover:opacity-60 transition-all flex items-center gap-1.5 border px-2.5 py-1 text-[10px] tracking-[0.08em] uppercase font-light ${
+                className={`hover:opacity-60 transition-all flex items-center gap-1 sm:gap-1.5 border px-1.5 sm:px-2.5 py-1 text-[9px] sm:text-[10px] tracking-[0.08em] uppercase font-light ${
                   isHome && !isScrolled ? "border-white/20" : "border-border"
                 }`} 
                 aria-label="Choose country"
               >
                 <span>{country === "India" ? "🇮🇳 INR" : "🇦🇺 AUD"}</span>
-                <span className="text-[8px] opacity-60">▼</span>
+                <span className="text-[7px] sm:text-[8px] opacity-60">▼</span>
               </button>
               {isCountryOpen && (
                 <div className="absolute right-0 top-full mt-2 bg-background border border-border shadow-lg z-50 min-w-[160px] animate-fade-in text-foreground">
@@ -142,35 +143,39 @@ const Header = () => {
           </div>
         )}
 
-        {/* Mobile menu */}
-        {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-border bg-background animate-fade-in text-foreground">
-            <div className="flex flex-col px-6 py-6 space-y-4">
-              <Link to="/shop" onClick={() => setIsMobileMenuOpen(false)} className="text-sm tracking-[0.12em] uppercase py-2">Shop</Link>
-              <Link to="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-sm tracking-[0.12em] uppercase py-2">About</Link>
-              <Link to="/contact" onClick={() => setIsMobileMenuOpen(false)} className="text-sm tracking-[0.12em] uppercase py-2">Contact</Link>
-              <Link to="/account" onClick={() => setIsMobileMenuOpen(false)} className="text-sm tracking-[0.12em] uppercase py-2">Account</Link>
-              <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="text-sm tracking-[0.12em] uppercase py-2">Wishlist</Link>
-              <div className="border-t border-border pt-4">
-                <p className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground mb-3">Country / Currency</p>
+        {/* Slide-in Mobile menu sheet drawer */}
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <SheetContent side="left" className="w-[280px] sm:w-[350px] p-0 flex flex-col bg-background text-foreground border-r border-border">
+            <SheetHeader className="p-6 border-b border-border flex flex-row items-center justify-between">
+              <SheetTitle className="text-xs tracking-[0.15em] uppercase font-light">Menu</SheetTitle>
+            </SheetHeader>
+            <div className="flex flex-col px-6 py-6 space-y-5 flex-1 overflow-y-auto">
+              <Link to="/shop" onClick={() => setIsMobileMenuOpen(false)} className="text-xs tracking-[0.15em] uppercase py-1.5 border-b border-border/10">Shop</Link>
+              <Link to="/about" onClick={() => setIsMobileMenuOpen(false)} className="text-xs tracking-[0.15em] uppercase py-1.5 border-b border-border/10">About</Link>
+              <Link to="/contact" onClick={() => setIsMobileMenuOpen(false)} className="text-xs tracking-[0.15em] uppercase py-1.5 border-b border-border/10">Contact</Link>
+              <Link to="/account" onClick={() => setIsMobileMenuOpen(false)} className="text-xs tracking-[0.15em] uppercase py-1.5 border-b border-border/10">Account</Link>
+              <Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} className="text-xs tracking-[0.15em] uppercase py-1.5 border-b border-border/10">Wishlist</Link>
+              
+              <div className="pt-6 border-t border-border mt-auto">
+                <p className="text-[9px] tracking-[0.15em] uppercase text-muted-foreground mb-3 font-mono">Select Region</p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => { setCountry("India"); setIsMobileMenuOpen(false); }}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 border text-xs tracking-[0.08em] uppercase ${country === "India" ? "border-foreground bg-secondary" : "border-border text-muted-foreground"}`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 border text-[10px] tracking-[0.08em] uppercase ${country === "India" ? "border-foreground bg-secondary font-medium" : "border-border text-muted-foreground"}`}
                   >
                     🇮🇳 INR
                   </button>
                   <button
                     onClick={() => { setCountry("Australia"); setIsMobileMenuOpen(false); }}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 border text-xs tracking-[0.08em] uppercase ${country === "Australia" ? "border-foreground bg-secondary" : "border-border text-muted-foreground"}`}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 border text-[10px] tracking-[0.08em] uppercase ${country === "Australia" ? "border-foreground bg-secondary font-medium" : "border-border text-muted-foreground"}`}
                   >
                     🇦🇺 AUD
                   </button>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          </SheetContent>
+        </Sheet>
       </header>
       <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>

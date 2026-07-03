@@ -17,12 +17,13 @@ const ShippingPolicy = () => {
         <div className="space-y-6 text-sm text-muted-foreground leading-relaxed">
           <div>
             <h2 className="text-foreground text-xs tracking-[0.12em] uppercase mb-2">Domestic Shipping (Australia)</h2>
-            <p>Standard shipping: 3-7 business days — $9.95 AUD</p>
+            <p>Standard shipping: 3-7 business days — <span className="line-through text-muted-foreground/60 mr-1">$10.00 AUD</span> <strong className="font-semibold text-foreground">$7.50 AUD</strong></p>
             <p>Express shipping: 1-3 business days — $14.95 AUD</p>
             <p>Free standard shipping on orders over $75 AUD.</p>
           </div>
           <div>
-            <h2 className="text-foreground text-xs tracking-[0.12em] uppercase mb-2">International Shipping</h2>
+            <h2 className="text-foreground text-xs tracking-[0.12em] uppercase mb-2">International Shipping & India</h2>
+            <p>Standard delivery (India): 3-5 business days — <span className="line-through text-muted-foreground/60 mr-1">₹100</span> <strong className="font-semibold text-foreground">₹50</strong></p>
             <p>International standard: 7-14 business days — $19.95 AUD</p>
             <p>International express: 3-7 business days — $29.95 AUD</p>
           </div>
