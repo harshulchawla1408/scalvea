@@ -1,180 +1,277 @@
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Instagram, Mail, ChevronDown, ChevronUp } from "lucide-react";
 import { getStoreSettings, StoreSettings, DEFAULT_SETTINGS } from "@/utils/settingsService";
+import logo2 from "@/assets/logo2.png";
 
-const FooterLogo = () => {
-  const [isHovered, setIsHovered] = useState(false);
-  const word = "SCALVEA";
-  
-  return (
-    <div 
-      className="inline-block cursor-pointer"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.5 }}
-        variants={{
-          hidden: { opacity: 0 },
-          visible: { 
-            opacity: 1, 
-            transition: { staggerChildren: 0.08, delayChildren: 0.1 } 
-          }
-        }}
-        animate={{
-          letterSpacing: isHovered ? "0.35em" : "0.25em",
-          textShadow: isHovered ? "0 0 12px rgba(255,255,255,0.4)" : "0 0 0px rgba(255,255,255,0)",
-        }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="flex items-center text-sm tracking-[0.25em] font-sans font-light uppercase select-none text-white relative"
-      >
-        {word.split("").map((letter, idx) => (
-          <motion.span
-            key={idx}
-            variants={{
-              hidden: { opacity: 0, filter: "blur(6px)", y: 5 },
-              visible: { 
-                opacity: 1, 
-                filter: "blur(0px)", 
-                y: 0,
-                transition: { duration: 0.8, ease: "easeOut" } 
-              }
-            }}
-            className="inline-block"
-          >
-            {letter}
-          </motion.span>
-        ))}
-        {/* Subtle moving light streak pass overlay */}
-        <motion.div 
-          animate={{ left: ["-100%", "200%"] }}
-          transition={{ repeat: Infinity, duration: 6, ease: "easeInOut", repeatDelay: 2 }}
-          className="absolute top-0 bottom-0 w-[40%] bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 pointer-events-none"
-        />
-      </motion.div>
-    </div>
-  );
-};
+const TiktokIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+  </svg>
+);
 
 const Footer = () => {
   const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
+  const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
 
   useEffect(() => {
     getStoreSettings().then(setSettings);
   }, []);
+
+  const toggleAccordion = (section: string) => {
+    setActiveAccordion(activeAccordion === section ? null : section);
+  };
+
   return (
-    <footer className="bg-black text-white pt-24 pb-12 overflow-hidden relative border-t border-neutral-900 z-20">
-      {/* Global Grain/Noise Overlay */}
-      <div className="absolute inset-0 noise-bg pointer-events-none opacity-[0.015]" />
-      
-      <div className="max-w-7xl mx-auto px-6 lg:px-16 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 lg:gap-8 pb-16">
-          
-          {/* Brand Logo & Info */}
-          <div className="lg:col-span-2 space-y-6 flex flex-col items-center md:items-start text-center md:text-left">
-            <FooterLogo />
-            <p className="text-xs text-neutral-400 font-light leading-relaxed max-w-xs">
-              Premium hair growth solutions backed by clinical research. High concentrations of Redensyl, Baicapil, Procapil, and Anagain.
+    <footer className="bg-[#000000] text-white border-t border-neutral-900">
+
+      {/* FOOTER COLUMNS SECTION */}
+      <div className="max-w-[1440px] mx-auto px-6 md:px-12 lg:px-16 xl:px-20 pt-20 md:pt-24 pb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10 xl:gap-16">
+
+          {/* Column 1 — Brand */}
+          <div className="space-y-6 flex flex-col items-start text-left lg:col-span-1 border-b border-neutral-900 lg:border-none pb-6 lg:pb-0">
+            {/* Footer Logo */}
+            <img src={logo2} alt="Scalvea" className="h-12 w-auto object-contain" />
+            <p className="text-sm md:text-[14px] text-neutral-400 font-light leading-relaxed max-w-xs">
+              Science-backed hair care formulated with clinically researched ingredients for healthier hair and scalp. Premium Australian innovation, trusted by customers in Australia and India.
             </p>
+            {/* Social Icons */}
             <div className="flex gap-4 pt-2">
-              <a href="#" className="text-[10px] tracking-[0.1em] uppercase text-neutral-400 hover:text-white transition-colors">Instagram</a>
-              <a href="#" className="text-[10px] tracking-[0.1em] uppercase text-neutral-400 hover:text-white transition-colors">Facebook</a>
-              <a href="#" className="text-[10px] tracking-[0.1em] uppercase text-neutral-400 hover:text-white transition-colors">Pinterest</a>
+              <a
+                href="https://www.instagram.com/scalvea_/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-neutral-400 hover:text-white transition-colors duration-200 p-1"
+                aria-label="Instagram"
+              >
+                <Instagram className="size-[18px]" />
+              </a>
+              <a
+                href="https://www.tiktok.com/@scalvea/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-neutral-400 hover:text-white transition-colors duration-200 p-1"
+                aria-label="TikTok"
+              >
+                <TiktokIcon className="size-[18px]" />
+              </a>
+              <a
+                href="mailto:info@scalvea.com"
+                className="text-neutral-400 hover:text-white transition-colors duration-200 p-1"
+                aria-label="Email"
+              >
+                <Mail className="size-[18px]" />
+              </a>
             </div>
           </div>
 
-          {/* Shop */}
-          <div className="flex flex-col items-center md:items-start text-center md:text-left">
-            <h4 className="text-[10px] tracking-[0.2em] uppercase font-semibold text-neutral-300 mb-5">Shop</h4>
-            <ul className="space-y-3 text-xs text-neutral-400 font-light flex flex-col items-center md:items-start">
-              <li><Link to="/shop" className="hover:text-white transition-colors relative group block w-fit">
-                All Products
-                <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all group-hover:w-full" />
-              </Link></li>
-              <li><Link to="/shop?category=Serums" className="hover:text-white transition-colors relative group block w-fit">
-                Follicle 8 Serum
-                <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all group-hover:w-full" />
-              </Link></li>
-              <li><Link to="/shop?category=Sprays" className="hover:text-white transition-colors relative group block w-fit">
-                Follicle 8 Spray
-                <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all group-hover:w-full" />
-              </Link></li>
-            </ul>
-          </div>
-
-          {/* Help */}
-          <div className="flex flex-col items-center md:items-start text-center md:text-left">
-            <h4 className="text-[10px] tracking-[0.2em] uppercase font-semibold text-neutral-300 mb-5">Help</h4>
-            <ul className="space-y-3 text-xs text-neutral-400 font-light flex flex-col items-center md:items-start">
-              <li><Link to="/support" className="hover:text-white transition-colors relative group block w-fit">
-                Support Center
-                <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all group-hover:w-full" />
-              </Link></li>
-              <li><Link to="/shipping-returns" className="hover:text-white transition-colors relative group block w-fit">
-                Shipping & Returns
-                <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all group-hover:w-full" />
-              </Link></li>
-              <li><Link to="/faqs" className="hover:text-white transition-colors relative group block w-fit">
-                FAQs
-                <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all group-hover:w-full" />
-              </Link></li>
-            </ul>
-          </div>
-
-          {/* Contact / Locations */}
-          <div className="flex flex-col items-center md:items-start text-center md:text-left">
-            <h4 className="text-[10px] tracking-[0.2em] uppercase font-semibold text-neutral-300 mb-5">Locations</h4>
-            <div className="space-y-4 text-xs text-neutral-400 font-light flex flex-col items-center md:items-start">
-              <div>
-                <p className="text-neutral-300 font-medium tracking-wider text-[10px] uppercase">Australia Office</p>
-                <p className="text-[10px] leading-relaxed text-neutral-400">{settings.au_business_name}</p>
-                <p className="text-[10px] leading-relaxed text-neutral-500">Craigieburn, VIC 3064</p>
-              </div>
-              <div>
-                <p className="text-neutral-300 font-medium tracking-wider text-[10px] uppercase">India Operations</p>
-                <p className="text-[10px] leading-relaxed text-neutral-500">Patiala, Punjab</p>
-              </div>
-              <div className="pt-1">
-                <p className="text-neutral-300 font-medium tracking-wider text-[10px] uppercase">Email</p>
-                <a href={`mailto:${settings.in_email}`} className="hover:text-white transition-colors text-[10px] break-all">
-                  {settings.in_email}
-                </a>
-              </div>
+          {/* Column 2 — Shop */}
+          <div className="flex flex-col border-b border-neutral-900 lg:border-none py-4 lg:py-0">
+            <button
+              onClick={() => toggleAccordion("shop")}
+              className="w-full flex items-center justify-between lg:pointer-events-none text-left focus:outline-none"
+            >
+              <h4 className="text-xs md:text-[13px] tracking-[0.2em] uppercase font-bold text-white mb-0 lg:mb-5">
+                Shop
+              </h4>
+              <span className="lg:hidden text-neutral-500">
+                {activeAccordion === "shop" ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+              </span>
+            </button>
+            <div className={`mt-4 lg:mt-0 ${activeAccordion === "shop" ? "block" : "hidden lg:block"}`}>
+              <ul className="space-y-3.5 text-sm text-neutral-400 font-light">
+                <li><Link to="/shop" className="hover:text-white transition-colors relative group block w-fit">
+                  All Products
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><Link to="/product/follicle-8-hair-growth-serum" className="hover:text-white transition-colors relative group block w-fit">
+                  Hair Growth Serum
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><Link to="/shop?category=Serums" className="hover:text-white transition-colors relative group block w-fit">
+                  Anti Dandruff Serum
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><Link to="/shop?category=Oils" className="hover:text-white transition-colors relative group block w-fit">
+                  Hair Oil
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><Link to="/shop?category=Shampoos" className="hover:text-white transition-colors relative group block w-fit">
+                  Hair Shampoo
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><Link to="/shop?category=Conditioners" className="hover:text-white transition-colors relative group block w-fit">
+                  Hair Conditioner
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><a href="/#products" className="hover:text-white transition-colors relative group block w-fit">
+                  Best Sellers
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </a></li>
+              </ul>
             </div>
           </div>
 
-          {/* Mini newsletter */}
-          <div className="flex flex-col items-center md:items-start text-center md:text-left">
-            <h4 className="text-[10px] tracking-[0.2em] uppercase font-semibold text-neutral-300 mb-5">Newsletter</h4>
-            <p className="text-[10px] text-neutral-400 font-light mb-4">Sign up for exclusive notifications.</p>
-            <form onSubmit={(e) => e.preventDefault()} className="flex w-full max-w-sm">
-              <input 
-                type="email" 
-                placeholder="Email" 
-                className="bg-neutral-900 border border-neutral-800 text-xs px-3 py-1.5 outline-none focus:border-white transition-colors w-full text-white font-light rounded-none" 
-              />
-              <button type="submit" className="bg-white text-black px-3 text-[9px] tracking-[0.15em] uppercase font-medium">Go</button>
-            </form>
+          {/* Column 3 — Company */}
+          <div className="flex flex-col border-b border-neutral-900 lg:border-none py-4 lg:py-0">
+            <button
+              onClick={() => toggleAccordion("company")}
+              className="w-full flex items-center justify-between lg:pointer-events-none text-left focus:outline-none"
+            >
+              <h4 className="text-xs md:text-[13px] tracking-[0.2em] uppercase font-bold text-white mb-0 lg:mb-5">
+                Company
+              </h4>
+              <span className="lg:hidden text-neutral-500">
+                {activeAccordion === "company" ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+              </span>
+            </button>
+            <div className={`mt-4 lg:mt-0 ${activeAccordion === "company" ? "block" : "hidden lg:block"}`}>
+              <ul className="space-y-3.5 text-sm text-neutral-400 font-light">
+                <li><Link to="/about" className="hover:text-white transition-colors relative group block w-fit">
+                  About Us
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><a href="/#ingredients" className="hover:text-white transition-colors relative group block w-fit">
+                  Ingredients
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </a></li>
+                <li><Link to="/#" className="hover:text-white transition-colors relative group block w-fit">
+                  Blog
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><Link to="/contact" className="hover:text-white transition-colors relative group block w-fit">
+                  Contact
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><Link to="/faqs" className="hover:text-white transition-colors relative group block w-fit">
+                  FAQs
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><Link to="/privacy-policy" className="hover:text-white transition-colors relative group block w-fit">
+                  Privacy Policy
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><Link to="/terms-conditions" className="hover:text-white transition-colors relative group block w-fit">
+                  Terms & Conditions
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Column 4 — Support */}
+          <div className="flex flex-col border-b border-neutral-900 lg:border-none py-4 lg:py-0">
+            <button
+              onClick={() => toggleAccordion("support")}
+              className="w-full flex items-center justify-between lg:pointer-events-none text-left focus:outline-none"
+            >
+              <h4 className="text-xs md:text-[13px] tracking-[0.2em] uppercase font-bold text-white mb-0 lg:mb-5">
+                Support
+              </h4>
+              <span className="lg:hidden text-neutral-500">
+                {activeAccordion === "support" ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+              </span>
+            </button>
+            <div className={`mt-4 lg:mt-0 ${activeAccordion === "support" ? "block" : "hidden lg:block"}`}>
+              <ul className="space-y-3.5 text-sm text-neutral-400 font-light">
+                <li><Link to="/payment-policy" className="hover:text-white transition-colors relative group block w-fit">
+                  Payment Policy
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><Link to="/shipping-policy" className="hover:text-white transition-colors relative group block w-fit">
+                  Shipping Policy
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><Link to="/return-refund-policy" className="hover:text-white transition-colors relative group block w-fit">
+                  Return & Refund Policy
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><Link to="/account" className="hover:text-white transition-colors relative group block w-fit">
+                  Track Order
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><Link to="/support" className="hover:text-white transition-colors relative group block w-fit">
+                  Support
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+                <li><Link to="/contact" className="hover:text-white transition-colors relative group block w-fit">
+                  Contact
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-200 group-hover:w-full" />
+                </Link></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Column 5 — Locations */}
+          <div className="flex flex-col py-4 lg:py-0">
+            <button
+              onClick={() => toggleAccordion("locations")}
+              className="w-full flex items-center justify-between lg:pointer-events-none text-left focus:outline-none"
+            >
+              <h4 className="text-xs md:text-[13px] tracking-[0.2em] uppercase font-bold text-white mb-0 lg:mb-5">
+                Locations
+              </h4>
+              <span className="lg:hidden text-neutral-500">
+                {activeAccordion === "locations" ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+              </span>
+            </button>
+            <div className={`mt-4 lg:mt-0 ${activeAccordion === "locations" ? "block" : "hidden lg:block"}`}>
+              <div className="space-y-4 text-sm text-neutral-400 font-light">
+                <div>
+                  <p className="text-neutral-300 font-semibold tracking-wider text-[11px] uppercase mb-1">Australia Office</p>
+                  <p className="leading-relaxed text-neutral-400 font-normal">SCALVEA GROUPS PTY LTD</p>
+                  <p className="leading-relaxed text-neutral-400">17 Travers Street</p>
+                  <p className="leading-relaxed text-neutral-400">Craigieburn VIC 3064</p>
+                  <p className="leading-relaxed text-neutral-400">Australia</p>
+                </div>
+                <div>
+                  <p className="text-neutral-300 font-semibold tracking-wider text-[11px] uppercase mb-1">India Operations</p>
+                  <p className="leading-relaxed text-neutral-400 font-normal">R-6 Tej Bagh Colony</p>
+                  <p className="leading-relaxed text-neutral-400">Sanour Road, Patiala</p>
+                  <p className="leading-relaxed text-neutral-400">Punjab, India</p>
+                </div>
+                <div className="pt-1 space-y-2">
+                  <div>
+                    <p className="text-neutral-300 font-semibold tracking-wider text-[11px] uppercase mb-0.5">Email</p>
+                    <a href="mailto:info@scalvea.com" className="hover:text-white transition-colors block break-all text-neutral-400">
+                      info@scalvea.com
+                    </a>
+                  </div>
+                  <div>
+                    <p className="text-neutral-300 font-semibold tracking-wider text-[11px] uppercase mb-0.5">Phone</p>
+                    <a href="tel:+919877191114" className="hover:text-white transition-colors block text-neutral-400">
+                      +91 98771 91114
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
         </div>
 
-        {/* Bottom bar */}
-        <div className="border-t border-neutral-900 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <span className="text-[9px] tracking-[0.2em] text-neutral-500 uppercase">
-            © 2026 SCALVEA. NOTHING TO HIDE.
-          </span>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-[9px] tracking-[0.15em] text-neutral-500 uppercase justify-center sm:justify-end">
-            <Link to="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link to="/terms-of-service" className="hover:text-white transition-colors">Terms of Service</Link>
-            <Link to="/shipping-policy" className="hover:text-white transition-colors">Shipping Policy</Link>
-            <Link to="/returns-policy" className="hover:text-white transition-colors">Returns & Refunds</Link>
-            <Link to="/cancellation-policy" className="hover:text-white transition-colors">Cancellation Policy</Link>
+        {/* FOOTER BOTTOM SECTION */}
+        <div className="border-t border-neutral-900 mt-20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] tracking-[0.18em] text-neutral-500 uppercase font-light w-full">
+          <div className="w-full md:w-auto text-center md:text-left">
+            © 2026 Scalvea. All Rights Reserved.
+          </div>
+          <div className="md:absolute md:left-1/2 md:-translate-x-1/2 font-semibold text-neutral-450 text-center w-full md:w-auto py-2 md:py-0">
+            Nothing To Hide.
+          </div>
+          <div className="w-full md:w-auto text-center md:text-right">
+            Made with Science • Australia & India
           </div>
         </div>
+
       </div>
     </footer>
   );

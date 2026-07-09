@@ -25,6 +25,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ShippingPolicy from "./pages/ShippingPolicy";
 import ReturnsPolicy from "./pages/ReturnsPolicy";
+import PaymentPolicy from "./pages/PaymentPolicy";
 import CancellationPolicy from "./pages/CancellationPolicy";
 import ShippingReturns from "./pages/ShippingReturns";
 import FAQ from "./pages/FAQ";
@@ -57,10 +58,13 @@ const App = () => (
                 <Route path="/account" element={<Account />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/payment-policy" element={<PaymentPolicy />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
+                <Route path="/terms-conditions" element={<TermsOfService />} />
                 <Route path="/shipping-policy" element={<ShippingPolicy />} />
                 <Route path="/returns-policy" element={<ReturnsPolicy />} />
+                <Route path="/return-refund-policy" element={<ReturnsPolicy />} />
                 <Route path="/cancellation-policy" element={<CancellationPolicy />} />
                 <Route path="/shipping-returns" element={<ShippingReturns />} />
                 <Route path="/faq" element={<FAQ />} />

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Upload, X, Image } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, X, Image, RefreshCw } from "lucide-react";
 
 const AdminProducts = () => {
   const [products, setProducts] = useState<any[]>([]);
@@ -12,6 +12,13 @@ const AdminProducts = () => {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Auto-generated Shiprocket IDs (preview before save, read-only)
+  const [nextSrIds, setNextSrIds] = useState<{ product_id: number | null; variant_id: number | null }>({
+    product_id: null,
+    variant_id: null,
+  });
+  const [loadingNextIds, setLoadingNextIds] = useState(false);
+
   const [form, setForm] = useState({
     name: "", slug: "", description: "", category: "Serums", ingredients: "", how_to_use: "",
     key_ingredients: "", size: "30 mL / 1.01 fl oz", imageUrls: [] as string[], featured: false, badge: "",
@@ -19,13 +26,36 @@ const AdminProducts = () => {
     inventory_quantity_india: 0, inventory_quantity_australia: 0,
     is_active_india: true, is_active_australia: true,
     sku_india: "", sku_australia: "",
-    sku: "", weight: 0.0, shiprocket_product_id: "", shiprocket_variant_id: "",
+    sku: "", weight: 0.0,
+    // Read-only on create — assigned by DB sequence. Populated on edit.
+    shiprocket_product_id: "", shiprocket_variant_id: "",
   });
 
   const fetchProducts = async () => {
     const { data } = await supabase.from("products").select("*, product_prices(*)").order("created_at", { ascending: false });
     setProducts(data || []);
     setLoading(false);
+  };
+
+  // Fetch next available Shiprocket IDs from the DB sequence (read-only preview)
+  const fetchNextSrIds = async () => {
+    setLoadingNextIds(true);
+    try {
+      const { data, error } = await supabase.rpc("get_next_shiprocket_ids");
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) {
+        setNextSrIds({
+          product_id: Number(row.next_product_id),
+          variant_id: Number(row.next_variant_id),
+        });
+      }
+    } catch (err: any) {
+      // Non-fatal — just show dashes if RPC not yet deployed
+      setNextSrIds({ product_id: null, variant_id: null });
+    } finally {
+      setLoadingNextIds(false);
+    }
   };
 
   useEffect(() => { fetchProducts(); }, []);
@@ -39,6 +69,7 @@ const AdminProducts = () => {
       sku_india: "", sku_australia: "",
       sku: "", weight: 0.0, shiprocket_product_id: "", shiprocket_variant_id: "",
     });
+    setNextSrIds({ product_id: null, variant_id: null });
     setEditProduct(null);
     setShowForm(false);
   };
@@ -94,7 +125,9 @@ const AdminProducts = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const productData = {
+
+    // Base product data — no shiprocket IDs on CREATE (DB sequence assigns them)
+    const baseProductData: Record<string, any> = {
       name: form.name, slug: form.slug, description: form.description, category: form.category,
       ingredients: form.ingredients, how_to_use: form.how_to_use,
       key_ingredients: form.key_ingredients.split(",").map(s => s.trim()).filter(Boolean),
@@ -108,22 +141,28 @@ const AdminProducts = () => {
       sku_australia: form.sku_australia || null,
       sku: form.sku || null,
       weight: Number(form.weight) || 0.0,
-      shiprocket_product_id: form.shiprocket_product_id ? Number(form.shiprocket_product_id) : null,
-      shiprocket_variant_id: form.shiprocket_variant_id ? Number(form.shiprocket_variant_id) : null,
       // Fallback fields for legacy compatibility
       is_active: form.is_active_australia,
     };
 
     try {
       if (editProduct) {
-        await supabase.from("products").update(productData as any).eq("id", editProduct.id);
+        // On EDIT: keep the existing shiprocket IDs exactly as-is (never change them)
+        await supabase.from("products").update(baseProductData as any).eq("id", editProduct.id);
         await supabase.from("product_prices").update({ price_aud: form.price_aud, price_inr: form.price_inr, price_usd: 0 } as any).eq("product_id", editProduct.id);
         toast({ title: "Product updated" });
       } else {
-        const { data, error } = await supabase.from("products").insert(productData as any).select().single();
+        // On CREATE: omit shiprocket IDs entirely — DB nextval() sequence assigns them
+        // This guarantees sequential, unique, non-zero IDs with no admin input required
+        const { data, error } = await supabase.from("products").insert(baseProductData as any).select().single();
         if (error) throw error;
         await supabase.from("product_prices").insert({ product_id: data.id, price_aud: form.price_aud, price_inr: form.price_inr, price_usd: 0 } as any);
-        toast({ title: "Product created" });
+        toast({
+          title: "Product created",
+          description: `Shiprocket IDs auto-assigned: Product ${data.shiprocket_product_id ?? "(pending)"} · Variant ${data.shiprocket_variant_id ?? "(pending)"}`,
+        });
+        // Refresh next ID preview for the next potential creation
+        fetchNextSrIds();
       }
       resetForm();
       fetchProducts();
@@ -152,7 +191,14 @@ const AdminProducts = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">{products.length} products</p>
-        <Button onClick={() => { resetForm(); setShowForm(true); }} className="bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.1em] uppercase h-9">
+        <Button
+          onClick={() => {
+            resetForm();
+            setShowForm(true);
+            fetchNextSrIds(); // pre-load next available IDs
+          }}
+          className="bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.1em] uppercase h-9"
+        >
           <Plus className="h-3 w-3 mr-2" /> Add Product
         </Button>
       </div>
@@ -207,23 +253,67 @@ const AdminProducts = () => {
             <input value={form.key_ingredients} onChange={(e) => setForm({ ...form, key_ingredients: e.target.value })} placeholder="Key ingredients (comma separated)" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block">Global SKU</label>
               <input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Global SKU" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block">Weight (kg)</label>
-              <input type="number" step="0.001" value={form.weight} onChange={(e) => setForm({ ...form, weight: parseFloat(e.target.value) || 0 })} placeholder="0.5" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
+              <input type="number" step="0.001" value={form.weight} onChange={(e) => setForm({ ...form, weight: parseFloat(e.target.value) || 0 })} placeholder="0.12" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block">Shiprocket Product ID</label>
-              <input type="number" value={form.shiprocket_product_id} onChange={(e) => setForm({ ...form, shiprocket_product_id: e.target.value })} placeholder="SR Product ID" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
+          </div>
+
+          {/* Shiprocket IDs — auto-assigned, never manually entered */}
+          <div className="border border-border p-4 bg-secondary/30 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-medium">
+                Shiprocket IDs
+                <span className="ml-2 text-emerald-600 normal-case tracking-normal font-normal">
+                  {editProduct ? "(assigned — read-only)" : "(auto-assigned on save)"}
+                </span>
+              </h4>
+              {!editProduct && (
+                <button
+                  type="button"
+                  onClick={fetchNextSrIds}
+                  disabled={loadingNextIds}
+                  className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                  title="Refresh next available IDs"
+                >
+                  <RefreshCw className={`h-3 w-3 ${loadingNextIds ? "animate-spin" : ""}`} />
+                  Refresh
+                </button>
+              )}
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block">Shiprocket Variant ID</label>
-              <input type="number" value={form.shiprocket_variant_id} onChange={(e) => setForm({ ...form, shiprocket_variant_id: e.target.value })} placeholder="SR Variant ID" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block">Product ID</label>
+                <div className="h-10 px-3 flex items-center text-sm border border-border bg-background text-muted-foreground font-mono select-all">
+                  {editProduct
+                    ? (form.shiprocket_product_id || <span className="opacity-40">—</span>)
+                    : loadingNextIds
+                      ? <span className="opacity-40 animate-pulse">loading…</span>
+                      : nextSrIds.product_id ?? <span className="opacity-40">—</span>
+                  }
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block">Variant ID</label>
+                <div className="h-10 px-3 flex items-center text-sm border border-border bg-background text-muted-foreground font-mono select-all">
+                  {editProduct
+                    ? (form.shiprocket_variant_id || <span className="opacity-40">—</span>)
+                    : loadingNextIds
+                      ? <span className="opacity-40 animate-pulse">loading…</span>
+                      : nextSrIds.variant_id ?? <span className="opacity-40">—</span>
+                  }
+                </div>
+              </div>
             </div>
+            <p className="text-[10px] text-muted-foreground">
+              IDs are auto-sequenced by the database. No manual entry required.
+              Follicle 8 = 100001 / 200001 · Scalp-5 = 100002 / 200002 · Next = {nextSrIds.product_id ?? "…"} / {nextSrIds.variant_id ?? "…"}
+            </p>
           </div>
 
           {/* Image Upload */}

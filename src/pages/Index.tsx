@@ -3,7 +3,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/products/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
-import { ArrowRight, Star, Truck, Shield, Leaf, Check } from "lucide-react";
+import { ArrowRight, Star, Truck, Shield, Leaf, Check, Microscope, CheckCircle, Globe, Beaker } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,7 +18,7 @@ import client2 from "@/assets/client-2.jpg";
 import client3 from "@/assets/client-3.jpg";
 import client4 from "@/assets/client-4.jpg";
 import client5 from "@/assets/client-5.jpg";
-import heroPng from "@/assets/hero.png";
+import heroAvif from "@/assets/hero.avif";
 import heroVideo from "@/assets/hero-video.mp4";
 import hero2 from "@/assets/hero2.png";
 import hero3 from "@/assets/hero3.png";
@@ -33,6 +33,19 @@ const REVIEWS = [
   { name: "Priya R.", text: "I've tried many hair growth serums but Scalvea is the first one that actually delivered visible results.", img: client3, location: "Mumbai, IN" },
   { name: "Elena P.", text: "The non-greasy formula is amazing. I apply it before styling and it doesn't leave any residue.", img: client4, location: "Sydney, AU" },
   { name: "Marcus T.", text: "My scalp feels so much healthier. The shedding has decreased by at least 70% in 6 weeks.", img: client5, location: "Brisbane, AU" },
+];
+
+const MARQUEE_ITEMS = [
+  { icon: Truck, text: "FREE SHIPPING" },
+  { icon: Shield, text: "CLINICALLY PROVEN" },
+  { icon: Microscope, text: "SCIENCE-BACKED FORMULAS" },
+  { icon: Globe, text: "MADE IN AUSTRALIA" },
+  { icon: Globe, text: "TRUSTED IN INDIA & AUSTRALIA" },
+  { icon: Leaf, text: "CLEAN INGREDIENTS" },
+  { icon: CheckCircle, text: "LAB TESTED" },
+  { icon: Beaker, text: "REDENSYL • BAICAPIL • PROCAPIL • ANAGAIN" },
+  { icon: Truck, text: "FAST SHIPPING" },
+  { icon: Star, text: "PREMIUM HAIR CARE" },
 ];
 
 // Helper CountUp Component
@@ -103,6 +116,14 @@ const Index = () => {
   const [scrollY, setScrollY] = useState(0);
   const [pageLoading, setPageLoading] = useState(true);
   const [scienceInView, setScienceInView] = useState(false);
+
+  const scrollToProducts = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const el = document.getElementById("products");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   // Initialize Lenis Smooth Scroll
   useEffect(() => {
@@ -213,122 +234,67 @@ const Index = () => {
       {/* Global Grain/Noise Overlay */}
       <div className="fixed inset-0 noise-bg pointer-events-none z-40 select-none opacity-[0.02]" />
 
-      {/* 1. CINEMATIC HERO SECTION */}
-      <section className="relative h-screen min-h-[650px] w-full overflow-hidden bg-black flex items-center">
-        {/* Parallax Background Container */}
-        <div 
-          className="absolute inset-0 z-0 overflow-hidden select-none pointer-events-none"
-          style={{ transform: `translateY(${scrollY * 0.12}px)` }}
-        >
+      {/* 1. HERO SECTION WITH POSTER IMAGE */}
+      <section className="relative w-full overflow-hidden bg-white select-none">
+        {/* Desktop/Laptop Hero Section */}
+        <div className="relative w-full hidden md:block">
           <img
-            src={heroPng}
-            alt="Scalvea Hero Background"
+            src={heroAvif}
+            alt="Scalvea - Science-Backed Care for Healthy Hair"
             loading="eager"
             fetchPriority="high"
-            className="absolute inset-0 w-full h-full object-cover object-[72%_center] md:object-right-bottom scale-105 animate-cinematic-zoom"
+            className="w-full h-auto block"
+            style={{ imageRendering: "-webkit-optimize-contrast" }}
           />
-          {/* Looped Cinematic Hero Video overlay with opacity blending */}
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover object-[72%_center] md:object-right-bottom opacity-50 mix-blend-screen"
-          >
-            <source src={heroVideo} type="video/mp4" />
-          </video>
-          {/* Soft Dark Overlay for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-transparent" />
-          <div className="absolute inset-0 bg-black/25" />
-          <div className="absolute top-[15%] left-[20%] w-[380px] h-[380px] bg-amber-100/5 rounded-full blur-[140px] animate-ambient-light" />
+          <a
+            href="#products"
+            onClick={scrollToProducts}
+            className="absolute left-[4.17%] top-[87.39%] w-[16.81%] h-[5.87%] cursor-pointer z-30 transition-all duration-200 hover:bg-white/20 mix-blend-difference focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black rounded-none after:absolute after:-inset-y-4 after:-inset-x-6 after:content-['']"
+            aria-label="Discover the Range"
+          />
         </div>
 
-        {/* Smooth section blend transition at the bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background via-background/40 to-transparent z-10 pointer-events-none" />
-
-        {/* Hero Content Grid */}
-        <div className="relative z-20 w-full max-w-7xl mx-auto px-6 lg:px-16 flex flex-col justify-center h-full pt-12">
-          <div className="max-w-xl space-y-6">
-            
-            {/* Thin hair line drawings */}
-            <div 
-              className="h-[1px] bg-white/25 w-0 animate-draw-line" 
-              style={{ animationDelay: "0.2s" }} 
-            />
-
-            {/* Sub-label */}
-            <p 
-              className="text-[9px] tracking-[0.3em] uppercase text-white/50 opacity-0 animate-fade-in-soft" 
-              style={{ animationDelay: "0.6s" }}
-            >
-              SCIENCE-BACKED HAIR GROWTH
-            </p>
-
-            {/* Heading Editorial */}
-            <h2 className="text-[38px] sm:text-[48px] md:text-[72px] lg:text-[88px] leading-[0.9] text-white editorial-heading flex flex-col">
-              <span className="opacity-0 animate-fade-up-soft" style={{ animationDelay: "0.9s" }}>Nothing</span>
-              <span className="opacity-0 animate-fade-up-soft mt-1" style={{ animationDelay: "1.2s" }}>To</span>
-              <span className="opacity-0 animate-blur-to-clear italic text-amber-50/90 font-light mt-1" style={{ animationDelay: "1.5s" }}>Hide</span>
-            </h2>
-
-            {/* Description */}
-            <p 
-              className="text-xs md:text-sm text-white/60 font-light leading-relaxed max-w-sm opacity-0 animate-fade-up-soft" 
-              style={{ animationDelay: "1.9s" }}
-            >
-              Clinically formulated with Redensyl, Baicapil, Procapil & Anagain at proven concentrations.
-            </p>
-
-            {/* Staggered buttons with slide-reveal hovers */}
-            <div 
-              className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 opacity-0 animate-scale-up-soft w-full sm:w-auto" 
-              style={{ animationDelay: "2.4s" }}
-            >
-              <Link 
-                to="/shop" 
-                className="group relative overflow-hidden h-11 px-8 flex items-center justify-center text-[10px] tracking-[0.2em] uppercase font-medium bg-white text-black border border-white hover:text-white transition-all duration-500 hover:-translate-y-0.5 transform shadow-lg w-full sm:w-auto"
-              >
-                <span className="absolute inset-0 w-0 bg-black transition-all duration-500 ease-out group-hover:w-full" />
-                <span className="relative z-10">Shop Now</span>
-              </Link>
-              
-              <Link 
-                to="/about" 
-                className="group relative overflow-hidden h-11 px-8 flex items-center justify-center text-[10px] tracking-[0.2em] uppercase font-light text-white border border-white/30 hover:border-white transition-all duration-500 hover:-translate-y-0.5 transform bg-white/5 backdrop-blur-sm w-full sm:w-auto"
-              >
-                <span className="absolute inset-0 w-0 bg-white/10 transition-all duration-500 ease-out group-hover:w-full" />
-                <span className="relative z-10">Our Story</span>
-              </Link>
-            </div>
-            
-          </div>
+        {/* Mobile/Tablet Hero Section */}
+        <div className="relative w-full md:hidden">
+          <img
+            src={heroAvif}
+            alt="Scalvea - Science-Backed Care for Healthy Hair"
+            loading="eager"
+            fetchPriority="high"
+            className="w-full h-auto block"
+            style={{ imageRendering: "-webkit-optimize-contrast" }}
+          />
+          {/* Note: The link coordinates below are configured for hero.avif. 
+              Once you provide the custom mobile poster, you can adjust these percentage coordinates (left, top, width, height) 
+              in Index.tsx to match where the button is in the new image. */}
+          <a
+            href="#products"
+            onClick={scrollToProducts}
+            className="absolute left-[4.17%] top-[87.39%] w-[16.81%] h-[5.87%] cursor-pointer z-30 transition-all duration-200 hover:bg-white/20 mix-blend-difference focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black rounded-none after:absolute after:-inset-y-6 after:-inset-x-10 after:content-['']"
+            aria-label="Discover the Range"
+          />
         </div>
       </section>
 
-      {/* Trust bar */}
-      <section className="border-b border-border relative z-20 bg-background py-6">
-        <div className="max-w-7xl mx-auto px-6 lg:px-16">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-6 gap-x-4 md:gap-0 md:divide-x divide-border">
-            {[
-              { icon: Truck, label: "Free Shipping", sub: "On regional orders" },
-              { icon: Shield, label: "Clinically Proven", sub: "4 key active ingredients" },
-              { icon: Leaf, label: "Clean Formulation", sub: "Transparent dosing" },
-              { icon: Check, label: "Made in Australia", sub: "Lab certified results" },
-            ].map((item, idx) => (
-              <div key={idx} className="flex items-center gap-3 px-2 sm:px-6">
-                <item.icon className="h-4 w-4 text-neutral-400 flex-shrink-0" />
-                <div>
-                  <p className="text-[9px] tracking-[0.1em] uppercase font-medium text-neutral-800">{item.label}</p>
-                  <p className="text-[9px] text-neutral-400 font-light">{item.sub}</p>
-                </div>
+      {/* LUXURY TRUST MARQUEE STRIP */}
+      <section className="bg-[#111111] border-y border-neutral-900 h-[84px] flex items-center overflow-hidden relative z-20 w-full select-none">
+        <div className="animate-marquee-luxury flex items-center gap-16 md:gap-24 whitespace-nowrap">
+          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, idx) => {
+            const IconComponent = item.icon;
+            return (
+              <div key={idx} className="flex items-center gap-4 text-white shrink-0">
+                <IconComponent className="size-[18px] md:size-[20px] text-white/85" />
+                <span className="text-[11px] md:text-[12px] tracking-[0.2em] uppercase font-semibold text-white">
+                  {item.text}
+                </span>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </section>
 
       {/* 2. BEST SELLERS / PRODUCTS SECTION */}
-      <section className="bg-white py-16 md:py-24 lg:py-32 overflow-hidden relative z-20">
+      <section id="products" className="bg-white py-16 md:py-24 lg:py-32 overflow-hidden relative z-20">
         <div className="max-w-7xl mx-auto px-6 lg:px-16">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
             <div>
@@ -462,7 +428,7 @@ const Index = () => {
       </section>
 
       {/* 4. INGREDIENTS / SCIENCE SECTION */}
-      <section className="relative py-16 md:py-24 lg:py-32 overflow-hidden bg-white border-y border-border/30">
+      <section id="ingredients" className="relative py-16 md:py-24 lg:py-32 overflow-hidden bg-white border-y border-border/30">
         {/* Faded Scientific Background Image */}
         <div className="absolute inset-0 z-0 opacity-15 select-none pointer-events-none">
           <img

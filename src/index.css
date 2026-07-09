@@ -224,4 +224,190 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
+  
+  @keyframes marqueeLuxury {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .animate-marquee-luxury {
+    display: flex;
+    width: max-content;
+    animation: marqueeLuxury 55s linear infinite;
+    will-change: transform;
+  }
+
+  .animate-marquee-luxury:hover {
+    animation-play-state: paused;
+  }
+}
+
+/* ============================================================
+   PRODUCT DETAIL PAGE — Premium CRO Utilities
+   ============================================================ */
+
+/* Scroll reveal */
+@keyframes pdReveal {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pd-reveal {
+  opacity: 0;
+}
+
+.pd-reveal.pd-visible {
+  animation: pdReveal 0.7s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.pd-reveal-delay-1.pd-visible { animation-delay: 0.1s; }
+.pd-reveal-delay-2.pd-visible { animation-delay: 0.2s; }
+.pd-reveal-delay-3.pd-visible { animation-delay: 0.3s; }
+.pd-reveal-delay-4.pd-visible { animation-delay: 0.4s; }
+
+/* Glass card */
+.pd-glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 12px;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.04);
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+              box-shadow 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.pd-glass-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.09);
+}
+
+/* Ingredient molecule card */
+.pd-ingredient-card {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 14px;
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+              box-shadow 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+              border-color 0.3s ease;
+}
+
+.pd-ingredient-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.14);
+}
+
+/* Timeline pulse dot */
+@keyframes pdPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.15); }
+  50%       { box-shadow: 0 0 0 8px rgba(0, 0, 0, 0); }
+}
+
+.pd-timeline-dot {
+  animation: pdPulse 2.5s ease-in-out infinite;
+}
+
+/* Animated counter */
+@keyframes pdCountUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pd-counter-value {
+  animation: pdCountUp 0.6s ease forwards;
+}
+
+/* Before/After slider */
+.pd-before-after {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  cursor: col-resize;
+  user-select: none;
+}
+
+.pd-before-after-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 2px 16px rgba(0,0,0,0.18);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pd-before-after-handle-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* FAQ accordion smooth expand */
+.pd-faq-content {
+  overflow: hidden;
+  transition: max-height 0.45s cubic-bezier(0.25, 1, 0.5, 1),
+              opacity 0.35s ease;
+  max-height: 0;
+  opacity: 0;
+}
+
+.pd-faq-content.pd-faq-open {
+  max-height: 500px;
+  opacity: 1;
+}
+
+/* Button ripple */
+.pd-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.pd-ripple::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.pd-ripple:active::after {
+  opacity: 1;
+}
+
+/* Dark science section */
+.pd-science-bg {
+  background: linear-gradient(135deg, #0a0a0a 0%, #141414 50%, #0d0d0d 100%);
+}
+
+/* Rating bar fill animation */
+@keyframes pdBarFill {
+  from { width: 0; }
+  to   { width: var(--bar-width); }
+}
+
+.pd-rating-bar-fill {
+  animation: pdBarFill 0.9s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation-delay: 0.3s;
+  width: 0;
+}
+
+.pd-rating-bar-fill.pd-visible {
+  width: var(--bar-width) !important;
 }

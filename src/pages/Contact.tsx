@@ -8,7 +8,7 @@ import { useSEO } from "@/hooks/useSEO";
 import { getStoreSettings, StoreSettings, DEFAULT_SETTINGS } from "@/utils/settingsService";
 
 // Asset imports
-import heroPng from "@/assets/hero.png";
+import heroPng from "@/assets/hero.avif";
 
 const Contact = () => {
   const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
