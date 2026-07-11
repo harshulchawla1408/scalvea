@@ -159,6 +159,7 @@ serve(async (req) => {
       // CRITICAL: Log the full result structure to understand what redirect_url looks like
       console.log("Shiprocket result keys:", Object.keys(resData.result || {}));
       console.log("Shiprocket redirect_url from API:", resData.result?.redirect_url);
+      console.log("Shiprocket full result JSON:", JSON.stringify(resData.result, null, 2));
       console.log("Shiprocket token:", token);
 
       if (!token) {
@@ -168,14 +169,29 @@ serve(async (req) => {
         );
       }
 
-      // Use the redirect_url from Shiprocket's API response.
-      // NOTE: checkout.shiprocket.in/goto/{token} is DEPRECATED (returns 404 - "Fastrr is the new Checkout").
-      // We must rely on the URL Shiprocket provides in the API response.
+      // Build redirect_url from the token.
+      // NOTE: checkout.shiprocket.in/goto/{token} is DEPRECATED (returns 404 - Fastrr rebrand).
+      // The Shiprocket SDK (shopify.js) uses https://fastrr-boost-ui.pickrr.com/ as its
+      // checkoutBuyer base URL and constructs the checkout URL with customCheckoutToken.
+      // We replicate that here for the fallback redirect path.
       let redirectUrl = resData.result?.redirect_url || "";
 
       // Fix any legacy domain typos (shiprocket.co -> shiprocket.in)
       if (redirectUrl.includes("checkout.shiprocket.co")) {
         redirectUrl = redirectUrl.replace("checkout.shiprocket.co", "checkout.shiprocket.in");
+      }
+
+      // If Shiprocket API didn't return a redirect_url, construct it from the token
+      // using the Fastrr checkout URL format (sourced from the SDK source code)
+      if (!redirectUrl) {
+        const channelParams = btoa(encodeURIComponent(JSON.stringify({
+          shop_name: "company-logo",
+          shop_url: "scalvea.com",
+          redirectUrl: callbackRedirectUrl,
+          credInstalled: false,
+          gpayInstalled: "NO"
+        })));
+        redirectUrl = `https://fastrr-boost-ui.pickrr.com/?customCheckoutToken=${token}&type=cart&platform=CUSTOM&channel=${channelParams}&isInitiatedFromApp=true`;
       }
 
       // Log what we are returning to the frontend

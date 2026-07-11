@@ -164,27 +164,28 @@ const Checkout = () => {
       }
 
       const token = data.token;
-      const redirectUrl = data.redirect_url;
+      const redirectUrl = data.redirect_url || "";
 
-      if (!redirectUrl) {
-        throw new Error("No checkout URL returned from server. Please try again.");
-      }
-
-      console.log("Checkout token:", token);
-      console.log("Redirect URL:", redirectUrl);
+      console.log("Checkout token received:", token);
+      console.log("Redirect URL received:", redirectUrl || "(empty — SDK will construct URL from token)");
 
       // 3. Call HeadlessCheckout.addToCart or fallback to direct redirect
       const headless = (window as any).HeadlessCheckout;
       if (headless && typeof headless.addToCart === "function") {
+        // SDK is available — it constructs the checkout URL internally from the token.
+        // The fallbackUrl is shown in the preloader if the iframe takes too long.
         console.log("Loading Shiprocket Checkout via Headless SDK");
         clearCart();
         headless.addToCart(e || null, token, {
-          fallbackUrl: redirectUrl,
+          fallbackUrl: redirectUrl || undefined,
           isInitiatedFromApp: true
         });
       } else {
-        // SDK not available — fall back to direct redirect URL from the API
-        console.log("HeadlessCheckout SDK not available. Falling back to direct redirect:", redirectUrl);
+        // SDK not available — need redirectUrl to fall back to direct navigation
+        if (!redirectUrl) {
+          throw new Error("Shiprocket checkout unavailable. Please try again in a moment.");
+        }
+        console.log("HeadlessCheckout SDK not available. Redirecting to:", redirectUrl);
         clearCart();
         window.location.href = redirectUrl;
       }
