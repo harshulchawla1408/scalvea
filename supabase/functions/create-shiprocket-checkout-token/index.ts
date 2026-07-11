@@ -155,11 +155,31 @@ serve(async (req) => {
       const token = resData.result?.token;
       const expiresAt = resData.result?.expires_at;
       const orderId = resData.result?.data?.order_id;
-      
-      let redirectUrl = resData.result?.redirect_url || `https://checkout.shiprocket.in/goto/${token}`;
+
+      // CRITICAL: Log the full result structure to understand what redirect_url looks like
+      console.log("Shiprocket result keys:", Object.keys(resData.result || {}));
+      console.log("Shiprocket redirect_url from API:", resData.result?.redirect_url);
+      console.log("Shiprocket token:", token);
+
+      if (!token) {
+        return new Response(
+          JSON.stringify({ error: "Shiprocket returned success but no token", raw: resData }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Use the redirect_url from Shiprocket's API response.
+      // NOTE: checkout.shiprocket.in/goto/{token} is DEPRECATED (returns 404 - "Fastrr is the new Checkout").
+      // We must rely on the URL Shiprocket provides in the API response.
+      let redirectUrl = resData.result?.redirect_url || "";
+
+      // Fix any legacy domain typos (shiprocket.co -> shiprocket.in)
       if (redirectUrl.includes("checkout.shiprocket.co")) {
         redirectUrl = redirectUrl.replace("checkout.shiprocket.co", "checkout.shiprocket.in");
       }
+
+      // Log what we are returning to the frontend
+      console.log("Final redirect URL to frontend:", redirectUrl);
 
       return new Response(
         JSON.stringify({

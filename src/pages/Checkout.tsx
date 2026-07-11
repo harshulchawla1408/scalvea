@@ -144,7 +144,12 @@ const Checkout = () => {
     setPlacing(true);
 
     try {
-      // 1. Invoke Supabase Edge Function to generate access token
+      // 1. Ensure the Shiprocket SDK is loaded before proceeding
+      const { loadShiprocketAssets } = await import("@/utils/shiprocket");
+      const sdkReady = await loadShiprocketAssets();
+      console.log("Shiprocket SDK ready:", sdkReady);
+
+      // 2. Invoke Supabase Edge Function to generate access token
       const { data, error } = await supabase.functions.invoke("create-shiprocket-checkout-token", {
         body: {
           items: items.map(item => ({
@@ -155,27 +160,36 @@ const Checkout = () => {
       });
 
       if (error || !data || !data.token) {
-        throw new Error(error?.message || "Failed to create checkout token");
+        throw new Error(error?.message || data?.error || "Failed to create checkout token");
       }
 
       const token = data.token;
       const redirectUrl = data.redirect_url;
 
-      // 2. Call HeadlessCheckout.addToCart or fallback to direct redirect
+      if (!redirectUrl) {
+        throw new Error("No checkout URL returned from server. Please try again.");
+      }
+
+      console.log("Checkout token:", token);
+      console.log("Redirect URL:", redirectUrl);
+
+      // 3. Call HeadlessCheckout.addToCart or fallback to direct redirect
       const headless = (window as any).HeadlessCheckout;
       if (headless && typeof headless.addToCart === "function") {
         console.log("Loading Shiprocket Checkout via Headless SDK");
+        clearCart();
         headless.addToCart(e || null, token, {
           fallbackUrl: redirectUrl,
           isInitiatedFromApp: true
         });
       } else {
-        console.log("Redirecting to Shiprocket Checkout URL");
+        // SDK not available — fall back to direct redirect URL from the API
+        console.log("HeadlessCheckout SDK not available. Falling back to direct redirect:", redirectUrl);
+        clearCart();
         window.location.href = redirectUrl;
       }
-      
-      clearCart();
     } catch (err: any) {
+      console.error("Shiprocket checkout error:", err);
       toast({ title: "Checkout Error", description: err.message, variant: "destructive" });
     } finally {
       setPlacing(false);

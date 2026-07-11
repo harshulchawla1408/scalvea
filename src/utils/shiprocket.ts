@@ -15,7 +15,23 @@ export const loadShiprocketAssets = (): Promise<boolean> => {
       document.head.appendChild(css);
     }
 
-    // JS
+    // JS — guard against duplicate injection
+    if (document.getElementById("shiprocket-js")) {
+      // Script tag exists but SDK may still be loading — poll for HeadlessCheckout
+      let attempts = 0;
+      const poll = setInterval(() => {
+        attempts++;
+        if ((window as any).HeadlessCheckout) {
+          clearInterval(poll);
+          resolve(true);
+        } else if (attempts >= 30) { // 3 second timeout
+          clearInterval(poll);
+          resolve(false);
+        }
+      }, 100);
+      return;
+    }
+
     const script = document.createElement("script");
     script.id = "shiprocket-js";
     script.src =
@@ -28,7 +44,7 @@ export const loadShiprocketAssets = (): Promise<boolean> => {
     };
 
     script.onerror = () => {
-      console.error("Shiprocket SDK failed");
+      console.error("Shiprocket SDK failed to load from CDN");
       resolve(false);
     };
 
