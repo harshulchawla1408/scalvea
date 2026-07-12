@@ -25,8 +25,8 @@ const Cart = () => {
     return `A$${val.toFixed(2)}`;
   };
 
-  const freeShippingThreshold = settings?.free_shipping_above || 75;
-  const shipping = total >= freeShippingThreshold ? 0 : (settings?.shipping_charge || 9.95);
+  const freeShippingThreshold = settings?.free_shipping_above || (isIndia ? 999 : 100);
+  const shipping = total >= freeShippingThreshold ? 0 : (isIndia ? (settings?.shipping_charge || 100) : 7.50);
 
   return (
     <div className="min-h-screen bg-background">

@@ -1,4 +1,4 @@
-export const launchShiprocketCheckout = (token: string, fallbackUrl: string): void => {
+export const launchShiprocketCheckout = (event: Event | any, token: string, fallbackUrl: string): void => {
   if (!token) {
     console.error("No Shiprocket token provided. Aborting checkout.");
     return;
@@ -53,7 +53,7 @@ export const launchShiprocketCheckout = (token: string, fallbackUrl: string): vo
             
             // Launch the checkout
             try {
-              (window as any).HeadlessCheckout.addToCart(null, token, {
+              (window as any).HeadlessCheckout.addToCart(event, token, {
                 fallbackUrl,
                 isInitiatedFromApp: false
               });

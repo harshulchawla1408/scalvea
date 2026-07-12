@@ -1,1 +1,19 @@
 project_id = "dtehgajreecaonqalxlf"
+
+[functions.shiprocket-products]
+verify_jwt = false
+
+[functions.shiprocket-products-by-collection]
+verify_jwt = false
+
+[functions.shiprocket-collections]
+verify_jwt = false
+
+[functions.shiprocket-order-webhook]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.shiprocket-catalog-sync]
+verify_jwt = false

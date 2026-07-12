@@ -136,9 +136,10 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { type, event, record } = body;
+    const { type, table, record, old_record } = body;
+    const targetRecord = record || old_record;
 
-    if (!record) {
+    if (!targetRecord) {
       return new Response(JSON.stringify({ error: "Missing record payload" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -150,9 +151,9 @@ serve(async (req) => {
     // from the DB (the row is gone). Build the payload directly from the record and
     // override status to "archived". Skip the collection webhook — the collection
     // may still contain other products.
-    if (event === "DELETE") {
+    if (type === "DELETE") {
       const archivedPayload = mapProductRow(
-        { ...record, product_prices: [] }, // no prices available for deleted rows
+        { ...targetRecord, product_prices: [] }, // no prices available for deleted rows
         { status: "archived" }             // override — marks product as unavailable
       );
 
@@ -186,9 +187,9 @@ serve(async (req) => {
 
     // ── INSERT / UPDATE path ─────────────────────────────────────────────────────
     // Determine target product ID (price-change events carry product_id on the price row)
-    let productId = record.id;
-    if (type === "price" && record.product_id) {
-      productId = record.product_id;
+    let productId = targetRecord.id;
+    if (table === "product_prices" && targetRecord.product_id) {
+      productId = targetRecord.product_id;
     }
 
     // Fetch full product details with prices

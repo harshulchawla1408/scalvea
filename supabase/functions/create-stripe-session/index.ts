@@ -151,15 +151,15 @@ serve(async (req) => {
       }
     }
 
-    // Add GST as a custom line item (only if > 0)
-    if (gstCents > 0) {
+    // Add Shipping as a custom line item (so Stripe doesn't prompt for address)
+    if (shippingCents > 0) {
       stripeLineItems.push({
         price_data: {
           currency: "aud",
           product_data: {
-            name: "GST (10%)",
+            name: shipping_type === "express" ? "Express Shipping" : "Standard Shipping",
           },
-          unit_amount: gstCents,
+          unit_amount: shippingCents,
         },
         quantity: 1,
       });
@@ -271,21 +271,18 @@ serve(async (req) => {
       customer_email: email,
       success_url: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout`,
-      shipping_address_collection: {
-        allowed_countries: ["AU"],
+      payment_intent_data: {
+        shipping: {
+          name: shipping_address.firstName + " " + shipping_address.lastName,
+          address: {
+            line1: shipping_address.address,
+            city: shipping_address.city,
+            state: shipping_address.state,
+            postal_code: shipping_address.postcode,
+            country: "AU",
+          }
+        }
       },
-      shipping_options: [
-        {
-          shipping_rate_data: {
-            type: "fixed_amount",
-            fixed_amount: {
-              amount: shippingCents,
-              currency: "aud",
-            },
-            display_name: shipping_type === "express" ? "Express Shipping" : "Standard Shipping",
-          },
-        },
-      ],
       metadata: {
         user_id: userId,
         market: "AU",

@@ -139,7 +139,7 @@ serve(async (req) => {
             { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-        orderDetails = result.data;
+        orderDetails = result.data?.data || result.data;
       }
 
       // Double-check in case webhook created the mapping in the meantime

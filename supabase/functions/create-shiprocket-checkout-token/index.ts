@@ -41,17 +41,18 @@ serve(async (req) => {
     const productIds = items.map((item: any) => item.productId);
     const { data: products, error: prodError } = await supabase
       .from("products")
-      .select("id, shiprocket_variant_id, sku_india, sku")
+      .select("id, name, shiprocket_variant_id")
       .in("id", productIds);
 
     if (prodError) throw prodError;
 
     const mappedItems = items.map((item: any) => {
       const prod = (products || []).find((p: any) => p.id === item.productId);
-      const rawVariantId = prod?.shiprocket_variant_id || prod?.sku_india || prod?.sku;
-      const finalVariantIdStr = rawVariantId ? String(rawVariantId).trim() : "200001";
+      if (!prod || !prod.shiprocket_variant_id) {
+        throw new Error(`Product ${prod?.name || item.productId} is missing a valid Shiprocket Variant ID. Checkout aborted.`);
+      }
       return {
-        variant_id: finalVariantIdStr,
+        variant_id: String(prod.shiprocket_variant_id).trim(),
         quantity: Number(item.quantity)
       };
     });
@@ -70,8 +71,7 @@ serve(async (req) => {
           token: mockToken,
           expires_at: new Date(Date.now() + 3600 * 1000).toISOString(),
           order_id: "mock_order_123",
-          redirect_url: `${callbackRedirectUrl}?token=${mockToken}&oid=mock_order_123&ost=SUCCESS`,
-          signature: "mock_signature"
+          redirect_url: `${callbackRedirectUrl}?token=${mockToken}&oid=mock_order_123&ost=SUCCESS`
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -174,8 +174,7 @@ serve(async (req) => {
           token,
           expires_at: expiresAt,
           order_id: orderId,
-          redirect_url: redirectUrl,
-          signature
+          redirect_url: redirectUrl
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

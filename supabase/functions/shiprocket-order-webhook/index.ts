@@ -147,7 +147,8 @@ serve(async (req) => {
           );
           clearTimeout(timeoutId);
           if (res.ok) {
-            orderDetails = await res.json();
+            const rawData = await res.json();
+            orderDetails = rawData.data || rawData;
           } else {
             console.error("Failed to fetch order details from Shiprocket. Using webhook payload fallbacks.");
           }
@@ -189,13 +190,11 @@ serve(async (req) => {
           name: it.name || "Scalvea Product"
         }));
       } else {
-        const fallbackProd = await findProductIdByVariantId(supabase, "default");
-        orderDetails.items = [{
-          variant_id: fallbackProd?.id || "fallback-id",
-          quantity: 1,
-          price: Number(amount || 0),
-          name: fallbackProd?.name || "Premium Hair Care Product"
-        }];
+        console.error("Critical: Webhook payload missing items and API fetch failed. Aborting order creation.");
+        return new Response(
+          JSON.stringify({ error: "Cannot process order without items." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
       if (body.shipping_address) {

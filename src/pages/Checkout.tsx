@@ -42,11 +42,11 @@ const Checkout = () => {
 
   const discountAmount = appliedCoupon ? total * (appliedCoupon.discount_percentage / 100) : 0;
   const subtotalAfterDiscount = total - discountAmount;
-  const taxRate = (settings?.tax_percentage || 0) / 100;
+  const taxRate = isIndia ? (settings?.tax_percentage || 0) / 100 : 0; // Prices are tax-inclusive for AU
   const taxAmount = subtotalAfterDiscount * taxRate;
   
   const freeShippingThreshold = settings?.free_shipping_above || (isIndia ? 999 : 100);
-  const shippingAmount = subtotalAfterDiscount >= freeShippingThreshold ? 0 : (settings?.shipping_charge || (isIndia ? 100 : 10));
+  const shippingAmount = subtotalAfterDiscount >= freeShippingThreshold ? 0 : (isIndia ? (settings?.shipping_charge || 100) : 7.50);
   const grandTotal = subtotalAfterDiscount + taxAmount + shippingAmount;
 
   const [form, setForm] = useState({
@@ -128,6 +128,7 @@ const Checkout = () => {
   // Shiprocket assets are loaded dynamically at checkout via launchShiprocketCheckout
 
   const handleShiprocketCheckout = async (e?: any) => {
+    e?.preventDefault();
     if (!user) {
       toast({ title: "Please sign in", description: "You need an account to place an order.", variant: "destructive" });
       navigate("/auth");
@@ -155,13 +156,12 @@ const Checkout = () => {
       }
 
       const token = data.token;
-      console.log("Checkout token received:", token);
 
       // 2. Launch Official Shiprocket Checkout
       const { launchShiprocketCheckout } = await import("@/lib/shiprocketCheckout");
       const fallbackUrl = window.location.origin + "/checkout";
       
-      launchShiprocketCheckout(token, fallbackUrl);
+      launchShiprocketCheckout(e?.nativeEvent || e, token, fallbackUrl);
 
       // Note: We deliberately do NOT clear the cart here. 
       // If the user cancels or the checkout fails, they must be able to return to their cart.
