@@ -93,7 +93,7 @@ const About = () => {
               }}
               className="text-[44px] md:text-[68px] lg:text-[84px] leading-tight text-white editorial-heading tracking-wide uppercase select-none"
             >
-              {"NOTHING TO HIDE".split(" ").map((word, wIdx) => (
+              {"CARE YOU DESERVE".split(" ").map((word, wIdx) => (
                 <span key={wIdx} className="inline-block mr-4 last:mr-0">
                   {word.split("").map((letter, lIdx) => (
                     <motion.span

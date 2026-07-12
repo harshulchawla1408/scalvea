@@ -265,7 +265,7 @@ const Footer = () => {
             © 2026 Scalvea. All Rights Reserved.
           </div>
           <div className="md:absolute md:left-1/2 md:-translate-x-1/2 font-semibold text-neutral-450 text-center w-full md:w-auto py-2 md:py-0">
-            Nothing To Hide.
+            Care You Deserve.
           </div>
           <div className="w-full md:w-auto text-center md:text-right">
             Made with Science • Australia & India

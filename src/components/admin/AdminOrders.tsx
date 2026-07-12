@@ -130,10 +130,22 @@ const AdminOrders = () => {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-muted-foreground font-light">
-                    {addr && <span>{addr.firstName} {addr.lastName}, {addr.address}, {addr.city}, {addr.state} {addr.postcode}, {addr.country}</span>}
-                    <span className="ml-2 font-medium">· {order.country === "India" ? "🇮🇳 India" : "🇦🇺 Australia"}</span>
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mt-2">
+                  <div className="text-xs text-muted-foreground font-light space-y-1">
+                    <div>
+                      <span className="font-medium text-foreground">Customer:</span> {order.customer_name || `${addr?.firstName || addr?.first_name || ""} ${addr?.lastName || addr?.last_name || ""}`}
+                    </div>
+                    <div>
+                      <span className="font-medium text-foreground">Contact:</span> {order.customer_email || addr?.email} | Ph: {order.customer_phone || addr?.phone}
+                    </div>
+                    <div>
+                      <span className="font-medium text-foreground">Address:</span> {addr ? `${addr.address || addr.address_line1}, ${addr.city}, ${addr.state} ${addr.postcode}, ${addr.country}` : "—"}
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] uppercase font-mono mt-2">
+                      <span className="bg-secondary px-2 py-0.5 rounded text-foreground">{order.market === "IN" ? "🇮🇳 India" : "🇦🇺 Australia"}</span>
+                      {order.stripe_session_id && <span className="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded truncate max-w-[150px]" title={order.stripe_session_id}>Stripe: {order.stripe_session_id}</span>}
+                      {order.fastrr_order_id && <span className="bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 px-2 py-0.5 rounded truncate max-w-[150px]" title={order.fastrr_order_id}>Shiprocket: {order.fastrr_order_id}</span>}
+                    </div>
                   </div>
                   <select
                     value={order.order_status}
@@ -152,6 +164,30 @@ const AdminOrders = () => {
                   <span>Tax: {isIndia ? "₹" : "A$"}{Number(order.tax_amount).toLocaleString(isIndia ? "en-IN" : "en-AU")}</span>
                   <span>Shipping: {isIndia ? "₹" : "A$"}{Number(order.shipping_amount).toLocaleString(isIndia ? "en-IN" : "en-AU")}</span>
                 </div>
+                {isExpanded && (
+                  <div className="border-t border-border/40 pt-3 mt-3 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
+                    <div>
+                      <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Courier</p>
+                      <p>{order.courier || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Tracking ID</p>
+                      <p>{order.tracking_number || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">AWB / Shipment</p>
+                      <p>{order.awb || order.shipment_id || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Invoice</p>
+                      <p>{order.invoice_number || "—"}</p>
+                    </div>
+                    <div className="col-span-2 md:col-span-4 border-t border-border/10 pt-2 mt-1">
+                      <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Admin Notes</p>
+                      <p className="italic">{order.admin_notes || "No notes."}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

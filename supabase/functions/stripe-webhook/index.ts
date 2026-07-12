@@ -7,112 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-async function sendOrderEmails(supabase: any, order: any, orderItems: any[]) {
-  const resendApiKey = Deno.env.get("RESEND_API_KEY");
-  if (!resendApiKey) {
-    console.warn("RESEND_API_KEY is not configured. Skipping email notifications.");
-    return;
-  }
-
-  const senderEmail = Deno.env.get("SENDER_EMAIL") || "onboarding@resend.dev";
-  const adminEmail = Deno.env.get("ADMIN_EMAIL") || "admin@scalvea.com";
-  let emailToUse = order.shipping_address?.email;
-
-  if (!emailToUse && order.user_id) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("id", order.user_id)
-      .maybeSingle();
-    if (profile?.email) {
-      emailToUse = profile.email;
-    }
-  }
-
-  if (!emailToUse) {
-    console.warn("No customer email found for order:", order.order_number);
-    return;
-  }
-
-  const currencySymbol = order.currency === "INR" ? "₹" : "A$";
-  const formattedItems = orderItems
-    .map((item) => `<li>${item.product_name} x ${item.quantity} - ${currencySymbol}${Number(item.price * item.quantity).toFixed(2)}</li>`)
-    .join("");
-
-  const emailHtml = `
-    <h1>Thank you for your order!</h1>
-    <p>Your order <strong>${order.order_number}</strong> has been received and is being processed.</p>
-    <h2>Order Summary</h2>
-    <ul>
-      ${formattedItems}
-    </ul>
-    <p><strong>Subtotal:</strong> ${currencySymbol}${Number(order.subtotal).toFixed(2)}</p>
-    <p><strong>Tax (GST):</strong> ${currencySymbol}${Number(order.tax_amount).toFixed(2)}</p>
-    <p><strong>Shipping:</strong> ${currencySymbol}${Number(order.shipping_amount).toFixed(2)}</p>
-    ${order.discount_amount > 0 ? `<p><strong>Discount:</strong> -${currencySymbol}${Number(order.discount_amount).toFixed(2)}</p>` : ""}
-    <p><strong>Total:</strong> ${currencySymbol}${Number(order.total_amount).toFixed(2)}</p>
-    <p><strong>Delivery Estimate:</strong> ${order.delivery_estimate || "5-7 business days"}</p>
-  `;
-
-  const adminHtml = `
-    <h1>New Order Received</h1>
-    <p>Order Number: <strong>${order.order_number}</strong></p>
-    <p>Customer: ${order.shipping_address?.firstName || ""} ${order.shipping_address?.lastName || ""}</p>
-    <p>Email: ${emailToUse}</p>
-    <p>Market: ${order.market || order.country}</p>
-    <h2>Order Items</h2>
-    <ul>
-      ${formattedItems}
-    </ul>
-    <p><strong>Total Amount:</strong> ${currencySymbol}${Number(order.total_amount).toFixed(2)}</p>
-  `;
-
-  try {
-    // Send to Customer
-    const customerRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${resendApiKey}`,
-      },
-      body: JSON.stringify({
-        from: senderEmail,
-        to: emailToUse,
-        subject: `Order Confirmation - ${order.order_number}`,
-        html: emailHtml,
-      }),
-    });
-
-    if (!customerRes.ok) {
-      console.error("Failed to send customer email confirmation:", await customerRes.text());
-    } else {
-      console.log("Customer email confirmation sent successfully.");
-    }
-
-    // Send to Admin
-    const adminRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${resendApiKey}`,
-      },
-      body: JSON.stringify({
-        from: senderEmail,
-        to: adminEmail,
-        subject: `[New Order] ${order.order_number} - ${order.market || order.country}`,
-        html: adminHtml,
-      }),
-    });
-
-    if (!adminRes.ok) {
-      console.error("Failed to send admin email notification:", await adminRes.text());
-    } else {
-      console.log("Admin email notification sent successfully.");
-    }
-  } catch (error) {
-    console.error("Error sending order emails:", error);
-  }
-}
+import { sendOrderEmails } from "../_shared/shiprocket-mapper.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -126,7 +21,7 @@ serve(async (req) => {
       throw new Error("Stripe secret key not configured");
     }
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2026-01-28.clover" as any });
 
     const signature = req.headers.get("stripe-signature");
     if (!signature) {
@@ -207,11 +102,28 @@ serve(async (req) => {
       const shippingAmount = shippingCents / 100;
       const totalAmount = (session.amount_total || 0) / 100;
 
-      let parsedShippingAddress = {};
+      let parsedShippingAddress: any = {};
       try {
         parsedShippingAddress = JSON.parse(rawShippingAddress || "{}");
       } catch {
         console.error("Failed to parse shipping address metadata");
+      }
+
+      // Prioritize Stripe's finalized shipping details if they exist
+      if (session.shipping_details?.address) {
+        const stripeAddress = session.shipping_details.address;
+        const nameParts = (session.shipping_details.name || "").split(" ");
+        parsedShippingAddress = {
+          firstName: nameParts[0] || parsedShippingAddress.firstName,
+          lastName: nameParts.slice(1).join(" ") || parsedShippingAddress.lastName,
+          address: stripeAddress.line1 + (stripeAddress.line2 ? `, ${stripeAddress.line2}` : ""),
+          city: stripeAddress.city,
+          state: stripeAddress.state,
+          postcode: stripeAddress.postal_code,
+          country: stripeAddress.country,
+          phone: session.customer_details?.phone || parsedShippingAddress.phone,
+          email: session.customer_details?.email || parsedShippingAddress.email,
+        };
       }
 
       // 2. Reconstruct cart items list
@@ -269,6 +181,13 @@ serve(async (req) => {
         stripe_payment_intent_id: stripePaymentIntentId,
         delivery_estimate: shippingType === "express" ? "2-4 business days" : "5-7 business days",
         shipping_address: parsedShippingAddress,
+        customer_email: parsedShippingAddress.email || session.customer_details?.email,
+        customer_phone: parsedShippingAddress.phone || session.customer_details?.phone,
+        customer_name: parsedShippingAddress.firstName ? `${parsedShippingAddress.firstName} ${parsedShippingAddress.lastName || ""}`.trim() : session.customer_details?.name,
+        is_guest: !userId,
+        source: "Stripe",
+        platform: "Web",
+        gateway_response: session,
       };
 
       console.log("Inserting new Order record into database. Payload:", JSON.stringify(orderPayload));
@@ -279,6 +198,11 @@ serve(async (req) => {
         .single();
 
       if (orderError || !newOrder) {
+        // Handle concurrent duplicate webhook gracefully (Postgres Unique Violation on stripe_session_id)
+        if (orderError?.code === "23505") {
+          console.log(`Concurrent webhook detected. Order already exists for session ${stripeSessionId}. Returning 200.`);
+          return new Response(JSON.stringify({ success: true, message: "Order already processed concurrently" }), { status: 200 });
+        }
         console.error("Order insertion failed. Error:", orderError);
         throw new Error(`Failed to create order: ${orderError?.message}`);
       }

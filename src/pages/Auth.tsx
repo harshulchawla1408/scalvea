@@ -435,7 +435,7 @@ const Auth = () => {
               transition={{ delay: 0.4, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
               className="text-4xl lg:text-5xl font-light leading-tight text-neutral-100 editorial-heading"
             >
-              Nothing To Hide
+              Care You Deserve
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 15 }}

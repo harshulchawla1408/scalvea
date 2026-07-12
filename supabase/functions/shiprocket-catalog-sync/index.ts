@@ -1,31 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+import { mapProductRow, getCollectionId, slugify } from "../_shared/shiprocket-mapper.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function slugify(text: string): string {
-  return text
-    .toString()
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w\-]+/g, "")
-    .replace(/\-\-+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "");
-}
-
-function getCollectionId(category: string): number {
-  let hash = 0;
-  for (let i = 0; i < category.length; i++) {
-    hash = (hash << 5) - hash + category.charCodeAt(i);
-    hash |= 0;
-  }
-  return 300000 + (Math.abs(hash) % 100000);
-}
+// ─── HMAC Signature ───────────────────────────────────────────────────────────
 
 async function generateHmacBase64(secret: string, data: string): Promise<string> {
   const key = await crypto.subtle.importKey(
@@ -43,20 +26,40 @@ async function generateHmacBase64(secret: string, data: string): Promise<string>
   return base64Encode(new Uint8Array(signatureBuffer));
 }
 
+// ─── Webhook Delivery ─────────────────────────────────────────────────────────
+
+/**
+ * Posts a signed webhook payload to a Shiprocket endpoint with retry logic.
+ *
+ * Authentication:
+ *   X-Api-Key          → SHIPROCKET_API_KEY
+ *   X-Api-HMAC-SHA256  → Base64(HMAC_SHA256(requestBody, SHIPROCKET_SECRET_KEY))
+ *
+ * Error handling:
+ *   - 511 Invalid authentication: stops immediately, no retry (wrong creds won't fix themselves).
+ *   - Network / timeout failures: retried up to maxAttempts with exponential back-off.
+ *   - Each fetch is guarded by a 10-second AbortController timeout.
+ */
 async function postWebhookWithRetries(
   url: string,
   payloadString: string,
   apiKey: string,
   secretKey: string
-): Promise<{ success: boolean; attempts: number; responseText: string }> {
+): Promise<{ success: boolean; attempts: number; responseText: string; statusCode?: number }> {
   const signature = await generateHmacBase64(secretKey, payloadString);
   let attempts = 0;
   const maxAttempts = 3;
   let success = false;
   let responseText = "";
+  let statusCode: number | undefined;
 
   while (attempts < maxAttempts && !success) {
     attempts++;
+
+    // 10-second fetch timeout per attempt
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -66,9 +69,19 @@ async function postWebhookWithRetries(
           "X-Api-HMAC-SHA256": signature,
         },
         body: payloadString,
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+      statusCode = response.status;
       responseText = await response.text();
+
+      // 511 = Invalid authentication — retrying with wrong credentials is pointless
+      if (response.status === 511) {
+        responseText = `511 Invalid authentication — verify SHIPROCKET_API_KEY and SHIPROCKET_SECRET_KEY. Server response: ${responseText}`;
+        break; // exit retry loop immediately
+      }
+
       if (response.ok) {
         try {
           const resJson = JSON.parse(responseText);
@@ -76,23 +89,31 @@ async function postWebhookWithRetries(
             success = true;
           }
         } catch (_) {
-          // If JSON parse fails but status is 200, check if we got raw true/ok
+          // If JSON parse fails but status is 200, accept as success if body contains "true"
           if (responseText.includes("true")) {
             success = true;
           }
         }
       }
     } catch (err: any) {
-      responseText = err.message;
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        responseText = `Request timed out after 10s (attempt ${attempts})`;
+      } else {
+        responseText = err.message;
+      }
     }
 
+    // Back-off before next retry (skip on final attempt or after 511 break)
     if (!success && attempts < maxAttempts) {
       await new Promise((resolve) => setTimeout(resolve, attempts * 2000));
     }
   }
 
-  return { success, attempts, responseText };
+  return { success, attempts, responseText, statusCode };
 }
+
+// ─── Handler ──────────────────────────────────────────────────────────────────
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -115,7 +136,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { type, record } = body;
+    const { type, event, record } = body;
 
     if (!record) {
       return new Response(JSON.stringify({ error: "Missing record payload" }), {
@@ -124,7 +145,47 @@ serve(async (req) => {
       });
     }
 
-    // Determine target product ID
+    // ── DELETE path ─────────────────────────────────────────────────────────────
+    // When a product is deleted, the OLD row arrives via record. We cannot re-fetch
+    // from the DB (the row is gone). Build the payload directly from the record and
+    // override status to "archived". Skip the collection webhook — the collection
+    // may still contain other products.
+    if (event === "DELETE") {
+      const archivedPayload = mapProductRow(
+        { ...record, product_prices: [] }, // no prices available for deleted rows
+        { status: "archived" }             // override — marks product as unavailable
+      );
+
+      const productUrl = "https://checkout-api.shiprocket.com/wh/v1/custom/product";
+      const productPayloadString = JSON.stringify(archivedPayload);
+      const productResult = await postWebhookWithRetries(productUrl, productPayloadString, apiKey, secretKey);
+
+      await supabase.from("shiprocket_webhook_logs").insert({
+        webhook_type: "product_delete",
+        payload: archivedPayload,
+        response: productResult.responseText,
+        status: productResult.statusCode === 511
+          ? "auth_failure"
+          : productResult.success
+          ? "success"
+          : "failed",
+        attempts: productResult.attempts,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          product_delete_sync: {
+            success: productResult.success,
+            attempts: productResult.attempts,
+          },
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── INSERT / UPDATE path ─────────────────────────────────────────────────────
+    // Determine target product ID (price-change events carry product_id on the price row)
     let productId = record.id;
     if (type === "price" && record.product_id) {
       productId = record.product_id;
@@ -149,104 +210,63 @@ serve(async (req) => {
       );
     }
 
-    // Prepare Product Payload
-    const prices = Array.isArray(product.product_prices)
-      ? product.product_prices[0]
-      : product.product_prices;
+    // ── Build product payload via shared mapper ───────────────────────────────
+    const productPayload = mapProductRow(product);
 
-    const priceInr = Number(prices?.price_inr || prices?.india_price || 0);
-    const compareAtPriceVal = (priceInr * 1.3).toFixed(2);
-    
-    const imageSrc = product.images && product.images.length > 0 ? product.images[0] : "";
-    const sizeVal = product.size || "Default";
-    const weightVal = Number(product.weight) || 0;
-    const gramsVal = Math.round(weightVal * 1000);
-
-    const productPayload = {
-      id: Number(product.shiprocket_product_id),
-      title: product.name || "",
-      body_html: product.description || "",
-      vendor: "Scalvea",
-      product_type: product.category || "Hair Care",
-      created_at: product.created_at ? new Date(product.created_at).toISOString() : new Date().toISOString(),
-      handle: product.slug || "",
-      updated_at: product.updated_at ? new Date(product.updated_at).toISOString() : new Date().toISOString(),
-      tags: product.category ? `${product.category}, Serum` : "Serum",
-      status: product.is_active_india ? "active" : "draft",
-      variants: [
-        {
-          id: Number(product.shiprocket_variant_id),
-          title: "Default",
-          price: priceInr.toFixed(2),
-          compare_at_price: compareAtPriceVal,
-          sku: product.sku || product.sku_india || `SCAL-${product.shiprocket_variant_id}`,
-          quantity: Number(product.inventory_quantity ?? 0),
-          created_at: product.created_at ? new Date(product.created_at).toISOString() : new Date().toISOString(),
-          updated_at: product.updated_at ? new Date(product.updated_at).toISOString() : new Date().toISOString(),
-          taxable: true,
-          option_values: {
-            Size: sizeVal
-          },
-          grams: gramsVal,
-          image: {
-            src: imageSrc
-          },
-          weight: gramsVal,
-          weight_unit: "g"
-        }
-      ],
-      image: {
-        src: imageSrc
-      },
-      options: [
-        {
-          name: "Size",
-          values: [sizeVal]
-        }
-      ]
-    };
-
-    // Prepare Collection Payload
+    // ── Build collection payload ──────────────────────────────────────────────
     const category = product.category || "General";
-    
-    // Fetch all active products in this category to calculate collection dates and image
+
+    // Fetch category siblings to derive the collection's representative image and timestamps
     let catQuery = supabase
       .from("products")
       .select("created_at, updated_at, images")
       .eq("is_active_india", true);
-      
+
     if (product.category) {
       catQuery = catQuery.eq("category", product.category);
     } else {
       catQuery = catQuery.is("category", null);
     }
-    
+
     const { data: catProducts } = await catQuery;
 
     const collectionId = getCollectionId(category);
-    const collectionUpdatedAt = catProducts && catProducts.length > 0 
-      ? new Date(Math.max(...catProducts.map(p => new Date(p.updated_at || "").getTime()))).toISOString()
-      : new Date(product.updated_at || "").toISOString();
-      
-    const collectionCreatedAt = catProducts && catProducts.length > 0 
-      ? new Date(Math.min(...catProducts.map(p => new Date(p.created_at || "").getTime()))).toISOString()
-      : new Date(product.created_at || "").toISOString();
 
-    const collectionImageSrc = catProducts?.find(p => p.images && p.images.length > 0)?.images[0] || product.images?.[0] || "";
+    const collectionUpdatedAt =
+      catProducts && catProducts.length > 0
+        ? new Date(
+            Math.max(
+              ...catProducts.map((p) => new Date(p.updated_at || "").getTime())
+            )
+          ).toISOString()
+        : new Date(product.updated_at || "").toISOString();
+
+    const collectionCreatedAt =
+      catProducts && catProducts.length > 0
+        ? new Date(
+            Math.min(
+              ...catProducts.map((p) => new Date(p.created_at || "").getTime())
+            )
+          ).toISOString()
+        : new Date(product.created_at || "").toISOString();
+
+    const collectionImageSrc =
+      catProducts?.find((p) => Array.isArray(p.images) && p.images.length > 0)
+        ?.images[0] ||
+      product.images?.[0] ||
+      "";
 
     const collectionPayload = {
       id: collectionId,
-      updated_at: collectionUpdatedAt,
+      title: category,
       body_html: `${category} Products`,
       handle: slugify(category),
-      image: {
-        src: collectionImageSrc
-      },
-      title: category,
-      created_at: collectionCreatedAt
+      image: { src: collectionImageSrc },
+      created_at: collectionCreatedAt,
+      updated_at: collectionUpdatedAt,
     };
 
-    // 1. Sync Product Webhook
+    // ── Send Product Webhook ──────────────────────────────────────────────────
     const productUrl = "https://checkout-api.shiprocket.com/wh/v1/custom/product";
     const productPayloadString = JSON.stringify(productPayload);
     const productResult = await postWebhookWithRetries(productUrl, productPayloadString, apiKey, secretKey);
@@ -255,11 +275,15 @@ serve(async (req) => {
       webhook_type: "product",
       payload: productPayload,
       response: productResult.responseText,
-      status: productResult.success ? "success" : "failed",
-      attempts: productResult.attempts
+      status: productResult.statusCode === 511
+        ? "auth_failure"
+        : productResult.success
+        ? "success"
+        : "failed",
+      attempts: productResult.attempts,
     });
 
-    // 2. Sync Collection Webhook
+    // ── Send Collection Webhook ───────────────────────────────────────────────
     const collectionUrl = "https://checkout-api.shiprocket.com/wh/v1/custom/collection";
     const collectionPayloadString = JSON.stringify(collectionPayload);
     const collectionResult = await postWebhookWithRetries(collectionUrl, collectionPayloadString, apiKey, secretKey);
@@ -268,21 +292,28 @@ serve(async (req) => {
       webhook_type: "collection",
       payload: collectionPayload,
       response: collectionResult.responseText,
-      status: collectionResult.success ? "success" : "failed",
-      attempts: collectionResult.attempts
+      status: collectionResult.statusCode === 511
+        ? "auth_failure"
+        : collectionResult.success
+        ? "success"
+        : "failed",
+      attempts: collectionResult.attempts,
     });
 
     return new Response(
       JSON.stringify({
         success: true,
-        product_sync: { success: productResult.success, attempts: productResult.attempts },
-        collection_sync: { success: collectionResult.success, attempts: collectionResult.attempts }
+        product_sync: {
+          success: productResult.success,
+          attempts: productResult.attempts,
+        },
+        collection_sync: {
+          success: collectionResult.success,
+          attempts: collectionResult.attempts,
+        },
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,

@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, AlertCircle, ShoppingBag, MapPin, CreditCard } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
+import { useCart } from "@/contexts/CartContext";
 
 const OrderSuccess = () => {
   useSEO({
@@ -24,6 +25,7 @@ const OrderSuccess = () => {
   const [order, setOrder] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const { clearCart } = useCart();
 
   useEffect(() => {
     if (!sessionId && !orderId && !shiprocketOrderId) {
@@ -74,6 +76,7 @@ const OrderSuccess = () => {
           setOrder(data);
           setLoading(false);
           clearInterval(intervalId);
+          clearCart();
         } else {
           // If not found, increment retry count
           setRetryCount(prev => {
@@ -257,10 +260,28 @@ const OrderSuccess = () => {
               )}
             </div>
 
-            {/* Back action */}
-            <div className="flex justify-center pt-2">
-              <Button asChild className="text-xs tracking-[0.1em] uppercase px-8 h-11 bg-foreground text-background hover:bg-foreground/90">
-                <Link to="/shop">Continue Shopping</Link>
+            {/* Actions */}
+            <div className="pt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link to="/shop">
+                <Button variant="outline" className="min-w-[200px] h-12 uppercase tracking-widest text-xs font-light rounded-none">
+                  Continue Shopping
+                </Button>
+              </Link>
+              {order.user_id ? (
+                <Link to="/account">
+                  <Button className="min-w-[200px] h-12 bg-neutral-900 hover:bg-neutral-800 text-white uppercase tracking-widest text-xs font-light rounded-none">
+                    View Orders
+                  </Button>
+                </Link>
+              ) : null}
+            </div>
+
+            <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Button disabled variant="outline" className="min-w-[200px] h-12 uppercase tracking-widest text-xs font-light rounded-none text-muted-foreground">
+                Track Order (Coming Soon)
+              </Button>
+              <Button disabled variant="outline" className="min-w-[200px] h-12 uppercase tracking-widest text-xs font-light rounded-none text-muted-foreground">
+                Download Invoice
               </Button>
             </div>
           </div>

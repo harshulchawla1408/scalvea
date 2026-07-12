@@ -1,33 +1,45 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import { generateHmacSha256 } from "../_shared/shiprocket-mapper.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-async function generateHmacSha256(secret: string, data: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signatureBuffer = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(data)
-  );
-  const u8 = new Uint8Array(signatureBuffer);
-  
-  // Base64 encode
-  let binary = "";
-  for (let i = 0; i < u8.length; i++) {
-    binary += String.fromCharCode(u8[i]);
+// ─── Helper: outbound fetch with 15-second timeout ───────────────────────────
+
+async function shiprocketFetch(
+  url: string,
+  payloadString: string,
+  apiKey: string,
+  sig: string
+): Promise<{ ok: boolean; status: number; text: string }> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Api-Key": apiKey,
+        "X-Api-HMAC-SHA256": sig
+      },
+      body: payloadString,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return { ok: res.ok, status: res.status, text: await res.text() };
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError") {
+      return { ok: false, status: 504, text: "Request timed out after 15s" };
+    }
+    throw err;
   }
-  return btoa(binary);
 }
+
+// ─── Handler ─────────────────────────────────────────────────────────────────
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -52,6 +64,7 @@ serve(async (req) => {
     const body = await req.json();
     const { action, amount, order_id, page, from, to } = body;
 
+    // ── Refund Initiate ───────────────────────────────────────────────────────
     if (action === "initiate") {
       if (!amount || !order_id) {
         return new Response(JSON.stringify({ error: "Missing amount or order_id" }), {
@@ -68,18 +81,13 @@ serve(async (req) => {
       const payloadString = JSON.stringify(payload);
       const sig = await generateHmacSha256(secretKey, payloadString);
 
-      const response = await fetch("https://checkout-api.shiprocket.com/api/v1/external/refund/initiate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "x-signature": sig,
-          "X-Api-HMAC-SHA256": sig
-        },
-        body: payloadString
-      });
+      const { ok, status, text: responseText } = await shiprocketFetch(
+        "https://checkout-api.shiprocket.com/api/v1/external/refund/initiate",
+        payloadString,
+        apiKey,
+        sig
+      );
 
-      const responseText = await response.text();
       let resJson: any = {};
       try {
         resJson = JSON.parse(responseText);
@@ -87,9 +95,8 @@ serve(async (req) => {
         resJson = { raw: responseText };
       }
 
-      // If refund succeeds, log it in payments and update order status
-      if (response.ok && resJson.ok === true) {
-        // Query local order ID from shiprocket mapping
+      // On success, log the refund in payments and update order status
+      if (ok && resJson.ok === true) {
         const { data: mapping } = await supabase
           .from("shiprocket_orders")
           .select("order_id")
@@ -97,7 +104,6 @@ serve(async (req) => {
           .maybeSingle();
 
         if (mapping?.order_id) {
-          // Log refund in payments
           await supabase.from("payments").insert({
             order_id: mapping.order_id,
             payment_method: "shiprocket_refund",
@@ -107,8 +113,6 @@ serve(async (req) => {
             raw_response: resJson
           });
 
-          // Update order status if fully refunded
-          // In production, we'd query total payments to check if fully refunded
           await supabase.from("orders").update({
             payment_status: "refunded",
             order_status: "cancelled",
@@ -118,10 +122,11 @@ serve(async (req) => {
       }
 
       return new Response(JSON.stringify(resJson), {
-        status: response.status,
+        status,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
 
+    // ── Refund Report ─────────────────────────────────────────────────────────
     } else if (action === "report") {
       const payload = {
         page: Number(page || 1),
@@ -132,18 +137,13 @@ serve(async (req) => {
       const payloadString = JSON.stringify(payload);
       const sig = await generateHmacSha256(secretKey, payloadString);
 
-      const response = await fetch("https://checkout-api.shiprocket.com/api/v1/external/refund/reports", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "x-signature": sig,
-          "X-Api-HMAC-SHA256": sig
-        },
-        body: payloadString
-      });
+      const { status, text: responseText } = await shiprocketFetch(
+        "https://checkout-api.shiprocket.com/api/v1/external/refund/reports",
+        payloadString,
+        apiKey,
+        sig
+      );
 
-      const responseText = await response.text();
       let resJson = {};
       try {
         resJson = JSON.parse(responseText);
@@ -152,7 +152,7 @@ serve(async (req) => {
       }
 
       return new Response(JSON.stringify(resJson), {
-        status: response.status,
+        status,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
 

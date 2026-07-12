@@ -1,32 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { generateHmacSha256 } from "../_shared/shiprocket-mapper.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-async function generateHmacSha256(secret: string, data: string): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signatureBuffer = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(data)
-  );
-  const u8 = new Uint8Array(signatureBuffer);
-  
-  // Base64 encode
-  let binary = "";
-  for (let i = 0; i < u8.length; i++) {
-    binary += String.fromCharCode(u8[i]);
-  }
-  return btoa(binary);
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -60,16 +38,33 @@ serve(async (req) => {
     const payloadString = JSON.stringify(payload);
     const sig = await generateHmacSha256(secretKey, payloadString);
 
-    const response = await fetch("https://checkout-api.shiprocket.com/api/v1/custom-platform-order/details/list", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "x-signature": sig,
-        "X-Api-HMAC-SHA256": sig
-      },
-      body: payloadString
-    });
+    // 15-second timeout to prevent hung edge functions
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15_000);
+
+    let response: Response;
+    try {
+      response = await fetch("https://checkout-api.shiprocket.com/api/v1/custom-platform-order/details/list", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Api-Key": apiKey,
+          "X-Api-HMAC-SHA256": sig
+        },
+        body: payloadString,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        return new Response(
+          JSON.stringify({ error: "Shiprocket order list request timed out after 15s" }),
+          { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      throw err;
+    }
 
     const responseText = await response.text();
     let resJson = {};

@@ -10,16 +10,16 @@ BEGIN
   END IF;
 END $$;
 
--- Schedule a cron job to call the shiprocket-order-list Edge Function every 30 minutes
--- This pulls the latest orders list from Shiprocket to synchronize any pending or initiated orders
+-- Schedule a cron job to call the shiprocket-reconcile Edge Function every 30 minutes
+-- This pulls pending/initiated orders and syncs them automatically
 SELECT cron.schedule(
   'shiprocket-order-sync-job',
   '*/30 * * * *', -- every 30 minutes
   $$
   SELECT net.http_post(
-    url := 'https://dtehgajreecaonqalxlf.supabase.co/functions/v1/shiprocket-order-list',
+    url := 'https://dtehgajreecaonqalxlf.supabase.co/functions/v1/shiprocket-reconcile',
     headers := '{"Content-Type": "application/json"}'::jsonb,
-    body := '{"limit": 50, "page": 1, "status": "initiated"}'::jsonb
+    body := '{}'::jsonb
   );
   $$
 );

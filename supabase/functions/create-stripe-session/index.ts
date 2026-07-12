@@ -259,7 +259,7 @@ serve(async (req) => {
       );
     }
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2026-01-28.clover" as any });
 
     console.log("Stripe Session Creation Initiated. Total cents:", subtotalAfterDiscountCents + gstCents + shippingCents);
 

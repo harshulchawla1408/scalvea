@@ -78,8 +78,8 @@ const CountUp = ({ value, duration = 1.8 }: { value: number; duration?: number }
 
 const Index = () => {
   useSEO({
-    title: "Premium Hair Growth Solutions",
-    description: "Premium hair growth solutions backed by clinical research. Featuring Redensyl, Baicapil, Procapil and AnaGain for healthier, fuller-looking hair.",
+    title: "Premium Hair Growth Solutions | Care You Deserve",
+    description: "Discover premium hair growth products formulated with clinically inspired ingredients including Anagain, Redensyl, Baicapil and Procapil. Designed to support healthier, fuller-looking hair for men and women.",
     keywords: "hair growth serum, hair growth spray, scalp treatment, hair regrowth, Scalvea, Redensyl, Baicapil, Procapil, AnaGain",
     schema: {
       "@context": "https://schema.org",
@@ -87,8 +87,19 @@ const Index = () => {
         {
           "@type": "Organization",
           "name": "Scalvea",
+          "slogan": "Care You Deserve",
           "url": "https://scalvea.com",
           "logo": "https://scalvea.com/logo.png",
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "email": "support@scalvea.com",
+            "contactType": "customer support"
+          },
+          "brand": {
+            "@type": "Brand",
+            "name": "Scalvea",
+            "slogan": "Care You Deserve"
+          },
           "sameAs": [
             "https://www.instagram.com/scalvea",
             "https://instagram.com/scalvea_",

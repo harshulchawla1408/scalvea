@@ -177,7 +177,7 @@ table{width:100%;border-collapse:collapse;margin:20px 0}th,td{text-align:left;pa
 th{text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#888}.total{font-weight:600;font-size:15px}
 .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px}
 .meta{font-size:12px;color:#666;line-height:1.8}</style></head><body>
-<div class="header"><div><h1>SCALVEA</h1><p style="font-size:11px;color:#888;letter-spacing:2px">NOTHING TO HIDE</p></div>
+<div class="header"><div><h1>SCALVEA</h1><p style="font-size:11px;color:#888;letter-spacing:2px">CARE YOU DESERVE</p></div>
 <div style="text-align:right"><h2 style="font-size:16px;margin:0">INVOICE</h2>
 <p class="meta">${order.order_number}<br>${new Date(order.created_at).toLocaleDateString()}</p></div></div>
 <div class="meta" style="margin-bottom:20px"><strong>Ship To:</strong><br>
@@ -416,30 +416,28 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
                           </div>
                         </div>
 
-                        {order.shiprocket_orders && order.shiprocket_orders.length > 0 && (
-                          <div className="border-t border-border/40 pt-4 mt-2 grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Courier Partner</p>
-                              <p>{order.shiprocket_orders[0].courier_name || "Assigning..."}</p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Tracking Number</p>
-                              <p className="font-mono">
-                                {order.shiprocket_orders[0].tracking_id ? (
-                                  <span className="text-foreground font-semibold">{order.shiprocket_orders[0].tracking_id}</span>
-                                ) : (
-                                  "Pending shipment"
-                                )}
-                              </p>
-                            </div>
+                        <div className="border-t border-border/40 pt-4 mt-2 grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Courier Partner</p>
+                            <p>{order.courier || "Assigning..."}</p>
                           </div>
-                        )}
+                          <div>
+                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Tracking Number</p>
+                            <p className="font-mono">
+                              {order.tracking_number ? (
+                                <span className="text-foreground font-semibold">{order.tracking_number}</span>
+                              ) : (
+                                <span className="text-muted-foreground">Pending shipment</span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
 
                         {order.shipping_address && (
                           <div className="text-sm">
                             <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Address</p>
-                            <p>{(order.shipping_address as any).first_name} {(order.shipping_address as any).last_name}</p>
-                            <p className="text-muted-foreground">{(order.shipping_address as any).address_line1}, {(order.shipping_address as any).city} {(order.shipping_address as any).state} {(order.shipping_address as any).postcode}</p>
+                            <p>{(order.shipping_address as any).firstName || (order.shipping_address as any).first_name} {(order.shipping_address as any).lastName || (order.shipping_address as any).last_name}</p>
+                            <p className="text-muted-foreground">{(order.shipping_address as any).address || (order.shipping_address as any).address_line1}, {(order.shipping_address as any).city} {(order.shipping_address as any).state} {(order.shipping_address as any).postcode}</p>
                           </div>
                         )}
 

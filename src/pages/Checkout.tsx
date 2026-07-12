@@ -125,14 +125,7 @@ const Checkout = () => {
     setCouponCode("");
   };
 
-  // Dynamic load Shiprocket Checkout script
-  useEffect(() => {
-    if (isIndia) {
-      import("@/utils/shiprocket").then(({ loadShiprocketAssets }) => {
-        loadShiprocketAssets();
-      });
-    }
-  }, [isIndia]);
+  // Shiprocket assets are loaded dynamically at checkout via launchShiprocketCheckout
 
   const handleShiprocketCheckout = async (e?: any) => {
     if (!user) {
@@ -144,18 +137,16 @@ const Checkout = () => {
     setPlacing(true);
 
     try {
-      // 1. Ensure the Shiprocket SDK is loaded before proceeding
-      const { loadShiprocketAssets } = await import("@/utils/shiprocket");
-      const sdkReady = await loadShiprocketAssets();
-      console.log("Shiprocket SDK ready:", sdkReady);
-
-      // 2. Invoke Supabase Edge Function to generate access token
+      // 1. Invoke Supabase Edge Function to generate access token
       const { data, error } = await supabase.functions.invoke("create-shiprocket-checkout-token", {
         body: {
           items: items.map(item => ({
             productId: item.productId,
             quantity: item.quantity
-          }))
+          })),
+          // Pass coupon and discount so Shiprocket can apply cart_discount
+          couponCode: appliedCoupon?.code || null,
+          discountAmount: discountAmount > 0 ? discountAmount : null
         }
       });
 
@@ -164,35 +155,22 @@ const Checkout = () => {
       }
 
       const token = data.token;
-      const redirectUrl = data.redirect_url || "";
-
       console.log("Checkout token received:", token);
-      console.log("Redirect URL received:", redirectUrl || "(empty — SDK will construct URL from token)");
 
-      // 3. Call HeadlessCheckout.addToCart or fallback to direct redirect
-      const headless = (window as any).HeadlessCheckout;
-      if (headless && typeof headless.addToCart === "function") {
-        // SDK is available — it constructs the checkout URL internally from the token.
-        // The fallbackUrl is shown in the preloader if the iframe takes too long.
-        console.log("Loading Shiprocket Checkout via Headless SDK");
-        clearCart();
-        headless.addToCart(e || null, token, {
-          fallbackUrl: redirectUrl || undefined,
-          isInitiatedFromApp: true
-        });
-      } else {
-        // SDK not available — need redirectUrl to fall back to direct navigation
-        if (!redirectUrl) {
-          throw new Error("Shiprocket checkout unavailable. Please try again in a moment.");
-        }
-        console.log("HeadlessCheckout SDK not available. Redirecting to:", redirectUrl);
-        clearCart();
-        window.location.href = redirectUrl;
-      }
+      // 2. Launch Official Shiprocket Checkout
+      const { launchShiprocketCheckout } = await import("@/lib/shiprocketCheckout");
+      const fallbackUrl = window.location.origin + "/checkout";
+      
+      launchShiprocketCheckout(token, fallbackUrl);
+
+      // Note: We deliberately do NOT clear the cart here. 
+      // If the user cancels or the checkout fails, they must be able to return to their cart.
+      
     } catch (err: any) {
       console.error("Shiprocket checkout error:", err);
       toast({ title: "Checkout Error", description: err.message, variant: "destructive" });
     } finally {
+      // Restore UI state
       setPlacing(false);
     }
   };
@@ -255,9 +233,6 @@ const Checkout = () => {
 
       const sessionId = data.sessionId;
       const checkoutUrl = data.checkoutUrl;
-
-      // Clear local cart before redirecting so the success page starts with an empty cart
-      clearCart();
 
       // 3. Redirect using @stripe/stripe-js
       const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
