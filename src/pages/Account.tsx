@@ -61,6 +61,24 @@ const Account = () => {
     if (!loading && !user) navigate("/auth");
   }, [loading, user, navigate]);
 
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel("schema-db-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        (payload) => {
+          queryClient.invalidateQueries({ queryKey: ["orders", user.id] });
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, queryClient]);
+
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
@@ -76,7 +94,7 @@ const Account = () => {
       const { data } = await supabase
         .from("orders")
         .select("*, shiprocket_orders(*)")
-        .eq("user_id", user!.id)
+        .or(`user_id.eq.${user!.id},customer_email.eq.${user!.email}`)
         .order("created_at", { ascending: false });
       return data || [];
     },

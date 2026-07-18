@@ -30,45 +30,15 @@ const AdminOrders = () => {
   };
 
   const updateStatus = async (id: string, status: string, prevStatus: string, orderCountry: string) => {
+    if (status === prevStatus) return;
+    
     await supabase.from("orders").update({ order_status: status } as any).eq("id", id);
-
-    // Deduct country-specific inventory when order is delivered, unless Stripe order (which deducts at payment/webhook)
-    if (status === "delivered" && prevStatus !== "delivered") {
-      const { data: orderDetails } = await supabase.from("orders").select("payment_provider").eq("id", id).maybeSingle();
-      if (orderDetails?.payment_provider !== "stripe" && orderDetails?.payment_provider !== "shiprocket") {
-        const items = orderItems[id] || (await supabase.from("order_items").select("*").eq("order_id", id)).data || [];
-        const isIndia = orderCountry?.toLowerCase() === "india";
-        const stockField = isIndia ? "inventory_quantity" : "inventory_quantity_australia";
-
-        for (const item of items) {
-          if (!item.product_id) continue;
-          const { data: product } = await supabase
-            .from("products")
-            .select(`id, ${stockField}`)
-            .eq("id", item.product_id)
-            .single();
-
-          if (product) {
-            const prevQty = (product as any)[stockField] ?? 0;
-            const newQty = Math.max(0, prevQty - item.quantity);
-            await supabase
-              .from("products")
-              .update({ [stockField]: newQty } as any)
-              .eq("id", item.product_id);
-
-            await supabase.from("inventory_logs").insert({
-              product_id: item.product_id,
-              change_amount: -(item.quantity),
-              previous_quantity: prevQty,
-              new_quantity: newQty,
-              reason: `Order delivered (${id.slice(0, 8)}) - ${orderCountry.toUpperCase()}`,
-            } as any);
-          }
-        }
-      } else {
-        console.log("Skipping inventory deduction on status change: Stripe/Shiprocket inventory already deducted by payment webhook.");
-      }
-    }
+    await supabase.from("order_status_history").insert({
+      order_id: id,
+      previous_status: prevStatus,
+      new_status: status,
+      changed_by: "Admin"
+    } as any);
 
     toast({ title: `Order status updated to ${status}` });
     fetchOrders();

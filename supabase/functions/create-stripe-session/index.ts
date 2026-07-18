@@ -43,7 +43,7 @@ serve(async (req) => {
     const userId = user.id;
 
     // Parse request body
-    const { items, email, shipping_address, coupon_code, shipping_type } = await req.json();
+    const { items, email, phone, firstName, lastName, coupon_code, shipping_type } = await req.json();
     if (!items || !Array.isArray(items) || items.length === 0) {
       return new Response(
         JSON.stringify({ error: "Missing or invalid items in cart" }),
@@ -51,9 +51,9 @@ serve(async (req) => {
       );
     }
 
-    if (!email || !shipping_address) {
+    if (!email || !firstName || !lastName) {
       return new Response(
-        JSON.stringify({ error: "Missing contact email or shipping address details" }),
+        JSON.stringify({ error: "Missing contact details" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -201,7 +201,17 @@ serve(async (req) => {
           total: totalAmount,
           stripe_session_id: mockSessionId,
           delivery_estimate: shipping_type === "express" ? "2-4 business days" : "5-7 business days",
-          shipping_address: shipping_address,
+          // Mock order: we don't have a Stripe-collected address here, so use a placeholder
+          shipping_address: {
+            first_name: firstName,
+            last_name: lastName,
+            address_line1: "Mock Address",
+            city: "Mock City",
+            state: "NSW",
+            postcode: "2000",
+            phone: phone || "0400000000",
+            email: email
+          },
         } as any)
         .select()
         .single();
@@ -264,25 +274,18 @@ serve(async (req) => {
     console.log("Stripe Session Creation Initiated. Total cents:", subtotalAfterDiscountCents + gstCents + shippingCents);
 
     // 6. Create Stripe Checkout Session
+    // We delegate the final Australian address collection strictly to Stripe
+    // to avoid double-entry and prevent invalid postcodes/states from breaking session creation.
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: stripeLineItems,
       mode: "payment",
       customer_email: email,
+      shipping_address_collection: {
+        allowed_countries: ["AU"],
+      },
       success_url: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout`,
-      payment_intent_data: {
-        shipping: {
-          name: shipping_address.firstName + " " + shipping_address.lastName,
-          address: {
-            line1: shipping_address.address,
-            city: shipping_address.city,
-            state: shipping_address.state,
-            postal_code: shipping_address.postcode,
-            country: "AU",
-          }
-        }
-      },
       metadata: {
         user_id: userId,
         market: "AU",
@@ -292,7 +295,9 @@ serve(async (req) => {
         shipping_cost: String(shippingCents),
         shipping_type: shipping_type || "standard",
         cart_items: items.map((i: any) => `${i.productId}:${i.quantity}`).join(","),
-        shipping_address: JSON.stringify(shipping_address),
+        customer_phone: phone || "",
+        customer_first_name: firstName || "",
+        customer_last_name: lastName || "",
       },
     });
 
@@ -306,7 +311,11 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
-    console.error("Stripe Session Creation Error:", error);
+    console.error("Stripe Session Creation Error:", error.message || error);
+    // Log the Stripe specific error type if available for better debugging
+    if (error.type) {
+      console.error(`Stripe Error Type: ${error.type}, Code: ${error.code}`);
+    }
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

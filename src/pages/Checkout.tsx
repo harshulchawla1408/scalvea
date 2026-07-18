@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { loadStripe } from "@stripe/stripe-js";
 import { useSEO } from "@/hooks/useSEO";
+import { Lock, CheckCircle2, ShieldCheck } from "lucide-react";
 
 const AUSTRALIA_STATES = [
   "New South Wales (NSW)",
@@ -127,13 +128,14 @@ const Checkout = () => {
 
   // Shiprocket assets are loaded dynamically at checkout via launchShiprocketCheckout
 
-  const handleShiprocketCheckout = async (e?: any) => {
+  const handleShiprocketCheckout = async (e?: React.MouseEvent<HTMLButtonElement>) => {
+    // Capture the native DOM event synchronously BEFORE any async work.
+    // React's synthetic event pool may null the event during the token fetch (500ms–15s).
+    const capturedNativeEvent: Event | null = (e?.nativeEvent as Event) || null;
     e?.preventDefault();
-    if (!user) {
-      toast({ title: "Please sign in", description: "You need an account to place an order.", variant: "destructive" });
-      navigate("/auth");
-      return;
-    }
+
+    // NOTE: India Shiprocket checkout supports GUEST checkout.
+    // Do NOT add an auth guard here. Login is NOT required for Indian customers.
 
     setPlacing(true);
 
@@ -157,13 +159,16 @@ const Checkout = () => {
 
       const token = data.token;
 
-      // 2. Launch Official Shiprocket Checkout
+      // 2. Launch Official Shiprocket Headless Checkout via SDK.
+      // The SDK opens the Shiprocket iframe using HeadlessCheckout.addToCart(event, token, options).
+      // The capturedNativeEvent is required by the SDK to correctly position the iframe.
+      // fallbackUrl is the MERCHANT'S native checkout page — not a Shiprocket URL.
       const { launchShiprocketCheckout } = await import("@/lib/shiprocketCheckout");
       const fallbackUrl = window.location.origin + "/checkout";
       
-      launchShiprocketCheckout(e?.nativeEvent || e, token, fallbackUrl);
+      launchShiprocketCheckout(capturedNativeEvent, token, fallbackUrl);
 
-      // Note: We deliberately do NOT clear the cart here. 
+      // Note: Do NOT clear the cart here. 
       // If the user cancels or the checkout fails, they must be able to return to their cart.
       
     } catch (err: any) {
@@ -211,17 +216,9 @@ const Checkout = () => {
             quantity: item.quantity
           })),
           email: form.email,
-          shipping_address: {
-            firstName: form.firstName,
-            lastName: form.lastName,
-            address: form.address,
-            city: form.city,
-            state: form.state,
-            postcode: form.postcode,
-            country: "Australia",
-            phone: form.phone,
-            email: form.email,
-          },
+          phone: form.phone,
+          firstName: form.firstName,
+          lastName: form.lastName,
           coupon_code: appliedCoupon?.code || null,
           shipping_type: "standard" // default to standard shipping
         }
@@ -261,15 +258,30 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
+    if (!user && !isIndia) {
       toast({ title: "Please sign in", description: "You need an account to place an order.", variant: "destructive" });
       navigate("/auth");
       return;
     }
 
-    // Pincode/Postcode validation (Australia only)
-    if (!/^\d{4}$/.test(form.postcode)) {
-      toast({ title: "Invalid Postcode", description: "Australian postcodes must be exactly 4 digits.", variant: "destructive" });
+    if (isIndia) {
+      if (!form.email || !form.firstName || !form.lastName || !form.address || !form.city || !form.state || !form.postcode || !form.phone) {
+        toast({ title: "Missing details", description: "Please fill in all required fields.", variant: "destructive" });
+        return;
+      }
+      handleShiprocketCheckout(e as unknown as React.MouseEvent<HTMLButtonElement>);
+      return;
+    }
+
+    // Australia Validation
+    if (!form.email || !form.firstName || !form.lastName || !form.phone) {
+      toast({ title: "Missing details", description: "Please fill in all required contact fields.", variant: "destructive" });
+      return;
+    }
+
+    const phoneClean = form.phone.replace(/[^0-9+]/g, '');
+    if (phoneClean.length < 9) {
+      toast({ title: "Invalid Phone", description: "Please enter a valid Australian phone number.", variant: "destructive" });
       return;
     }
 
@@ -299,27 +311,22 @@ const Checkout = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             <div className="space-y-8">
               {isIndia ? (
-                <div className="space-y-6 border border-border/80 p-8 bg-secondary/10 relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-orange-400 via-neutral-100 to-green-600" />
-                  <h2 className="text-sm tracking-[0.2em] uppercase font-light flex items-center gap-2">🇮🇳 Shiprocket Fast Checkout</h2>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Indian orders are processed securely via Shiprocket. You can complete your purchase using saved addresses, OTP-based login, and multiple payment methods:
-                  </p>
-                  <div className="grid grid-cols-2 gap-3 text-[10px] tracking-[0.1em] uppercase text-muted-foreground font-mono">
-                    <div>✓ UPI (GPay, PhonePe, etc.)</div>
-                    <div>✓ Credit/Debit Cards</div>
-                    <div>✓ Net Banking & Wallets</div>
-                    <div>✓ Cash on Delivery (COD)</div>
-                    <div>✓ EMI / BNPL options</div>
+                <div className="space-y-6 pt-4">
+                  <div>
+                    <h2 className="text-xs tracking-[0.15em] uppercase mb-4">
+                      Secure Checkout
+                    </h2>
+                    <p className="text-xs text-muted-foreground font-light mb-6">
+                      Complete your order securely using your preferred payment method.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-4 text-[11px] uppercase tracking-[0.05em] text-muted-foreground">
+                      <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-foreground" /> UPI</div>
+                      <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-foreground" /> Credit & Debit Cards</div>
+                      <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-foreground" /> Net Banking & Wallets</div>
+                      <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-foreground" /> Cash on Delivery</div>
+                      <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-foreground" /> EMI / Pay Later</div>
+                    </div>
                   </div>
-                  <Button 
-                    type="button" 
-                    onClick={handleShiprocketCheckout} 
-                    disabled={placing} 
-                    className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase mt-6 animate-pulse"
-                  >
-                    {placing ? "Launching Shiprocket..." : "Proceed with Shiprocket Checkout"}
-                  </Button>
                 </div>
               ) : (
                 <>
@@ -339,31 +346,6 @@ const Checkout = () => {
                         <input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder="Last name" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
                       </div>
                       
-                      <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Street Address" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="Suburb / Town" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
-                        
-                        <select
-                          value={form.state}
-                          onChange={(e) => setForm({ ...form, state: e.target.value })}
-                          className="w-full h-11 px-3 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
-                          required
-                        >
-                          {AUSTRALIA_STATES.map((state) => (
-                            <option key={state} value={state}>{state}</option>
-                          ))}
-                        </select>
-
-                        <input 
-                          value={form.postcode} 
-                          onChange={(e) => setForm({ ...form, postcode: e.target.value })} 
-                          placeholder="Postcode (4 digits)" 
-                          required 
-                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors font-mono" 
-                        />
-                      </div>
-
                       <div className="flex flex-col gap-1">
                         <input 
                           value={form.phone} 
@@ -373,7 +355,71 @@ const Checkout = () => {
                           className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" 
                         />
                       </div>
+                    </div>
+                  </div>
 
+                  {/* Address fields only shown for India, as Stripe Hosted Checkout collects AU address natively */}
+                  {isIndia ? (
+                    <div className="space-y-4 pt-4 border-t border-border">
+                      <div className="space-y-1">
+                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Address / Apartment / Suite</label>
+                        <input 
+                          value={form.address} 
+                          onChange={(e) => setForm({ ...form, address: e.target.value })} 
+                          required 
+                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">City / Suburb</label>
+                          <input 
+                            value={form.city} 
+                            onChange={(e) => setForm({ ...form, city: e.target.value })} 
+                            required 
+                            className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">State / Territory</label>
+                          <input
+                            value={form.state}
+                            onChange={(e) => setForm({ ...form, state: e.target.value })}
+                            required
+                            placeholder="State"
+                            className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Postcode / PIN</label>
+                          <input 
+                            value={form.postcode} 
+                            onChange={(e) => setForm({ ...form, postcode: e.target.value })} 
+                            required 
+                            className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground"
+                          />
+                        </div>
+
+                        <div>
+                          <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Destination</p>
+                          <div className="w-full h-11 px-4 text-sm bg-secondary border border-border flex items-center text-muted-foreground cursor-not-allowed">
+                            🇮🇳 India
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 pt-4 border-t border-border">
+                      <div>
+                        <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Address</p>
+                        <div className="w-full h-11 px-4 text-sm bg-secondary border border-border flex items-center text-muted-foreground">
+                          Address will be collected securely on the next step
+                        </div>
+                      </div>
                       <div>
                         <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Destination</p>
                         <div className="w-full h-11 px-4 text-sm bg-secondary border border-border flex items-center text-muted-foreground cursor-not-allowed">
@@ -381,26 +427,28 @@ const Checkout = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
-                  <div>
-                    <h2 className="text-xs tracking-[0.15em] uppercase mb-6">Payment Options</h2>
-                    <div className="space-y-3">
-                      <div className="p-4 border border-foreground bg-secondary/10 flex items-center justify-between animate-fade-in">
-                        <div className="space-y-1">
-                          <span className="text-sm font-light block">Credit / Debit Card, Apple Pay, Google Pay</span>
-                          <span className="text-[10px] text-muted-foreground font-light block">Processed securely via Stripe Checkout</span>
-                        </div>
+                  <div className="pt-4">
+                    <h2 className="text-xs tracking-[0.15em] uppercase mb-4">Secure Payment</h2>
+                    <p className="text-xs text-muted-foreground font-light mb-6">
+                      Pay securely using your preferred payment method.
+                    </p>
+                    <div className="p-5 border border-border/60 bg-transparent flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light block">Credit / Debit Card, Apple Pay, Google Pay</span>
                         <div className="flex gap-1.5 text-[9px] tracking-wider font-mono text-muted-foreground uppercase">
                           <span>Visa</span> · <span>MC</span> · <span>Amex</span>
                         </div>
                       </div>
+                      <div className="flex items-center gap-2 text-[10px] tracking-[0.05em] uppercase text-muted-foreground mt-1">
+                        <Lock className="w-3 h-3" /> Secure encrypted payment
+                      </div>
                     </div>
+                    <p className="text-[9px] text-muted-foreground font-light text-right mt-2 uppercase tracking-[0.05em]">
+                      Secure payments powered by Stripe
+                    </p>
                   </div>
-
-                  <Button type="submit" disabled={placing} className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase">
-                    {placing ? "Processing Order..." : `Place Order — ${formatVal(grandTotal)}`}
-                  </Button>
                 </>
               )}
             </div>
@@ -471,12 +519,38 @@ const Checkout = () => {
                   <div className="border-t border-border pt-3 flex justify-between text-sm font-medium">
                     <span>Total Due</span>
                     <div className="text-right font-mono">
-                      <span className="block font-medium">{formatVal(grandTotal)}</span>
+                      <span className="block font-medium text-base">{formatVal(grandTotal)}</span>
                       <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5 font-sans">Inclusive of all taxes</span>
                     </div>
                   </div>
                 </div>
-                {settings && <p className="text-[10px] text-muted-foreground">Estimated Delivery Time: {settings.delivery_time}</p>}
+                {settings && <p className="text-[10px] text-muted-foreground text-center pt-2">Estimated Delivery Time: {settings.delivery_time}</p>}
+
+                <div className="pt-4">
+                  {isIndia ? (
+                    <Button 
+                      type="button" 
+                      onClick={(e) => handleShiprocketCheckout(e)} 
+                      disabled={placing} 
+                      className="w-full h-14 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase shadow-lg shadow-black/5"
+                    >
+                      {placing ? "Loading..." : "Continue to Secure Checkout"}
+                    </Button>
+                  ) : (
+                    <Button 
+                      type="submit" 
+                      disabled={placing} 
+                      className="w-full h-14 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase shadow-lg shadow-black/5"
+                    >
+                      {placing ? "Processing..." : `Continue to Payment — ${formatVal(grandTotal)}`}
+                    </Button>
+                  )}
+                  <div className="flex items-center justify-center gap-6 mt-6 text-[10px] uppercase tracking-[0.05em] text-muted-foreground">
+                    <div className="flex items-center gap-1.5"><Lock className="w-3 h-3" /> Secure Checkout</div>
+                    <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3" /> Safe Payments</div>
+                    <div className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> Order Protection</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

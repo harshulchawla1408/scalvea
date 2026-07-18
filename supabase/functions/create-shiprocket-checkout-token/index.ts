@@ -150,31 +150,21 @@ serve(async (req) => {
         );
       }
 
-      // Use redirect_url from Shiprocket response when available.
-      // Fix legacy domain: checkout.shiprocket.co → checkout.shiprocket.in
-      let redirectUrl = resData.result?.redirect_url || "";
-      if (redirectUrl.includes("checkout.shiprocket.co")) {
-        redirectUrl = redirectUrl.replace("checkout.shiprocket.co", "checkout.shiprocket.in");
-      }
-
-      // Fallback: construct Fastrr checkout URL from token (sourced from SDK source)
-      if (!redirectUrl) {
-        const channelParams = btoa(encodeURIComponent(JSON.stringify({
-          shop_name: "company-logo",
-          shop_url: "scalvea.com",
-          redirectUrl: callbackRedirectUrl,
-          credInstalled: false,
-          gpayInstalled: "NO"
-        })));
-        redirectUrl = `https://fastrr-boost-ui.pickrr.com/?customCheckoutToken=${token}&type=cart&platform=CUSTOM&channel=${channelParams}&isInitiatedFromApp=true`;
-      }
-
+      // Return ONLY the token, expires_at, and order_id to the browser.
+      //
+      // IMPORTANT: Do NOT construct or return any Shiprocket/Fastrr redirect URLs here.
+      // The frontend always uses HeadlessCheckout.addToCart(event, token, { fallbackUrl })
+      // via the official SDK. The redirect_url inside the Shiprocket API response is the
+      // URL where Shiprocket sends the customer AFTER checkout (our /shiprocket-callback),
+      // NOT a URL to launch checkout with.
+      //
+      // Leaking the token into a redirect URL would bypass the SDK and expose the token
+      // in the browser's address bar.
       return new Response(
         JSON.stringify({
           token,
           expires_at: expiresAt,
           order_id: orderId,
-          redirect_url: redirectUrl
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

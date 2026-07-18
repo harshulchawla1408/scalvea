@@ -266,6 +266,7 @@ export async function findProductIdByVariantId(supabase: any, variantId: string)
     .maybeSingle());
   if (data) return data;
 
+  // ── UUID match ──────────────────────────────────────────────────────────────
   if (variantId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
     ({ data } = await supabase
       .from("products")
@@ -275,14 +276,13 @@ export async function findProductIdByVariantId(supabase: any, variantId: string)
     if (data) return data;
   }
 
-  ({ data } = await supabase
-    .from("products")
-    .select("id, name, inventory_quantity")
-    .eq("is_active_india", true)
-    .limit(1)
-    .maybeSingle());
-
-  return data;
+  // ── No match found ───────────────────────────────────────────────────────────
+  // IMPORTANT: Do NOT fall back to the first active India product.
+  // A fallback would silently assign the wrong product to an order item,
+  // causing incorrect inventory deduction. Return null and let the caller
+  // decide whether to log a warning or skip the item.
+  console.warn(`findProductIdByVariantId: No product found for variant_id="${variantId}". Returning null.`);
+  return null;
 }
 
 /**

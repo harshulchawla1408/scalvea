@@ -95,7 +95,29 @@ serve(async (req) => {
       const shippingCents = Number(session.metadata.shipping_cost || 0);
       const cartItemsStr = session.metadata.cart_items;
       const shippingType = session.metadata.shipping_type || "standard";
-      const rawShippingAddress = session.metadata.shipping_address;
+      
+      // We now extract the final, Stripe-verified address from the session object itself.
+      const stripeShipping = session.shipping_details;
+      const shippingAddress = stripeShipping ? {
+        first_name: stripeShipping.name ? stripeShipping.name.split(" ")[0] : session.metadata.customer_first_name || "AU",
+        last_name: stripeShipping.name ? stripeShipping.name.split(" ").slice(1).join(" ") : session.metadata.customer_last_name || "Customer",
+        address_line1: stripeShipping.address?.line1 || "Stripe Address",
+        address_line2: stripeShipping.address?.line2 || "",
+        city: stripeShipping.address?.city || "",
+        state: stripeShipping.address?.state || "",
+        postcode: stripeShipping.address?.postal_code || "",
+        phone: session.metadata.customer_phone || "0000000000",
+        email: session.customer_details?.email || "customer@example.com",
+      } : {
+        first_name: session.metadata.customer_first_name || "AU",
+        last_name: session.metadata.customer_last_name || "Customer",
+        address_line1: "Stripe Address Not Provided",
+        city: "",
+        state: "",
+        postcode: "",
+        phone: session.metadata.customer_phone || "0000000000",
+        email: session.customer_details?.email || "customer@example.com",
+      };
 
       const discountAmount = discountCents / 100;
       const gstAmount = gstCents / 100;
@@ -180,10 +202,10 @@ serve(async (req) => {
         stripe_session_id: stripeSessionId,
         stripe_payment_intent_id: stripePaymentIntentId,
         delivery_estimate: shippingType === "express" ? "2-4 business days" : "5-7 business days",
-        shipping_address: parsedShippingAddress,
-        customer_email: parsedShippingAddress.email || session.customer_details?.email,
-        customer_phone: parsedShippingAddress.phone || session.customer_details?.phone,
-        customer_name: parsedShippingAddress.firstName ? `${parsedShippingAddress.firstName} ${parsedShippingAddress.lastName || ""}`.trim() : session.customer_details?.name,
+        shipping_address: shippingAddress,
+        customer_email: shippingAddress.email || session.customer_details?.email,
+        customer_phone: shippingAddress.phone || session.customer_details?.phone,
+        customer_name: `${shippingAddress.first_name} ${shippingAddress.last_name}`.trim(),
         is_guest: !userId,
         source: "Stripe",
         platform: "Web",

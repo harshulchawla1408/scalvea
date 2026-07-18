@@ -8,6 +8,8 @@ const AdminSettings = () => {
   const [exporting, setExporting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [resyncing, setResyncing] = useState(false);
+  const [resyncResult, setResyncResult] = useState<any>(null);
   
   const [settings, setSettings] = useState<StoreSettings>({
     au_business_name: "",
@@ -84,6 +86,38 @@ const AdminSettings = () => {
     URL.revokeObjectURL(url);
     setExporting(false);
     toast({ title: "Products exported" });
+  };
+
+  const handleCatalogResync = async () => {
+    setResyncing(true);
+    setResyncResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("shiprocket-catalog-resync", {
+        body: {}
+      });
+      if (error) throw error;
+      setResyncResult(data);
+      if (data?.success) {
+        toast({
+          title: `Catalog Resync Complete`,
+          description: `${data.synced} product(s) synced to Shiprocket. ${data.failed > 0 ? `${data.failed} failed.` : ''}`,
+        });
+      } else {
+        toast({
+          title: "Partial Resync",
+          description: `${data?.synced || 0} synced, ${data?.failed || 0} failed. Check results below.`,
+          variant: "destructive",
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: "Resync Failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setResyncing(false);
+    }
   };
 
   if (loading) {
@@ -268,6 +302,42 @@ const AdminSettings = () => {
             </a>
           ))}
         </div>
+      </div>
+      {/* Shiprocket Catalog Sync */}
+      <div className="border border-amber-200 bg-amber-50/50 p-6 space-y-4">
+        <div>
+          <h2 className="text-xs tracking-[0.15em] uppercase font-semibold text-foreground">Shiprocket Catalog Sync</h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            Force-push all active India products to Shiprocket's checkout catalog. Run this if a new product is not showing in Shiprocket checkout, or after the initial integration setup.
+          </p>
+        </div>
+        <div className="flex flex-col gap-3">
+          <Button
+            type="button"
+            onClick={handleCatalogResync}
+            disabled={resyncing}
+            className="w-fit text-xs tracking-[0.08em] uppercase bg-amber-600 hover:bg-amber-700 text-white"
+          >
+            {resyncing ? "Syncing Products to Shiprocket..." : "🔄 Force Catalog Resync"}
+          </Button>
+          {resyncResult && (
+            <div className="text-xs font-mono bg-white border border-border p-3 space-y-1 max-h-48 overflow-y-auto">
+              <p className={resyncResult.success ? "text-green-600" : "text-amber-600"}>
+                ✓ {resyncResult.synced}/{resyncResult.total} products synced
+                {resyncResult.failed > 0 ? ` · ✗ ${resyncResult.failed} failed` : ""}
+              </p>
+              {resyncResult.results?.map((r: any, i: number) => (
+                <div key={i} className={`text-[10px] ${r.status === 'synced' ? 'text-green-600' : 'text-red-600'}`}>
+                  [{r.status.toUpperCase()}] {r.name} — variant_id={r.shiprocket_variant_id}
+                  {r.error ? ` — ERROR: ${r.error}` : ""}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <p className="text-[10px] text-muted-foreground">
+          This calls the <code className="bg-muted px-1 py-0.5 rounded">shiprocket-catalog-resync</code> Edge Function. Safe to run multiple times (idempotent). Each product sync uses the Product Update Webhook at <code className="bg-muted px-1 py-0.5 rounded">checkout-api.shiprocket.com/wh/v1/custom/product</code>.
+        </p>
       </div>
     </div>
   );

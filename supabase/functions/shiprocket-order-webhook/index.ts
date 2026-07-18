@@ -90,17 +90,41 @@ serve(async (req) => {
     if (existingMapping) {
       console.log(`Order ${shiprocketOrderId} already processed. Updating status.`);
       const mappedStatus = mapOrderStatus(status);
-      const mappedPayment = mapPaymentMethod(payment_type || existingMapping.orders?.payment_method);
-      const paymentStatus = (mappedPayment === "shiprocket_cod" && mappedStatus !== "delivered") ? "unpaid" : "paid";
+      const prevStatus = existingMapping.orders?.order_status;
+      
+      const updatePayload: any = {
+        updated_at: new Date().toISOString()
+      };
+      
+      if (mappedStatus && mappedStatus !== prevStatus) {
+        updatePayload.order_status = mappedStatus;
+      }
+      
+      if (body.tracking_id || body.courier_name) {
+        if (body.tracking_id) {
+          updatePayload.tracking_number = body.tracking_id;
+          updatePayload.awb = body.awb_code || body.tracking_id;
+        }
+        if (body.courier_name) {
+          updatePayload.courier = body.courier_name;
+        }
+      }
 
       await supabase
         .from("orders")
-        .update({
-          order_status: mappedStatus,
-          payment_status: paymentStatus,
-          updated_at: new Date().toISOString()
-        })
+        .update(updatePayload)
         .eq("id", existingMapping.order_id);
+        
+      if (mappedStatus && mappedStatus !== prevStatus) {
+        await supabase
+          .from("order_status_history")
+          .insert({
+            order_id: existingMapping.order_id,
+            previous_status: prevStatus,
+            new_status: mappedStatus,
+            changed_by: "Shiprocket Webhook"
+          } as any);
+      }
 
       if (body.tracking_id || body.courier_name) {
         await supabase
@@ -163,12 +187,34 @@ serve(async (req) => {
 
     // Fallback: construct orderDetails from webhook body when Details API fails
     if (!orderDetails) {
+      // Parse financial amounts from the Shiprocket webhook body.
+      // The webhook body contains the authoritative totals; never default to 0.
+      const bodyTotal = Number(body.total_amount_payable || body.amount || body.subtotal_price || 0);
+      const bodyShipping = Number(body.shipping_charges || body.shipping_amount || 0);
+      const bodyDiscount = Number(body.total_discount || body.coupon_discount || body.prepaid_discount || 0);
+      const bodyCod = Number(body.cod_charges || 0);
+      const bodyTax = bodyTotal > 0 ? Number(body.tax_amount || 0) : 0;
+
       orderDetails = {
         order_id: String(shiprocketOrderId),
-        status: status || "completed",
-        amount: Number(amount || 0.0),
-        payment_method: payment_type || "cod",
-        shipping_address: {
+        status: body.status || status || "completed",
+        amount: bodyTotal,
+        tax_amount: bodyTax,
+        shipping_amount: bodyShipping,
+        discount_amount: bodyDiscount,
+        cod_charges: bodyCod,
+        payment_method: body.payment_type || payment_type || "cod",
+        shipping_address: body.shipping_address ? {
+          first_name: body.shipping_address.first_name || body.shipping_address.name || "Shiprocket",
+          last_name: body.shipping_address.last_name || "",
+          address_line1: body.shipping_address.address_line1 || body.shipping_address.address || "India Address Flow",
+          address_line2: body.shipping_address.address_line2 || "",
+          city: body.shipping_address.city || "Mumbai",
+          state: body.shipping_address.state || "Maharashtra",
+          postcode: body.shipping_address.pincode || body.shipping_address.postcode || "400001",
+          phone: body.shipping_address.phone || phone || "9999999999",
+          email: body.shipping_address.email || email || "customer@example.com"
+        } : {
           first_name: "Shiprocket",
           last_name: "Customer",
           address_line1: "India Address Flow",
@@ -182,25 +228,26 @@ serve(async (req) => {
         items: []
       };
 
-      if (body.items && Array.isArray(body.items)) {
-        orderDetails.items = body.items.map((it: any) => ({
-          variant_id: it.variant_id || it.product_id,
+      // Prefer cart_data.items from webhook body (contains variant_id)
+      const cartItems = body.cart_data?.items || body.items;
+      if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
+        orderDetails.items = cartItems.map((it: any) => ({
+          variant_id: String(it.variant_id || it.product_id || ""),
           quantity: Number(it.quantity || 1),
-          price: Number(it.price || 0),
-          name: it.name || "Scalvea Product"
+          price: Number(it.price || it.selling_price || 0),
+          name: it.name || it.product_name || "Scalvea Product"
         }));
       } else {
-        console.error("Critical: Webhook payload missing items and API fetch failed. Aborting order creation.");
-        return new Response(
-          JSON.stringify({ error: "Cannot process order without items." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        console.error("Critical: Webhook payload missing cart_data.items and API fetch failed. Order will have no items.");
+        // Continue creating the order shell — at least record the payment amount.
+        // Admin will need to manually reconcile items via shiprocket_webhook_logs.
       }
 
-      if (body.shipping_address) {
-        orderDetails.shipping_address = { ...orderDetails.shipping_address, ...body.shipping_address };
+      if (body.billing_address) {
+        orderDetails.billing_address = body.billing_address;
       }
     }
+
 
     // ── Resolve customer profile ───────────────────────────────────────────────
     let userId = null;
@@ -247,7 +294,7 @@ serve(async (req) => {
         shipping_amount: shippingVal,
         discount_amount: discountVal,
         coupon_code: finalCouponCode,
-        total_amount: totalVal,
+        total_amount: totalPayable,
         order_status: localStatus,
         payment_status: localPaymentStatus,
         payment_method: mappedPayment,

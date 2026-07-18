@@ -192,6 +192,118 @@ const About = () => {
           </div>
         </section>
 
+        {/* 2.5. FOUNDER STORY SECTION */}
+        <section className="bg-white py-16 md:py-24 lg:py-32 overflow-hidden relative border-t border-neutral-100">
+          <div className="max-w-7xl mx-auto px-6 lg:px-16">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+              
+              {/* Left Column - Main Story */}
+              <div className="lg:col-span-7 space-y-8">
+                <div className="space-y-4">
+                  <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-light block">
+                    FROM THE BARBER'S CHAIR
+                  </span>
+                  <h2 className="text-3xl md:text-5xl leading-tight editorial-heading text-neutral-900">
+                    Why I Started Scalvea
+                  </h2>
+                  <div className="h-[1px] bg-neutral-200 w-20 pt-2" />
+                </div>
+                
+                <div className="space-y-6 text-sm md:text-base text-neutral-500 font-light leading-relaxed max-w-xl">
+                  <motion.p
+                    initial={{ y: 20, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8 }}
+                    className="text-lg md:text-xl text-neutral-900 editorial-heading leading-snug"
+                  >
+                    People often ask me, "Why did a barber start his own hair care brand?"
+                  </motion.p>
+                  
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: 0.1 }}
+                    className="space-y-6"
+                  >
+                    <p>Was it a side hustle? Did I simply wake up one day and decide to start selling bottles?</p>
+                    <p>Not quite.</p>
+                    <p>For years, clients sitting in my chair would ask me the same question: "What should I use for my hair?"</p>
+                    <p>I would recommend the familiar names on the shelf — products I knew about, but couldn't always say with confidence were delivering the results my clients needed.</p>
+                    <p>Then they would come back.</p>
+                    <p>And too often, the story was the same.</p>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                    className="space-y-6"
+                  >
+                    <p>That stayed with me. Because when someone sits in my chair, I'm not just cutting their hair. They trust me with something deeply personal — how they look, how they feel, and the concerns they have about their hair and scalp.</p>
+                    <p>I realised I didn't want to keep recommending products unless I could genuinely stand behind them.</p>
+                    <p>So I decided to build something I could.</p>
+                  </motion.div>
+                  
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8, delay: 0.3 }}
+                    className="space-y-6"
+                  >
+                    <p>That's where Scalvea began.</p>
+                    <p>Not in a corporate boardroom. Not as another brand searching for a story.</p>
+                    <p>It began behind the barber's chair — through real conversations, real concerns, and years of listening to the people who trusted me with their hair.</p>
+                    <p>I started building products I could confidently recommend to the person sitting in front of me.</p>
+                    <p>Products I could stand behind.</p>
+                    <p>And that's how I built Scalvea.</p>
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Right Column - Pull Quote & Conclusion */}
+              <div className="lg:col-span-5 lg:sticky lg:top-32 space-y-12 pt-8 lg:pt-0">
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  whileInView={{ scale: 1, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1 }}
+                  className="border-l-[3px] border-neutral-900 pl-6 py-2"
+                >
+                  <p className="text-xl md:text-3xl text-neutral-900 editorial-heading leading-snug">
+                    "I didn't want to keep recommending products unless I could genuinely stand behind them."
+                  </p>
+                </motion.div>
+
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: 0.4 }}
+                  className="bg-[#fafafa] p-8 md:p-10 border border-neutral-100"
+                >
+                  <p className="text-[10px] text-neutral-400 font-light mb-4 uppercase tracking-[0.2em]">
+                    The Barber Behind The Brand
+                  </p>
+                  <p className="text-lg md:text-xl text-neutral-900 leading-relaxed editorial-heading">
+                    Scalvea isn't a brand that went looking for a face.<br/><br/>
+                    I am the barber behind the brand.
+                  </p>
+                  <div className="mt-8 pt-6 border-t border-neutral-200">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-light">
+                      It started from the chair — not the other way around.
+                    </p>
+                  </div>
+                </motion.div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
         {/* 3. AUSTRALIA + INDIA GLOBAL PRESENCE SECTION */}
         <section className="bg-black text-white py-16 md:py-24 lg:py-32 relative overflow-hidden">
           {/* Subtle world map ambient layout */}

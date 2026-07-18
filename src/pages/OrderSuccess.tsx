@@ -219,24 +219,24 @@ const OrderSuccess = () => {
                   </div>
                 )}
 
-                {Number(order.gst || order.tax_amount) > 0 && (
+                {Number(order.tax_amount) > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground font-light">GST (10% Included)</span>
-                    <span className="font-mono font-light">{formatVal(order.gst || order.tax_amount)}</span>
+                    <span className="text-muted-foreground font-light">Tax (Included)</span>
+                    <span className="font-mono font-light">{formatVal(order.tax_amount)}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-light">Shipping Cost</span>
                   <span className="font-mono font-light">
-                    {Number(order.shipping_cost || order.shipping_amount) === 0 ? (
+                    {Number(order.shipping_amount) === 0 ? (
                       "Free Shipping"
                     ) : (
                       <span>
                         <span className="line-through text-muted-foreground/60 mr-1.5">
                           {order.currency === "INR" ? "₹100" : "A$10.00"}
                         </span>
-                        <span>{formatVal(Number(order.shipping_cost || order.shipping_amount))}</span>
+                        <span>{formatVal(Number(order.shipping_amount))}</span>
                       </span>
                     )}
                   </span>
@@ -247,7 +247,7 @@ const OrderSuccess = () => {
                     <CreditCard className="h-3.5 w-3.5" /> Total Paid
                   </span>
                   <div className="text-right">
-                    <span className="font-mono text-base block">{formatVal(order.total || order.total_amount)}</span>
+                    <span className="font-mono text-base block">{formatVal(order.total_amount)}</span>
                     <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5 font-sans">Inclusive of all taxes</span>
                   </div>
                 </div>
