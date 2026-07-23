@@ -185,10 +185,23 @@ serve(async (req) => {
       console.error("Error calling Shiprocket Order Details API:", err);
     }
 
-    // Fallback: construct orderDetails from webhook body when Details API fails
+    // Safely extract cart items from body (always prefer cart_data if present)
+    const cartItems = body.cart_data?.items || body.items || orderDetails?.items || [];
+    let formattedItems = [];
+    
+    if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
+      formattedItems = cartItems.map((it: any) => ({
+        variant_id: String(it.variant_id || it.product_id || ""),
+        quantity: Number(it.quantity || 1),
+        price: Number(it.price || it.selling_price || 0),
+        name: it.name || it.product_name || "Scalvea Product"
+      }));
+    } else {
+      console.error("Critical: Webhook payload missing cart_data.items. Order items may be missing.");
+    }
+
+    // Construct orderDetails if API fetch failed
     if (!orderDetails) {
-      // Parse financial amounts from the Shiprocket webhook body.
-      // The webhook body contains the authoritative totals; never default to 0.
       const bodyTotal = Number(body.total_amount_payable || body.amount || body.subtotal_price || 0);
       const bodyShipping = Number(body.shipping_charges || body.shipping_amount || 0);
       const bodyDiscount = Number(body.total_discount || body.coupon_discount || body.prepaid_discount || 0);
@@ -224,39 +237,26 @@ serve(async (req) => {
           postcode: "400001",
           phone: phone || "9999999999",
           email: email || "customer@example.com"
-        },
-        items: []
+        }
       };
-
-      // Prefer cart_data.items from webhook body (contains variant_id)
-      const cartItems = body.cart_data?.items || body.items;
-      if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-        orderDetails.items = cartItems.map((it: any) => ({
-          variant_id: String(it.variant_id || it.product_id || ""),
-          quantity: Number(it.quantity || 1),
-          price: Number(it.price || it.selling_price || 0),
-          name: it.name || it.product_name || "Scalvea Product"
-        }));
-      } else {
-        console.error("Critical: Webhook payload missing cart_data.items and API fetch failed. Order will have no items.");
-        // Continue creating the order shell — at least record the payment amount.
-        // Admin will need to manually reconcile items via shiprocket_webhook_logs.
-      }
 
       if (body.billing_address) {
         orderDetails.billing_address = body.billing_address;
       }
     }
+    
+    // Explicitly inject the safely formatted items to prevent missing products
+    orderDetails.items = formattedItems;
 
 
     // ── Resolve customer profile ───────────────────────────────────────────────
     let userId = null;
-    if (orderDetails.shipping_address.email) {
+    if (orderDetails.shipping_address?.email) {
       const { data: pEmail } = await supabase.from("profiles").select("id")
         .ilike("email", orderDetails.shipping_address.email.trim()).maybeSingle();
       if (pEmail) userId = pEmail.id;
     }
-    if (!userId && orderDetails.shipping_address.phone) {
+    if (!userId && orderDetails.shipping_address?.phone) {
       const { data: pPhone } = await supabase.from("profiles").select("id")
         .eq("phone", orderDetails.shipping_address.phone).maybeSingle();
       if (pPhone) userId = pPhone.id;
@@ -273,7 +273,6 @@ serve(async (req) => {
     const discountVal = Number(orderDetails.discount_amount || 0);
     const subtotalVal = totalVal - taxVal - shippingVal + discountVal;
     
-    // Add additional discount preservation from webhook body if available
     const extraCouponCode = body.coupon_codes && body.coupon_codes.length > 0 ? body.coupon_codes.join(",") : null;
     const finalCouponCode = orderDetails.coupon_code || body.coupon_code || extraCouponCode || null;
     
@@ -303,21 +302,21 @@ serve(async (req) => {
         billing_address: billingAddr,
         total_amount_payable: totalPayable,
         shipping_address: {
-          firstName: orderDetails.shipping_address.first_name || body.shipping_address?.name,
-          lastName: orderDetails.shipping_address.last_name,
-          address: orderDetails.shipping_address.address_line1 + (orderDetails.shipping_address.address_line2 ? `, ${orderDetails.shipping_address.address_line2}` : ""),
-          city: orderDetails.shipping_address.city,
-          state: orderDetails.shipping_address.state,
-          postcode: orderDetails.shipping_address.postcode || body.shipping_address?.pincode,
+          firstName: orderDetails.shipping_address?.first_name || body.shipping_address?.name,
+          lastName: orderDetails.shipping_address?.last_name,
+          address: (orderDetails.shipping_address?.address_line1 || "") + (orderDetails.shipping_address?.address_line2 ? `, ${orderDetails.shipping_address.address_line2}` : ""),
+          city: orderDetails.shipping_address?.city,
+          state: orderDetails.shipping_address?.state,
+          postcode: orderDetails.shipping_address?.postcode || body.shipping_address?.pincode,
           country: "India",
-          phone: orderDetails.shipping_address.phone,
-          email: orderDetails.shipping_address.email,
+          phone: orderDetails.shipping_address?.phone,
+          email: orderDetails.shipping_address?.email,
           countryCode: body.shipping_address?.country_code,
           landmark: body.shipping_address?.landmark
         },
-        customer_email: orderDetails.shipping_address.email,
-        customer_phone: orderDetails.shipping_address.phone,
-        customer_name: orderDetails.shipping_address.first_name ? `${orderDetails.shipping_address.first_name} ${orderDetails.shipping_address.last_name || ""}`.trim() : body.shipping_address?.name,
+        customer_email: orderDetails.shipping_address?.email,
+        customer_phone: orderDetails.shipping_address?.phone,
+        customer_name: orderDetails.shipping_address?.first_name ? `${orderDetails.shipping_address.first_name} ${orderDetails.shipping_address.last_name || ""}`.trim() : body.shipping_address?.name,
         is_guest: !userId,
         source: "Shiprocket",
         platform: "Web",
@@ -364,7 +363,6 @@ serve(async (req) => {
     }
 
     // ── Payment record (idempotent) ───────────────────────────────────────────
-    // Store full combined webhook and details api payload into raw_response for lossless preservation
     const combinedResponse = {
       webhook_payload: body,
       details_api: orderDetails
@@ -391,6 +389,7 @@ serve(async (req) => {
     // ── Order items + inventory deduction ─────────────────────────────────────
     const createdItems = [];
     for (const item of orderDetails.items) {
+      if (!item.variant_id) continue;
       const prod = await findProductIdByVariantId(supabase, item.variant_id);
       const orderItemPayload = {
         order_id: newOrder.id,
@@ -418,8 +417,7 @@ serve(async (req) => {
       }
     }
 
-    // Do not await email sending to prevent webhook timeout (Shiprocket expects quick 200 OK)
-    // Edge Runtime allows Promises to resolve after the response is returned.
+    // Do not await email sending to prevent webhook timeout
     sendOrderEmails(supabase, newOrder, createdItems).catch(err => {
       console.error("Failed to send order emails asynchronously:", err);
     });

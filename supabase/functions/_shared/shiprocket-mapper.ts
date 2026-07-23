@@ -23,7 +23,13 @@ export interface ShiprocketVariantPayload {
   created_at: string;
   updated_at: string;
   taxable: boolean;
-  option_values: { name: string; value: string }[];
+  /**
+   * option_values MUST be a JSON OBJECT (LinkedHashMap<String, Object> on Shiprocket's Java backend).
+   * e.g. { "Size": "30 mL / 1.01 fl oz" }
+   * DO NOT use an array — Shiprocket's Jackson deserializer will throw
+   * MismatchedInputException: Cannot deserialize LinkedHashMap from START_ARRAY.
+   */
+  option_values: Record<string, string>;
   grams: number;
   image: { src: string };
   weight: number;
@@ -149,8 +155,13 @@ export function mapProductRow(
         created_at: createdAt,
         updated_at: updatedAt,
         taxable: true,
-        // option_values: array of { name, value } objects — NOT a plain dict
-        option_values: [{ name: "Size", value: sizeVal }],
+        // option_values MUST be a JSON OBJECT, not an array.
+        // Shiprocket's catalog-service deserializes this as:
+        //   LinkedHashMap<String, Object>
+        // which requires JSON token START_OBJECT `{`, not START_ARRAY `[`.
+        // Correct: { "Size": "30 mL / 1.01 fl oz" }
+        // Wrong:  [{ "name": "Size", "value": "30 mL / 1.01 fl oz" }]
+        option_values: { "Size": sizeVal },
         grams: gramsVal,
         image: { src: imageSrc },
         // weight in kg; weight_unit "kg"
@@ -335,7 +346,7 @@ export async function sendOrderEmails(supabase: any, order: any, orderItems: any
   const adminHtml = `
     <h1>New Order Received</h1>
     <p>Order Number: <strong>${order.order_number}</strong></p>
-    <p>Customer: ${order.shipping_address?.firstName || ""} ${order.shipping_address?.lastName || ""}</p>
+    <p>Customer: ${order.shipping_address?.firstName || order.shipping_address?.first_name || ""} ${order.shipping_address?.lastName || order.shipping_address?.last_name || ""}</p>
     <p>Email: ${emailToUse}</p>
     <p>Market: ${order.market || order.country}</p>
     <h2>Order Items</h2>
@@ -362,3 +373,112 @@ export async function sendOrderEmails(supabase: any, order: any, orderItems: any
   }
 }
 
+// ─── Shared Webhook Delivery (used by shiprocket-catalog-resync) ──────────────
+// shiprocket-catalog-sync defines its own local variant with signature:
+//   (url, payloadString, apiKey, secretKey) → ...
+// This exported version uses the simplified signature expected by catalog-resync:
+//   (apiKey, secretKey, type, payload, supabase) → { success, response?, error? }
+
+/**
+ * Posts a signed product or collection webhook to Shiprocket with retry logic.
+ *
+ * @param apiKey    - SHIPROCKET_API_KEY env var
+ * @param secretKey - SHIPROCKET_SECRET_KEY env var
+ * @param type      - "product" | "collection"
+ * @param payload   - The product/collection payload object (serialized internally)
+ * @param supabase  - Supabase client for writing to shiprocket_webhook_logs
+ */
+export async function postWebhookWithRetries(
+  apiKey: string,
+  secretKey: string,
+  type: "product" | "collection",
+  payload: Record<string, unknown>,
+  supabase: any
+): Promise<{ success: boolean; response?: string; error?: string }> {
+  const WEBHOOK_URLS: Record<string, string> = {
+    product: "https://checkout-api.shiprocket.com/wh/v1/custom/product",
+    collection: "https://checkout-api.shiprocket.com/wh/v1/custom/collection",
+  };
+
+  const url = WEBHOOK_URLS[type];
+  const payloadString = JSON.stringify(payload);
+  // Sign the EXACT body that will be sent — HMAC must match the transmitted bytes
+  const signature = await generateHmacSha256(secretKey, payloadString);
+
+  const maxAttempts = 3;
+  let attempts = 0;
+  let lastResponseText = "";
+
+  while (attempts < maxAttempts) {
+    attempts++;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Api-Key": apiKey,
+          "X-Api-HMAC-SHA256": signature,
+        },
+        body: payloadString,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+      lastResponseText = await res.text();
+
+      if (res.status === 511) {
+        const errMsg = `511 Invalid authentication — verify SHIPROCKET_API_KEY and SHIPROCKET_SECRET_KEY. Response: ${lastResponseText}`;
+        await supabase.from("shiprocket_webhook_logs").insert({
+          webhook_type: type,
+          payload,
+          response: errMsg,
+          status: "auth_failure",
+          attempts,
+        }).catch(() => {});
+        return { success: false, error: errMsg };
+      }
+
+      if (res.ok) {
+        let isSuccess = false;
+        try {
+          const resJson = JSON.parse(lastResponseText);
+          if (resJson.ok === true && resJson.result === true) isSuccess = true;
+        } catch {
+          if (lastResponseText.includes("true")) isSuccess = true;
+        }
+        if (isSuccess) {
+          await supabase.from("shiprocket_webhook_logs").insert({
+            webhook_type: type,
+            payload,
+            response: lastResponseText,
+            status: "success",
+            attempts,
+          }).catch(() => {});
+          return { success: true, response: lastResponseText };
+        }
+      }
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      lastResponseText = err.name === "AbortError"
+        ? `Timed out after 10s (attempt ${attempts})`
+        : String(err.message);
+    }
+
+    if (attempts < maxAttempts) {
+      await new Promise((r) => setTimeout(r, attempts * 2000));
+    }
+  }
+
+  await supabase.from("shiprocket_webhook_logs").insert({
+    webhook_type: type,
+    payload,
+    response: lastResponseText,
+    status: "failed",
+    attempts,
+  }).catch(() => {});
+
+  return { success: false, error: lastResponseText };
+}

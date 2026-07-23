@@ -1,11 +1,16 @@
+// ─── Fetch Shiprocket Order (Callback API) ───────────────────────────────────
+// This function acts as the backend handler for the frontend callback polling.
+// It explicitly DOES NOT create orders or deduct inventory to prevent race conditions.
+// It only synchronizes an EXISTING order (created by the webhook) with the latest
+// data from Shiprocket, or returns 404 if the webhook hasn't finished yet.
+// ─────────────────────────────────────────────────────────────────────────────
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import {
   generateHmacSha256,
   mapOrderStatus,
-  mapPaymentMethod,
-  findProductIdByVariantId,
-  sendOrderEmails
+  mapPaymentMethod
 } from "../_shared/shiprocket-mapper.ts";
 
 const corsHeaders = {
@@ -105,181 +110,14 @@ serve(async (req) => {
       mapping = data;
     }
 
-    // ── Self-healing: mapping not yet created by webhook ──────────────────────
+    // ── Enforce Webhook as Single Source of Truth ─────────────────────────────
     if (!mapping) {
-      console.log(`Mapping not found for orderId: ${orderId}. Attempting self-healing order creation.`);
-
-      const shiprocketOrderId = String(orderId);
-      const isMock = apiKey === "mock_key" || secretKey === "mock_secret";
-      let orderDetails: any = null;
-
-      if (isMock) {
-        orderDetails = {
-          order_id: shiprocketOrderId,
-          status: "completed",
-          amount: 749,
-          payment_method: "cod",
-          tax_amount: 0,
-          shipping_amount: 50,
-          discount_amount: 0,
-          shipping_address: {
-            first_name: "Mock", last_name: "Customer",
-            address_line1: "123 Mock Street", address_line2: "",
-            city: "Mumbai", state: "Maharashtra", postcode: "400001",
-            phone: "9999999999", email: "mockcustomer@example.com"
-          },
-          items: [{ variant_id: "default", quantity: 1, price: 749, name: "Follicle 8 Hair Growth Serum" }]
-        };
-      } else {
-        const result = await fetchShiprocketOrderDetails(shiprocketOrderId, apiKey, secretKey);
-        if (!result.ok) {
-          console.error("Failed to fetch order details during self-healing:", result.text);
-          return new Response(
-            JSON.stringify({ error: `No Shiprocket mapping found and failed to fetch details (Status: ${result.status})` }),
-            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        orderDetails = result.data?.data || result.data;
-      }
-
-      // Double-check in case webhook created the mapping in the meantime
-      const { data: doubleCheckMap } = await supabase
-        .from("shiprocket_orders")
-        .select("*")
-        .eq("shiprocket_order_id", shiprocketOrderId)
-        .maybeSingle();
-
-      if (doubleCheckMap) {
-        mapping = doubleCheckMap;
-      } else {
-        // Resolve customer profile
-        let userId = null;
-        if (orderDetails.shipping_address?.email) {
-          const { data: pEmail } = await supabase.from("profiles").select("id")
-            .ilike("email", orderDetails.shipping_address.email.trim()).maybeSingle();
-          if (pEmail) userId = pEmail.id;
-        }
-        if (!userId && orderDetails.shipping_address?.phone) {
-          const { data: pPhone } = await supabase.from("profiles").select("id")
-            .eq("phone", orderDetails.shipping_address.phone).maybeSingle();
-          if (pPhone) userId = pPhone.id;
-        }
-
-        const localStatus = mapOrderStatus(orderDetails.status);
-        const mappedPayment = mapPaymentMethod(orderDetails.payment_method);
-        const localPaymentStatus = (mappedPayment === "shiprocket_cod" && localStatus !== "delivered") ? "unpaid" : "paid";
-
-        const totalVal = Number(orderDetails.amount || 0);
-        const taxVal = Number(orderDetails.tax_amount || (totalVal * 0.18));
-        const shippingVal = Number(orderDetails.shipping_amount || 0);
-        const discountVal = Number(orderDetails.discount_amount || 0);
-        const subtotalVal = totalVal - taxVal - shippingVal + discountVal;
-        const billingAddr = orderDetails.billing_address || orderDetails.shipping_address || null;
-        const fastrrId = orderDetails.fastrr_order_id || orderDetails.order_id || null;
-        const totalPayable = Number(orderDetails.total_amount_payable || orderDetails.amount || 0);
-
-        const { data: newOrder, error: orderCreateError } = await supabase
-          .from("orders")
-          .insert({
-            user_id: userId,
-            country: "India",
-            currency: "INR",
-            subtotal: subtotalVal,
-            tax_amount: taxVal,
-            shipping_amount: shippingVal,
-            discount_amount: discountVal,
-            coupon_code: orderDetails.coupon_code || null,
-            total_amount: totalVal,
-            order_status: localStatus,
-            payment_status: localPaymentStatus,
-            payment_method: mappedPayment,
-            delivery_estimate: orderDetails.edd || "3-5 business days",
-            fastrr_order_id: fastrrId,
-            billing_address: billingAddr,
-            total_amount_payable: totalPayable,
-            shipping_address: orderDetails.shipping_address ? {
-              firstName: orderDetails.shipping_address.first_name,
-              lastName: orderDetails.shipping_address.last_name,
-              address: orderDetails.shipping_address.address_line1 + (orderDetails.shipping_address.address_line2 ? `, ${orderDetails.shipping_address.address_line2}` : ""),
-              city: orderDetails.shipping_address.city,
-              state: orderDetails.shipping_address.state,
-              postcode: orderDetails.shipping_address.postcode,
-              country: "India",
-              phone: orderDetails.shipping_address.phone,
-              email: orderDetails.shipping_address.email
-            } : null,
-            customer_email: orderDetails.shipping_address?.email,
-            customer_phone: orderDetails.shipping_address?.phone,
-            customer_name: orderDetails.shipping_address?.first_name ? `${orderDetails.shipping_address.first_name} ${orderDetails.shipping_address.last_name || ""}`.trim() : null,
-            is_guest: !userId,
-            source: "Shiprocket",
-            platform: "Web",
-            gateway_response: orderDetails,
-            market: "IN",
-          } as any)
-          .select()
-          .single();
-
-        if (orderCreateError) throw orderCreateError;
-
-        // Payment record
-        await supabase.from("payments").insert({
-          order_id: newOrder.id,
-          payment_method: mappedPayment,
-          payment_status: localPaymentStatus,
-          amount: totalPayable,
-          transaction_id: fastrrId,
-          raw_response: orderDetails
-        });
-
-        // Order items + inventory deduction
-        const createdItems = [];
-        if (orderDetails.items && Array.isArray(orderDetails.items)) {
-          for (const item of orderDetails.items) {
-            const prod = await findProductIdByVariantId(supabase, item.variant_id);
-            const orderItemPayload = {
-              order_id: newOrder.id,
-              product_id: prod?.id || null,
-              product_name: item.name || prod?.name || "Scalvea Product",
-              quantity: item.quantity,
-              price: item.price,
-              currency: "INR"
-            };
-            await supabase.from("order_items").insert(orderItemPayload as any);
-            createdItems.push(orderItemPayload);
-
-            if (prod) {
-              const prevQty = prod.inventory_quantity ?? 0;
-              const newQty = Math.max(0, prevQty - item.quantity);
-              await supabase.from("products").update({ inventory_quantity: newQty }).eq("id", prod.id);
-              await supabase.from("inventory_logs").insert({
-                product_id: prod.id,
-                change_amount: -item.quantity,
-                previous_quantity: prevQty,
-                new_quantity: newQty,
-                reason: `Shiprocket Order ${shiprocketOrderId} (Self-Healed)`
-              } as any);
-            }
-          }
-        }
-
-        // Mapping record
-        const { data: newMapping, error: finalMapError } = await supabase
-          .from("shiprocket_orders")
-          .insert({
-            order_id: newOrder.id,
-            shiprocket_order_id: shiprocketOrderId,
-            tracking_id: orderDetails.tracking_id || null,
-            courier_name: orderDetails.courier_name || null
-          } as any)
-          .select()
-          .single();
-
-        if (finalMapError) throw finalMapError;
-
-        mapping = newMapping;
-        await sendOrderEmails(supabase, newOrder, createdItems);
-      }
+      console.log(`Mapping not found for orderId: ${orderId}. Webhook has not processed it yet.`);
+      // Return 404 so the frontend ShiprocketCallback.tsx knows to keep polling!
+      return new Response(
+        JSON.stringify({ error: `Order mapping not found. Waiting for webhook...` }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // ── Fetch latest order details (authoritative source) ─────────────────────
@@ -312,7 +150,7 @@ serve(async (req) => {
           { status: result.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      orderDetails = result.data;
+      orderDetails = result.data?.data || result.data;
     }
 
     // Update local order with latest values from Shiprocket (authoritative)

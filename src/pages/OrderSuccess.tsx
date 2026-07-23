@@ -196,8 +196,8 @@ const OrderSuccess = () => {
                 </p>
                 {order.shipping_address && (
                   <div className="text-xs font-light leading-relaxed text-muted-foreground">
-                    <p className="font-medium text-foreground">{order.shipping_address.firstName} {order.shipping_address.lastName}</p>
-                    <p>{order.shipping_address.address}</p>
+                    <p className="font-medium text-foreground">{order.shipping_address.firstName || order.shipping_address.first_name || ""} {order.shipping_address.lastName || order.shipping_address.last_name || ""}</p>
+                    <p>{order.shipping_address.address || order.shipping_address.address_line1 || ""}</p>
                     <p>{order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.postcode}</p>
                     <p>{order.shipping_address.country}</p>
                     <p className="mt-1 text-[11px] font-mono">Ph: {order.shipping_address.phone}</p>

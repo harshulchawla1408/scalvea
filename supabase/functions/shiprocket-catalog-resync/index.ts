@@ -90,15 +90,17 @@ serve(async (req) => {
   const { data: products, error: fetchError } = await supabase
     .from("products")
     .select(`
-      id, name, slug, description, category, images, sku, weight,
+      id, name, slug, description, category, images, sku, sku_india, size, weight,
       shiprocket_product_id, shiprocket_variant_id,
       is_active_india, inventory_quantity,
+      created_at, updated_at,
       product_prices(price_inr, india_price)
     `)
     .eq("is_active_india", true)
     .not("shiprocket_product_id", "is", null)
     .not("shiprocket_variant_id", "is", null)
     .order("created_at", { ascending: true });
+
 
   if (fetchError) {
     return new Response(
