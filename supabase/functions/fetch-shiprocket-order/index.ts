@@ -1,15 +1,12 @@
-// ─── Fetch Shiprocket Order (Callback Polling API) ───────────────────────────
-// Called by ShiprocketCallback.tsx polling loop every 2 seconds after checkout.
+// ─── Fetch Shiprocket Order (Callback Verification API) ────────────────────────
+// Called by ShiprocketCallback.tsx immediately after checkout redirect.
 //
 // FLOW:
-//   1. Accept orderId (local UUID OR Shiprocket order_id string)
-//   2. Look up shiprocket_orders mapping
-//   3. If mapping found: run syncOrderFromDetails() for complete repair
-//   4. If mapping not found: return 404 so frontend keeps polling
-//
-// This function is the SECOND call path into syncOrderFromDetails(), after the
-// webhook. It ensures the order is fully populated even when the webhook fires
-// before all Order Details API data is available.
+//   1. Receive Shiprocket order_id.
+//   2. Call Shiprocket Order Details API as the Source of Truth.
+//   3. Check if we already mapped this order (in case of retry/race).
+//   4. Call syncOrderFromDetails() to atomically create/update the order.
+//   5. Return the local order UUID and number back to the frontend.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -24,8 +21,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ─── Handler ─────────────────────────────────────────────────────────────────
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -36,10 +31,10 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const supabase           = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { orderId } = await req.json();
-    if (!orderId) {
+    const { orderId: shiprocketOrderId } = await req.json();
+    if (!shiprocketOrderId) {
       return new Response(
-        JSON.stringify({ error: "Missing orderId" }),
+        JSON.stringify({ error: "Missing Shiprocket orderId" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -54,52 +49,17 @@ serve(async (req) => {
       );
     }
 
-    console.log(`fetch-shiprocket-order: looking up orderId=${orderId}`);
+    console.log(`[Callback] Verification requested for Shiprocket Order ID: ${shiprocketOrderId}`);
 
-    // ── Step 1: Resolve shiprocket_orders mapping ──────────────────────────
-    // Accept either a local UUID or a Shiprocket order_id string
-    let mapping: any = null;
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId);
-
-    if (isUuid) {
-      const { data } = await supabase
-        .from("shiprocket_orders")
-        .select("*")
-        .eq("order_id", orderId)
-        .maybeSingle();
-      mapping = data;
-    } else {
-      const { data } = await supabase
-        .from("shiprocket_orders")
-        .select("*")
-        .eq("shiprocket_order_id", String(orderId))
-        .maybeSingle();
-      mapping = data;
-    }
-
-    // ── Step 2: If no mapping yet, webhook hasn't processed it → 404 ───────
-    // The frontend ShiprocketCallback.tsx polls until it receives non-404.
-    if (!mapping) {
-      console.log(`fetch-shiprocket-order: No mapping found for ${orderId} — webhook not yet processed. Frontend should keep polling.`);
-      return new Response(
-        JSON.stringify({ error: "Order not yet processed. Please wait..." }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const shiprocketOrderId = mapping.shiprocket_order_id;
-    const localOrderId      = mapping.order_id;
-    const isMock            = apiKey === "mock_key" || secretKey === "mock_secret";
-
-    console.log(`fetch-shiprocket-order: Found mapping. srOrderId=${shiprocketOrderId} localId=${localOrderId}`);
-
-    // ── Step 3: Call Order Details API ─────────────────────────────────────
+    // ── 1. Call Order Details API (Authoritative Source) ─────────────────────
+    console.log(`[Callback] Calling Order Details API for ${shiprocketOrderId}`);
+    const isMock = apiKey === "mock_key" || secretKey === "mock_secret";
     let orderDetails: any;
 
     if (isMock) {
       orderDetails = {
-        order_id:            shiprocketOrderId,
-        fastrr_order_id:     shiprocketOrderId,
+        order_id:            String(shiprocketOrderId),
+        fastrr_order_id:     String(shiprocketOrderId),
         status:              "completed",
         payment_type:        "cod",
         payment_status:      "paid",
@@ -121,57 +81,62 @@ serve(async (req) => {
       };
     } else {
       const result = await callOrderDetailsApi(shiprocketOrderId, apiKey, secretKey);
-      if (result.ok && result.data) {
-        orderDetails = result.data;
-        console.log("fetch-shiprocket-order: Order Details API success");
-      } else {
-        // Soft failure: return existing order data without full sync
-        console.warn(`fetch-shiprocket-order: Order Details API failed (${result.error}). Returning existing order.`);
-        const { data: existingOrder } = await supabase
-          .from("orders")
-          .select("*, order_items(*), shiprocket_orders(*)")
-          .eq("id", localOrderId)
-          .maybeSingle();
+      if (!result.ok || !result.data) {
+        console.error(`[Callback] Order Details API failed: ${result.error}`);
+        // Return 404/500 so frontend knows it failed and can apply exponential backoff
         return new Response(
-          JSON.stringify({ success: true, order: existingOrder, partial: true }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "Order details not yet available from Shiprocket." }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      orderDetails = result.data;
+      console.log(`[Callback] Order Details API verified successfully for ${shiprocketOrderId}`);
     }
 
-    // ── Step 4: Full sync via canonical function ────────────────────────────
-    console.log("fetch-shiprocket-order: Running syncOrderFromDetails...");
-    const { orderId: syncedOrderId } = await syncOrderFromDetails(
+    // ── 2. Check if mapping already exists ──────────────────────────────────
+    // In rare cases (e.g. frontend retry, or webhook fired incredibly fast), it might exist.
+    const { data: mapping } = await supabase
+      .from("shiprocket_orders")
+      .select("order_id")
+      .eq("shiprocket_order_id", String(shiprocketOrderId))
+      .maybeSingle();
+
+    const existingOrderId = mapping?.order_id || null;
+
+    // ── 3. Atomically Create/Update Order ───────────────────────────────────
+    console.log(`[Sync] Running syncOrderFromDetails (existingId: ${existingOrderId})`);
+    
+    const { orderId: localOrderId } = await syncOrderFromDetails(
       supabase,
-      shiprocketOrderId,
+      String(shiprocketOrderId),
       orderDetails,
-      localOrderId,   // existingOrderId — always update, never create
-      null
+      existingOrderId,
+      null // No webhook body
     );
 
-    // ── Step 5: Return the fully-populated order ────────────────────────────
+    // ── 4. Retrieve minimal response for redirect ───────────────────────────
     const { data: finalOrder, error: finalErr } = await supabase
       .from("orders")
-      .select("*, order_items(*), shiprocket_orders(*)")
-      .eq("id", syncedOrderId)
+      .select("id, order_number")
+      .eq("id", localOrderId)
       .maybeSingle();
 
     if (finalErr || !finalOrder) {
-      console.error("fetch-shiprocket-order: Could not fetch updated order:", finalErr?.message);
+      console.error("[Callback] Error fetching final verified order:", finalErr?.message);
       return new Response(
-        JSON.stringify({ error: "Order updated but failed to retrieve final record" }),
+        JSON.stringify({ error: "Order verified but failed to retrieve final record" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`fetch-shiprocket-order: Complete. order=${finalOrder.order_number} status=${finalOrder.order_status} payment=${finalOrder.payment_status}`);
+    console.log(`[Callback] Verification Complete. Local Order UUID: ${finalOrder.id} (${finalOrder.order_number})`);
 
     return new Response(
       JSON.stringify({ success: true, order: finalOrder }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
-    console.error("fetch-shiprocket-order: Unhandled error:", error.message);
+    console.error("[Callback] Unhandled error:", error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

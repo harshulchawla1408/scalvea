@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/layout/Header";
@@ -17,95 +17,117 @@ const OrderSuccess = () => {
 
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
-  const orderId = searchParams.get("order_id");
+  const orderId = searchParams.get("id") || searchParams.get("order_id");
   const shiprocketOrderId = searchParams.get("shiprocket_order_id") || searchParams.get("oid");
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
   const { clearCart } = useCart();
+  
+  // Ref to prevent double execution in Strict Mode
+  const hasExecuted = useRef(false);
 
   useEffect(() => {
+    if (hasExecuted.current) return;
     if (!sessionId && !orderId && !shiprocketOrderId) {
       navigate("/shop");
       return;
     }
+    
+    // We only set this once to prevent multiple intervals on re-renders
+    hasExecuted.current = true;
 
-    let intervalId: any;
+    // ─── 1. Instant Load Path (Callback Succeeded) ─────────────────────────
+    // If we have an exact local UUID, the order is guaranteed to be fully synced
+    if (orderId || sessionId) {
+      const fetchExactOrder = async () => {
+        try {
+          let orderQuery = supabase.from("orders").select("*, order_items(*)");
+          
+          if (sessionId) {
+            orderQuery = orderQuery.eq("stripe_session_id", sessionId);
+          } else {
+            orderQuery = orderQuery.eq("id", orderId);
+          }
+          
+          const { data, error: dbError } = await orderQuery.maybeSingle();
+          if (dbError) throw dbError;
+          
+          if (data) {
+            setOrder(data);
+            clearCart();
+          } else {
+            setError("We couldn't locate your order details immediately. Please check your account page.");
+          }
+        } catch (err: any) {
+          console.error("Error fetching exact order:", err);
+          setError("An error occurred while retrieving order details.");
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchExactOrder();
+      return; // Exit early, no polling needed!
+    }
 
-    const checkOrder = async () => {
+    // ─── 2. Fallback Polling Path (Callback Failed) ────────────────────────
+    // This path is ONLY hit if the Callback verification timed out 3 times,
+    // and we are waiting for the Webhook to hopefully create the order.
+    let retries = 0;
+    const maxRetries = 10;
+    
+    const checkOrderFallback = async () => {
       try {
-        let orderQuery = supabase
-          .from("orders")
-          .select("*, order_items(*)");
+        const { data: mapping } = await supabase
+          .from("shiprocket_orders")
+          .select("order_id")
+          .eq("shiprocket_order_id", shiprocketOrderId)
+          .maybeSingle();
 
-        if (sessionId) {
-          orderQuery = orderQuery.eq("stripe_session_id", sessionId);
-        } else if (orderId) {
-          orderQuery = orderQuery.eq("id", orderId);
-        } else if (shiprocketOrderId) {
-          const { data: mapping } = await supabase
-            .from("shiprocket_orders")
-            .select("order_id")
-            .eq("shiprocket_order_id", shiprocketOrderId)
+        if (mapping?.order_id) {
+          const { data, error: dbError } = await supabase
+            .from("orders")
+            .select("*, order_items(*)")
+            .eq("id", mapping.order_id)
             .maybeSingle();
 
-          if (mapping?.order_id) {
-            orderQuery = orderQuery.eq("id", mapping.order_id);
-          } else {
-            // Mapping record not found yet (webhook has not processed the order yet)
-            setRetryCount(prev => {
-              if (prev >= 12) {
-                setLoading(false);
-                setError("We received your payment, but the order registration is taking longer than expected. Please check your account page shortly.");
-                clearInterval(intervalId);
-              }
-              return prev + 1;
-            });
-            return;
+          if (dbError) throw dbError;
+          
+          if (data) {
+            setOrder(data);
+            setLoading(false);
+            clearCart();
+            return true; // Success!
           }
         }
-
-        const { data, error: dbError } = await orderQuery.maybeSingle();
-
-        if (dbError) throw dbError;
-
-        if (data) {
-          setOrder(data);
-          setLoading(false);
-          clearInterval(intervalId);
-          clearCart();
-        } else {
-          // If not found, increment retry count
-          setRetryCount(prev => {
-            if (prev >= 12) { // 12 retries * 1.5s = 18 seconds timeout
-              setLoading(false);
-              setError("We received your payment, but the order registration is taking longer than expected. Please check your account page shortly.");
-              clearInterval(intervalId);
-            }
-            return prev + 1;
-          });
-        }
+        
+        return false; // Not found yet
       } catch (err: any) {
-        console.error("Error fetching order:", err);
-        setError("An error occurred while retrieving order details.");
-        setLoading(false);
-        clearInterval(intervalId);
+        console.error("Error in fallback poll:", err);
+        return false;
       }
     };
 
-    // Run immediately
-    checkOrder();
-
-    // Poll every 1.5 seconds
-    intervalId = setInterval(checkOrder, 1500);
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
+    const poll = async () => {
+      const success = await checkOrderFallback();
+      if (success) return;
+      
+      retries++;
+      if (retries >= maxRetries) {
+        setLoading(false);
+        setError("We received your payment, but the order registration is taking longer than expected. Please check your account page shortly.");
+      } else {
+        setTimeout(poll, 1500); // 1.5s delay
+      }
     };
-  }, [sessionId, orderId, shiprocketOrderId, navigate]);
+
+    // Start fallback polling
+    poll();
+
+  }, [sessionId, orderId, shiprocketOrderId, navigate, clearCart]);
 
   const formatVal = (val: number) => {
     if (order?.currency === "INR") {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertCircle, CheckCircle, ShieldCheck } from "lucide-react";
@@ -17,10 +17,11 @@ const ShiprocketCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const [status, setStatus] = useState<"checking" | "syncing" | "fallback" | "failed" | "success">("checking");
+  const [status, setStatus] = useState<"checking" | "syncing" | "failed" | "success">("checking");
   const [message, setMessage] = useState("Initializing callback handler...");
-  const [, setRetriesLeft] = useState(10);
-  const [, setTargetOrderId] = useState<string | null>(null);
+  
+  // Ref to prevent double-execution in React strict mode
+  const hasExecuted = useRef(false);
 
   // Read params
   const orderIdParam = searchParams.get("oid") ||
@@ -30,132 +31,89 @@ const ShiprocketCallback = () => {
                         searchParams.get("id");
 
   useEffect(() => {
-    // 5. Log full redirected URL received from Shiprocket
-    console.log("=== SHIPROCKET REDIRECT DETECTED ===");
-    console.log("Full redirected URL received from Shiprocket:", window.location.href);
-    console.log("URL search parameters:", Array.from(searchParams.entries()));
-    console.log("Extracted orderIdParam:", orderIdParam);
-    console.log("=====================================");
+    if (hasExecuted.current) return;
+    hasExecuted.current = true;
+
+    console.log("[Callback] === SHIPROCKET REDIRECT DETECTED ===");
+    console.log("[Callback] Full redirected URL:", window.location.href);
+    console.log("[Callback] Extracted orderIdParam:", orderIdParam);
 
     const ost = searchParams.get("ost");
-    if (ost && ost !== "SUCCESS" && ost !== "success") {
-      console.warn("Shiprocket checkout status indicates cancellation or failure:", ost);
+    if (ost && ost.toUpperCase() !== "SUCCESS") {
+      console.warn("[Callback] Shiprocket checkout status indicates cancellation or failure:", ost);
       setStatus("failed");
-      if (ost === "CANCELLED" || ost === "cancelled" || ost === "INITIATED") {
+      if (ost.toUpperCase() === "CANCELLED" || ost.toUpperCase() === "INITIATED") {
         setMessage("Checkout cancelled or abandoned. Redirecting back to checkout...");
       } else {
         setMessage(`Checkout payment failed (Status: ${ost}). Redirecting back to checkout...`);
       }
-      setTimeout(() => {
-        navigate("/checkout");
-      }, 3500);
+      setTimeout(() => navigate("/checkout"), 3500);
       return;
     }
 
-    const syncOrder = async (id: string, attempt: number) => {
+    if (!orderIdParam) {
+      console.error("[Callback] No order identifier found in URL.");
+      setStatus("failed");
+      setMessage("No order identifier found in URL. Please contact support.");
+      return;
+    }
+
+    // Exponential backoff logic (max 3 retries)
+    // 1st call: instant
+    // 2nd call: wait 1.5s
+    // 3rd call: wait 3s
+    const delays = [0, 1500, 3000];
+
+    const syncOrder = async (attempt: number) => {
       try {
         setStatus("syncing");
-        setMessage(`Verifying payment details with Shiprocket (Attempt ${11 - attempt}/10)...`);
+        setMessage(attempt === 0 ? "Verifying payment details with Shiprocket..." : `Retrying verification (Attempt ${attempt + 1}/3)...`);
+        
+        if (delays[attempt] > 0) {
+          await new Promise(res => setTimeout(res, delays[attempt]));
+        }
 
+        console.log(`[Callback] Calling fetch-shiprocket-order for ${orderIdParam}`);
         const { data, error } = await supabase.functions.invoke("fetch-shiprocket-order", {
-          body: { orderId: id }
+          body: { orderId: orderIdParam }
         });
 
         if (error) {
-          console.warn("fetch-shiprocket-order returned an error:", error);
-          throw error;
+          throw new Error(error.message || "Function invocation failed");
+        }
+        
+        if (!data || !data.success || !data.order?.id) {
+          throw new Error(data?.error || "Order verification returned invalid response");
         }
 
-        console.log("fetch-shiprocket-order response:", data);
+        console.log(`[Callback] Order Verified. Local UUID: ${data.order.id}`);
         setStatus("success");
         setMessage("Payment verified! Redirecting to success page...");
         
-        // Wait a brief moment for the visual transition
+        // Immediate redirect using the newly created local UUID
         setTimeout(() => {
-          navigate(`/order-success?shiprocket_order_id=${id}`);
-        }, 1500);
+          navigate(`/order-success?id=${data.order.id}`);
+        }, 800);
 
       } catch (err: any) {
-        console.error("Sync error:", err);
+        console.warn(`[Callback] Sync attempt ${attempt + 1} failed:`, err.message);
         
-        if (attempt > 1) {
-          setTimeout(() => {
-            setRetriesLeft(attempt - 1);
-            syncOrder(id, attempt - 1);
-          }, 2000); // Wait 2 seconds before retrying
+        if (attempt < delays.length - 1) {
+          syncOrder(attempt + 1);
         } else {
-          console.error("Exhausted all retries syncing order.");
+          console.error("[Callback] Exhausted all retries syncing order.");
           setStatus("failed");
           setMessage("We couldn't sync your order details immediately. Redirecting to your success page where syncing will continue...");
+          // Fallback to order-success with shiprocket_order_id in case webhook creates it later
           setTimeout(() => {
-            navigate(`/order-success?shiprocket_order_id=${id}`);
-          }, 4000);
+            navigate(`/order-success?shiprocket_order_id=${orderIdParam}`);
+          }, 3500);
         }
       }
     };
 
-    const handleFallback = async (attempt: number) => {
-      try {
-        setStatus("fallback");
-        setMessage(`No order identifier found in URL. Checking database for recent orders (Attempt ${11 - attempt}/10)...`);
+    syncOrder(0);
 
-        // Get authenticated user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          console.warn("No authenticated user found for fallback");
-          setStatus("failed");
-          setMessage("Session expired. Please log in to check your order history.");
-          return;
-        }
-
-        // Fetch recent orders for this user created in the last 5 minutes
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-        const { data: recentOrders, error: ordersErr } = await supabase
-          .from("orders")
-          .select("id, created_at, shiprocket_orders(shiprocket_order_id)")
-          .eq("user_id", user.id)
-          .gte("created_at", fiveMinutesAgo)
-          .order("created_at", { ascending: false });
-
-        if (ordersErr) throw ordersErr;
-
-        if (recentOrders && recentOrders.length > 0) {
-          const mappingOrder = recentOrders.find(
-            (o: any) => o.shiprocket_orders && o.shiprocket_orders.length > 0
-          );
-
-          if (mappingOrder) {
-            const shiprocketId = mappingOrder.shiprocket_orders[0].shiprocket_order_id;
-            console.log("Fallback found mapped order in database:", shiprocketId);
-            syncOrder(shiprocketId, 10);
-            return;
-          }
-        }
-
-        // If not found, retry or fail
-        if (attempt > 1) {
-          setTimeout(() => {
-            handleFallback(attempt - 1);
-          }, 2000);
-        } else {
-          setStatus("failed");
-          setMessage("We couldn't locate your recent order. Please check your account page to see if it processes shortly.");
-        }
-
-      } catch (err: any) {
-        console.error("Fallback check error:", err);
-        setStatus("failed");
-        setMessage(`Verification error: ${err.message}`);
-      }
-    };
-
-    if (orderIdParam) {
-      setTargetOrderId(orderIdParam);
-      syncOrder(orderIdParam, 10);
-    } else {
-      // 4. Fallback behavior if no order_id is present
-      handleFallback(10);
-    }
   }, [orderIdParam, searchParams, navigate]);
 
   return (
@@ -163,7 +121,6 @@ const ShiprocketCallback = () => {
       <Header />
       <main className="flex-grow flex items-center justify-center py-12 px-4 bg-gradient-to-br from-background via-muted/20 to-primary/5">
         <div className="max-w-md w-full bg-card/60 backdrop-blur-md rounded-2xl p-8 border border-border shadow-2xl relative overflow-hidden transition-all duration-300">
-          {/* Neon gradient glows */}
           <div className="absolute -top-12 -left-12 w-36 h-36 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-12 -right-12 w-36 h-36 bg-accent/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -180,7 +137,7 @@ const ShiprocketCallback = () => {
               </div>
             )}
 
-            {(status === "checking" || status === "syncing" || status === "fallback") && (
+            {(status === "checking" || status === "syncing") && (
               <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-6 animate-spin">
                 <Loader2 className="h-10 w-10" />
               </div>
@@ -188,10 +145,9 @@ const ShiprocketCallback = () => {
 
             <h1 className="text-2xl font-bold tracking-tight text-foreground mb-3">
               {status === "success" && "Order Verified"}
-              {status === "failed" && "Sync Timeout"}
+              {status === "failed" && "Verification Timeout"}
               {status === "checking" && "Processing Order"}
               {status === "syncing" && "Verifying Payment"}
-              {status === "fallback" && "Locating Order"}
             </h1>
 
             <p className="text-muted-foreground text-sm max-w-xs mb-8 min-h-[48px] flex items-center justify-center leading-relaxed">

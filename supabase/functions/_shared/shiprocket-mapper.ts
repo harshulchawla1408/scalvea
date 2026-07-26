@@ -599,7 +599,7 @@ export async function syncOrderFromDetails(
   existingOrderId: string | null = null,
   webhookBody: any = null
 ): Promise<{ orderId: string; created: boolean; itemsCreated: any[] }> {
-  console.log(`syncOrderFromDetails START — srId=${shiprocketOrderId} existing=${existingOrderId ?? "null(new)"}`);
+  console.log(`[Sync] syncOrderFromDetails START — srId=${shiprocketOrderId} existing=${existingOrderId ?? "null(new)"}`);
 
   // ── A: Extract customer / addresses ───────────────────────────────────────
   // Order Details API uses { customer, shipping, billing }.
@@ -718,7 +718,7 @@ export async function syncOrderFromDetails(
     if (updateErr) { console.error("syncOrderFromDetails UPDATE failed:", updateErr.message, updateErr.code); throw updateErr; }
     orderId    = existingOrderId;
     savedOrder = updated;
-    console.log(`syncOrderFromDetails: Updated ${savedOrder.order_number} (${orderId})`);
+    console.log(`[Sync] Updated ${savedOrder.order_number} (${orderId})`);
   } else {
     const { data: inserted, error: insertErr } = await supabase
       .from("orders").insert(orderPayload).select().single();
@@ -726,7 +726,7 @@ export async function syncOrderFromDetails(
     orderId    = inserted.id;
     savedOrder = inserted;
     created    = true;
-    console.log(`syncOrderFromDetails: Created ${savedOrder.order_number} (${orderId})`);
+    console.log(`[Sync] Created ${savedOrder.order_number} (${orderId})`);
 
     // Create shiprocket_orders mapping (UNIQUE on shiprocket_order_id)
     const { error: mapErr } = await supabase.from("shiprocket_orders").insert({

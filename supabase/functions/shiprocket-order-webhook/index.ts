@@ -4,11 +4,10 @@
 // FLOW:
 //   1. Read raw body (needed for HMAC verification)
 //   2. Verify HMAC signature
-//   3. Return HTTP 200 IMMEDIATELY
-//   4. Background: call Order Details API → syncOrderFromDetails()
-//
-// The webhook ALWAYS returns 200 once the signature is verified.
-// All DB work happens asynchronously so Shiprocket never times out.
+//   3. Return HTTP 200 IMMEDIATELY (Shiprocket never times out)
+//   4. Background: Check if order already mapped (via Callback)
+//   5. If YES: Only update logistics/status directly (no expensive API/Sync calls)
+//   6. If NO: Fallback to Order Details API + syncOrderFromDetails() to create it
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -35,9 +34,9 @@ async function processWebhook(
   isMock: boolean
 ): Promise<void> {
   const shiprocketOrderId = String(body.order_id);
-  console.log(`[BG] Step 1: Processing webhook for Shiprocket order: ${shiprocketOrderId}`);
+  console.log(`[Webhook] Received for Shiprocket order: ${shiprocketOrderId}`);
 
-  // ── Check if order already exists ─────────────────────────────────────────
+  // ── 1. Check if order already exists (created by Callback) ───────────────
   const { data: existingMapping, error: mappingError } = await supabase
     .from("shiprocket_orders")
     .select("order_id, tracking_id, courier_name")
@@ -45,12 +44,58 @@ async function processWebhook(
     .maybeSingle();
 
   if (mappingError) {
-    console.error("[BG] Mapping lookup error:", mappingError.message);
+    console.error("[Webhook] Mapping lookup error:", mappingError.message);
     throw mappingError;
   }
 
-  // ── Call Order Details API ─────────────────────────────────────────────────
-  console.log(`[BG] Step 2: Calling Order Details API for ${shiprocketOrderId}`);
+  if (existingMapping) {
+    // ── 2A. Order exists. Webhook is an asynchronous updater only. ────────
+    console.log(`[Webhook] Order ${shiprocketOrderId} already exists (local: ${existingMapping.order_id}). Applying targeted updates only.`);
+    
+    const localOrderId = existingMapping.order_id;
+    const mappedStatus = mapOrderStatus(body.status);
+    
+    // Update tracking info if provided
+    const newTrackingId = body.tracking_id || body.awb;
+    const newCourier    = body.courier_name;
+
+    if (newTrackingId || newCourier) {
+      await supabase.from("shiprocket_orders").update({
+        tracking_id:  newTrackingId || existingMapping.tracking_id,
+        courier_name: newCourier    || existingMapping.courier_name,
+      }).eq("order_id", localOrderId)
+        .catch((e: any) => console.warn("[Webhook] Tracking update failed:", e.message));
+      console.log(`[Webhook] Tracking Updated for ${localOrderId}`);
+    } else {
+      console.log(`[Webhook] Ignored (Already Synced) — no tracking updates found.`);
+    }
+
+    // Update status if changed
+    if (mappedStatus) {
+      const { data: currentOrder } = await supabase
+        .from("orders").select("order_status").eq("id", localOrderId).maybeSingle();
+
+      if (currentOrder && mappedStatus !== currentOrder.order_status) {
+        await supabase.from("orders").update({
+          order_status: mappedStatus,
+          updated_at: new Date().toISOString()
+        }).eq("id", localOrderId);
+
+        await supabase.from("order_status_history").insert({
+          order_id:       localOrderId,
+          previous_status: currentOrder.order_status,
+          new_status:     mappedStatus,
+          changed_by:     "Shiprocket Webhook",
+        }).catch(() => {});
+        console.log(`[Webhook] Status history recorded: ${currentOrder.order_status} → ${mappedStatus}`);
+      }
+    }
+    return; // Exit early, no heavy syncing needed.
+  }
+
+  // ── 2B. Order DOES NOT exist. Webhook is the fallback creator. ──────────
+  console.log(`[Webhook] No mapping found for ${shiprocketOrderId}. Callback may have failed or not fired. Proceeding with Fallback Creation.`);
+
   let orderDetails: any;
 
   if (isMock) {
@@ -80,74 +125,27 @@ async function processWebhook(
       shipping:            body.shipping             || null,
       billing:             body.billing              || null,
     };
-    console.log("[BG] Step 2: Mock mode — using webhook body as order details");
   } else {
     const result = await callOrderDetailsApi(shiprocketOrderId, apiKey, secretKey);
     if (result.ok && result.data) {
       orderDetails = result.data;
-      console.log(`[BG] Step 2: Order Details API success for ${shiprocketOrderId}`);
+      console.log(`[Webhook] Order Details API success for fallback creation of ${shiprocketOrderId}`);
     } else {
-      console.warn(`[BG] Step 2: Order Details API failed (${result.error}). Using webhook body fallback.`);
-      // Build a fallback object from the webhook body
-      orderDetails = {
-        order_id:            shiprocketOrderId,
-        fastrr_order_id:     body.fastrr_order_id     || shiprocketOrderId,
-        status:              body.status               || "processing",
-        payment_type:        body.payment_type         || body.payment_method || "cod",
-        payment_status:      body.payment_status       || null,
-        subtotal_price:      body.subtotal_price       || body.amount         || 0,
-        shipping_charges:    body.shipping_charges     || body.shipping_amount || 0,
-        coupon_discount:     body.coupon_discount      || 0,
-        prepaid_discount:    body.prepaid_discount     || 0,
-        total_discount:      body.total_discount       || body.coupon_discount || 0,
-        cod_charges:         body.cod_charges          || 0,
-        total_amount_payable:body.total_amount_payable || body.amount         || 0,
-        gst_amount:          body.gst_amount           || body.tax_amount     || 0,
-        edd:                 body.edd                  || null,
-        shipping_address:    body.shipping_address     || null,
-        billing_address:     body.billing_address      || null,
-        cart_data:           body.cart_data            || { items: body.items || [] },
-        coupon_codes:        body.coupon_codes         || [],
-        payments:            body.payments             || [],
-        discount_detail:     body.discount_detail      || null,
-        tags:                body.tags                 || [],
-        customer:            body.customer             || null,
-        shipping:            body.shipping             || null,
-        billing:             body.billing              || null,
-      };
+      console.warn(`[Webhook] Order Details API failed (${result.error}). Using webhook payload as fallback.`);
+      orderDetails = { ...body, order_id: shiprocketOrderId };
     }
   }
 
-  console.log(`[BG] Step 3: Running syncOrderFromDetails — existingOrderId=${existingMapping?.order_id ?? "null"}`);
-
+  console.log(`[Sync] Order Created via Webhook Fallback for srId=${shiprocketOrderId}`);
   const { orderId, created } = await syncOrderFromDetails(
     supabase,
     shiprocketOrderId,
     orderDetails,
-    existingMapping?.order_id || null,
+    null,
     body
   );
 
-  console.log(`[BG] Step 4: syncOrderFromDetails complete. orderId=${orderId} created=${created}`);
-
-  // ── For status-only updates (tracking/courier on existing orders) ──────────
-  if (existingMapping && !created) {
-    const mappedStatus = mapOrderStatus(body.status || orderDetails.status);
-    const { data: currentOrder } = await supabase
-      .from("orders").select("order_status").eq("id", orderId).maybeSingle();
-
-    if (mappedStatus && mappedStatus !== currentOrder?.order_status) {
-      await supabase.from("order_status_history").insert({
-        order_id:       orderId,
-        previous_status: currentOrder?.order_status,
-        new_status:     mappedStatus,
-        changed_by:     "Shiprocket Webhook",
-      } as any).catch(() => {});
-      console.log(`[BG] Status history recorded: ${currentOrder?.order_status} → ${mappedStatus}`);
-    }
-  }
-
-  console.log(`[BG] Webhook processing COMPLETE for order ${shiprocketOrderId} (local: ${orderId})`);
+  console.log(`[Webhook] Fallback creation complete. Local Order UUID: ${orderId} Created: ${created}`);
 }
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
@@ -170,11 +168,7 @@ serve(async (req) => {
     );
   }
 
-  // ── Step 1: Read raw body (required for HMAC verification) ────────────────
   const rawBody = await req.text();
-  console.log("Webhook received — body length:", rawBody.length);
-
-  // ── Step 2: Verify HMAC signature ─────────────────────────────────────────
   const isMock = apiKey === "mock_key" || secretKey === "mock_secret";
 
   const signatureHeader =
@@ -200,14 +194,13 @@ serve(async (req) => {
   }
 
   if (!signatureVerified) {
-    console.error("Webhook signature verification failed. Header:", signatureHeader.substring(0, 20) + "...");
+    console.error("Webhook signature verification failed.");
     return new Response(
       JSON.stringify({ error: "Invalid webhook signature" }),
       { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 
-  // ── Step 3: Parse body ────────────────────────────────────────────────────
   let body: any;
   try {
     body = JSON.parse(rawBody);
@@ -226,19 +219,15 @@ serve(async (req) => {
     );
   }
 
-  // ── Step 4: Return HTTP 200 IMMEDIATELY ───────────────────────────────────
-  // All DB work happens asynchronously. Shiprocket gets 200 without waiting.
+  // ── Return HTTP 200 IMMEDIATELY ───────────────────────────────────────────
   const supabase   = createClient(supabaseUrl, supabaseServiceKey);
   const bgPromise  = processWebhook(supabase, body, apiKey, secretKey, isMock)
-    .catch((err) => console.error("[BG] processWebhook unhandled error:", err?.message || err));
+    .catch((err) => console.error("[Webhook] processWebhook unhandled error:", err?.message || err));
 
-  // Use Supabase Edge Runtime's waitUntil so the background task completes
-  // even after the response is returned.
   try {
-    // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions
+    // @ts-ignore
     EdgeRuntime.waitUntil(bgPromise);
   } catch {
-    // Fallback: await synchronously (still returns 200 but after processing)
     await bgPromise;
   }
 
