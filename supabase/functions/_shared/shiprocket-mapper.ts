@@ -298,6 +298,7 @@ export async function findProductIdByVariantId(supabase: any, variantId: string)
 
 /**
  * Sends order confirmation email to customer and notification to admin via Resend.
+ * Enhanced to include payment method, EDD, billing address, and GST.
  * Silently skips if RESEND_API_KEY is not configured.
  */
 export async function sendOrderEmails(supabase: any, order: any, orderItems: any[]) {
@@ -308,8 +309,8 @@ export async function sendOrderEmails(supabase: any, order: any, orderItems: any
   }
 
   const senderEmail = Deno.env.get("SENDER_EMAIL") || "onboarding@resend.dev";
-  const adminEmail = Deno.env.get("ADMIN_EMAIL") || "admin@scalvea.com";
-  let emailToUse = order.shipping_address?.email;
+  const adminEmail  = Deno.env.get("ADMIN_EMAIL")  || "admin@scalvea.com";
+  let emailToUse    = order.shipping_address?.email || order.customer_email;
 
   if (!emailToUse && order.user_id) {
     const { data: profile } = await supabase
@@ -325,49 +326,84 @@ export async function sendOrderEmails(supabase: any, order: any, orderItems: any
     return;
   }
 
-  const currencySymbol = order.currency === "INR" ? "₹" : "A$";
+  const isIndia   = order.currency === "INR";
+  const formatAmt = (v: number) => isIndia
+    ? `&#8377;${Math.round(v || 0).toLocaleString("en-IN")}`
+    : `A$${Number(v || 0).toFixed(2)}`;
+
+  const addr    = order.shipping_address || {};
+  const billing = order.billing_address  || addr;
+
+  const addrLine = [addr.address || addr.address_line1, addr.city, addr.state, addr.postcode, addr.country].filter(Boolean).join(", ");
+  const billLine = [billing.address_line1 || billing.address, billing.city, billing.state, billing.postcode, billing.country].filter(Boolean).join(", ");
+  const payMethod = (order.payment_method || "").replace("shiprocket_", "").toUpperCase() || "N/A";
+
   const formattedItems = orderItems
-    .map((item) => `<li>${item.product_name} x ${item.quantity} - ${currencySymbol}${Number(item.price * item.quantity).toFixed(2)}</li>`)
+    .map((item: any) => `<li style="padding:4px 0">${item.product_name || item.name || "Product"} &times; ${item.quantity} &mdash; ${formatAmt(Number(item.price) * Number(item.quantity))}</li>`)
     .join("");
 
-  const emailHtml = `
-    <h1>Thank you for your order!</h1>
-    <p>Your order <strong>${order.order_number}</strong> has been received and is being processed.</p>
-    <h2>Order Summary</h2>
-    <ul>${formattedItems}</ul>
-    <p><strong>Subtotal:</strong> ${currencySymbol}${Number(order.subtotal).toFixed(2)}</p>
-    <p><strong>Tax:</strong> ${currencySymbol}${Number(order.tax_amount).toFixed(2)}</p>
-    <p><strong>Shipping:</strong> ${currencySymbol}${Number(order.shipping_amount).toFixed(2)}</p>
-    ${order.discount_amount > 0 ? `<p><strong>Discount:</strong> -${currencySymbol}${Number(order.discount_amount).toFixed(2)}</p>` : ""}
-    <p><strong>Total:</strong> ${currencySymbol}${Number(order.total_amount).toFixed(2)}</p>
-    <p><strong>Delivery Estimate:</strong> ${order.delivery_estimate || "3-5 business days"}</p>
-  `;
+  const couponLine   = order.coupon_code        ? `<p><strong>Coupon:</strong> ${order.coupon_code}</p>` : "";
+  const discountLine = Number(order.discount_amount) > 0 ? `<p><strong>Discount:</strong> -${formatAmt(Number(order.discount_amount))}</p>` : "";
+  const gstLine      = Number(order.gst_amount || order.tax_amount) > 0 ? `<p><strong>GST:</strong> ${formatAmt(Number(order.gst_amount || order.tax_amount))}</p>` : "";
+  const codLine      = Number(order.cod_charges) > 0 ? `<p><strong>COD Charges:</strong> ${formatAmt(Number(order.cod_charges))}</p>` : "";
+  const eddLine      = (order.edd_date || order.delivery_estimate) ? `<p><strong>Estimated Delivery:</strong> ${order.edd_date || order.delivery_estimate}</p>` : "";
 
-  const adminHtml = `
-    <h1>New Order Received</h1>
-    <p>Order Number: <strong>${order.order_number}</strong></p>
-    <p>Customer: ${order.shipping_address?.firstName || order.shipping_address?.first_name || ""} ${order.shipping_address?.lastName || order.shipping_address?.last_name || ""}</p>
-    <p>Email: ${emailToUse}</p>
-    <p>Market: ${order.market || order.country}</p>
-    <h2>Order Items</h2>
-    <ul>${formattedItems}</ul>
-    <p><strong>Total Amount:</strong> ${currencySymbol}${Number(order.total_amount).toFixed(2)}</p>
-  `;
+  const emailHtml = `<div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:40px 20px">
+    <h1 style="font-size:22px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px">SCALVEA</h1>
+    <p style="font-size:11px;color:#888;letter-spacing:2px;margin-top:0">CARE YOU DESERVE</p>
+    <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+    <p>Order <strong>${order.order_number}</strong> has been confirmed and is being processed.</p>
+    <h2 style="font-size:13px;text-transform:uppercase;letter-spacing:2px">Items Ordered</h2>
+    <ul style="padding:0;list-style:none">${formattedItems || "<li>See your order confirmation for details</li>"}</ul>
+    <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+    <p><strong>Subtotal:</strong> ${formatAmt(Number(order.subtotal))}</p>
+    ${gstLine}<p><strong>Shipping:</strong> ${formatAmt(Number(order.shipping_amount))}</p>
+    ${codLine}${discountLine}${couponLine}
+    <p><strong>Total Paid:</strong> <span style="font-size:16px;font-weight:600">${formatAmt(Number(order.total_amount_payable || order.total_amount))}</span></p>
+    <p><strong>Payment Method:</strong> ${payMethod}</p>
+    ${eddLine}
+    <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+    <p><strong>Shipping Address:</strong><br>${(addr.first_name || addr.firstName || "")} ${(addr.last_name || addr.lastName || "")}<br>${addrLine}</p>
+    <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+    <p style="font-size:11px;color:#888;text-align:center">SCALVEA GROUPS PTY LTD &middot; scalvea.com</p>
+  </div>`;
+
+  const adminHtml = `<div style="font-family:Inter,sans-serif;max-width:700px;margin:0 auto;padding:40px 20px">
+    <h1 style="font-size:16px;text-transform:uppercase;letter-spacing:2px">New Order &#8212; ${order.order_number}</h1>
+    <p><strong>Market:</strong> ${order.market || order.country} | <strong>Currency:</strong> ${order.currency}</p>
+    <p><strong>Customer:</strong> ${order.customer_name || ""} | <strong>Email:</strong> ${emailToUse} | <strong>Phone:</strong> ${order.customer_phone || addr.phone || "N/A"}</p>
+    <p><strong>Shiprocket Order ID:</strong> ${order.shiprocket_order_id || order.fastrr_order_id || "N/A"}</p>
+    <hr style="border:none;border-top:1px solid #eee;margin:16px 0">
+    <h2 style="font-size:13px;text-transform:uppercase;letter-spacing:2px">Items</h2>
+    <ul style="padding:0;list-style:none">${formattedItems || "<li>&#8212;</li>"}</ul>
+    <hr style="border:none;border-top:1px solid #eee;margin:16px 0">
+    <p><strong>Subtotal:</strong> ${formatAmt(Number(order.subtotal))}</p>
+    ${gstLine}<p><strong>Shipping:</strong> ${formatAmt(Number(order.shipping_amount))}</p>
+    ${codLine}${discountLine}${couponLine}
+    <p><strong>Total:</strong> ${formatAmt(Number(order.total_amount_payable || order.total_amount))}</p>
+    <p><strong>Payment:</strong> ${payMethod} | <strong>Status:</strong> ${order.payment_status || "N/A"}</p>
+    ${eddLine}
+    <hr style="border:none;border-top:1px solid #eee;margin:16px 0">
+    <p><strong>Shipping Address:</strong><br>${addrLine}</p>
+    <p><strong>Billing Address:</strong><br>${billLine}</p>
+  </div>`;
 
   try {
-    const customerRes = await fetch("https://api.resend.com/emails", {
+    const cr = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${resendApiKey}` },
-      body: JSON.stringify({ from: senderEmail, to: emailToUse, subject: `Order Confirmation - ${order.order_number}`, html: emailHtml }),
+      body: JSON.stringify({ from: senderEmail, to: emailToUse, subject: `Order Confirmed &#8212; ${order.order_number}`, html: emailHtml }),
     });
-    if (!customerRes.ok) console.error("Failed to send customer email:", await customerRes.text());
+    if (!cr.ok) console.error("Customer email send failed:", await cr.text());
+    else console.log("Customer email sent:", order.order_number);
 
-    const adminRes = await fetch("https://api.resend.com/emails", {
+    const ar = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${resendApiKey}` },
-      body: JSON.stringify({ from: senderEmail, to: adminEmail, subject: `[New Order] ${order.order_number} - ${order.market || order.country}`, html: adminHtml }),
+      body: JSON.stringify({ from: senderEmail, to: adminEmail, subject: `[New Order] ${order.order_number} &#8212; ${order.market || order.country}`, html: adminHtml }),
     });
-    if (!adminRes.ok) console.error("Failed to send admin email:", await adminRes.text());
+    if (!ar.ok) console.error("Admin email send failed:", await ar.text());
+    else console.log("Admin email sent:", order.order_number);
   } catch (error) {
     console.error("Error sending order emails:", error);
   }
@@ -432,11 +468,7 @@ export async function postWebhookWithRetries(
       if (res.status === 511) {
         const errMsg = `511 Invalid authentication — verify SHIPROCKET_API_KEY and SHIPROCKET_SECRET_KEY. Response: ${lastResponseText}`;
         await supabase.from("shiprocket_webhook_logs").insert({
-          webhook_type: type,
-          payload,
-          response: errMsg,
-          status: "auth_failure",
-          attempts,
+          webhook_type: type, payload, response: errMsg, status: "auth_failure", attempts,
         }).catch(() => {});
         return { success: false, error: errMsg };
       }
@@ -451,11 +483,7 @@ export async function postWebhookWithRetries(
         }
         if (isSuccess) {
           await supabase.from("shiprocket_webhook_logs").insert({
-            webhook_type: type,
-            payload,
-            response: lastResponseText,
-            status: "success",
-            attempts,
+            webhook_type: type, payload, response: lastResponseText, status: "success", attempts,
           }).catch(() => {});
           return { success: true, response: lastResponseText };
         }
@@ -473,12 +501,357 @@ export async function postWebhookWithRetries(
   }
 
   await supabase.from("shiprocket_webhook_logs").insert({
-    webhook_type: type,
-    payload,
-    response: lastResponseText,
-    status: "failed",
-    attempts,
+    webhook_type: type, payload, response: lastResponseText, status: "failed", attempts,
   }).catch(() => {});
 
   return { success: false, error: lastResponseText };
+}
+
+// ─── Order Details API ────────────────────────────────────────────────────────
+
+/**
+ * Calls the Shiprocket Order Details API — the canonical source of truth for
+ * every Shiprocket order. Returns the complete order object.
+ *
+ * API: POST https://checkout-api.shiprocket.com/api/v1/custom-platform-order/details
+ * Auth: X-Api-Key + X-Api-HMAC-SHA256 (HMAC of JSON body)
+ *
+ * Returns { ok: true, data } on success, { ok: false, error } on failure.
+ * Never throws — all errors are captured and returned as { ok: false }.
+ */
+export async function callOrderDetailsApi(
+  shiprocketOrderId: string,
+  apiKey: string,
+  secretKey: string
+): Promise<{ ok: boolean; data: any | null; error?: string }> {
+  const payload = {
+    order_id:  String(shiprocketOrderId),
+    timestamp: new Date().toISOString(),
+  };
+  const sig        = await generateHmacSha256(secretKey, JSON.stringify(payload));
+  const controller = new AbortController();
+  const timeoutId  = setTimeout(() => controller.abort(), 15_000);
+
+  try {
+    const res = await fetch(
+      "https://checkout-api.shiprocket.com/api/v1/custom-platform-order/details",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":      "application/json",
+          "X-Api-Key":         apiKey,
+          "X-Api-HMAC-SHA256": sig,
+        },
+        body:   JSON.stringify(payload),
+        signal: controller.signal,
+      }
+    );
+    clearTimeout(timeoutId);
+
+    const text = await res.text();
+    if (!res.ok) {
+      console.error(`Order Details API HTTP ${res.status} for order ${shiprocketOrderId}:`, text.substring(0, 200));
+      return { ok: false, data: null, error: `HTTP ${res.status}: ${text.substring(0, 100)}` };
+    }
+    let parsed: any;
+    try { parsed = JSON.parse(text); } catch { parsed = { raw: text }; }
+    // Normalise envelope — may return { data: {...} } or the object directly
+    const data = parsed?.data || parsed;
+    console.log(`Order Details API: success for Shiprocket order ${shiprocketOrderId}`);
+    return { ok: true, data };
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    const msg = err.name === "AbortError"
+      ? `Order Details API timed out (15s) for order ${shiprocketOrderId}`
+      : `Order Details API fetch error: ${err.message}`;
+    console.error(msg);
+    return { ok: false, data: null, error: msg };
+  }
+}
+
+// ─── Canonical Order Sync Function ───────────────────────────────────────────
+
+/**
+ * THE single source of truth for syncing a Shiprocket order into the merchant DB.
+ *
+ * Called by:
+ *   - shiprocket-order-webhook (new order creation + duplicate webhook repair)
+ *   - fetch-shiprocket-order   (callback polling sync)
+ *   - shiprocket-reconcile     (scheduled repair of incomplete orders)
+ *
+ * Guarantees:
+ *   - Idempotent order creation  (UNIQUE constraint on shiprocket_order_id)
+ *   - Idempotent payment upserts (check by transaction_id)
+ *   - Idempotent item creation   (skip if order_items already exist)
+ *   - Idempotent inventory deduction (check inventory_logs by reason)
+ *   - Emails sent ONLY on first creation
+ *
+ * @param supabase           Supabase service-role client
+ * @param shiprocketOrderId  Shiprocket order_id string
+ * @param orderDetails       Parsed Order Details API response (or fallback object)
+ * @param existingOrderId    UUID of existing local order — null means create new
+ * @param webhookBody        Raw webhook JSON body for fallback field resolution
+ */
+export async function syncOrderFromDetails(
+  supabase: any,
+  shiprocketOrderId: string,
+  orderDetails: any,
+  existingOrderId: string | null = null,
+  webhookBody: any = null
+): Promise<{ orderId: string; created: boolean; itemsCreated: any[] }> {
+  console.log(`syncOrderFromDetails START — srId=${shiprocketOrderId} existing=${existingOrderId ?? "null(new)"}`);
+
+  // ── A: Extract customer / addresses ───────────────────────────────────────
+  // Order Details API uses { customer, shipping, billing }.
+  // Older webhook fallback uses { shipping_address, billing_address }.
+  const customer    = orderDetails.customer    || {};
+  const shippingRaw = orderDetails.shipping    || orderDetails.shipping_address || webhookBody?.shipping_address || {};
+  const billingRaw  = orderDetails.billing     || orderDetails.billing_address  || webhookBody?.billing_address  || shippingRaw;
+
+  const firstName = customer.first_name || shippingRaw.first_name || (shippingRaw.name || "").split(" ")[0] || "Customer";
+  const lastName  = customer.last_name  || shippingRaw.last_name  || (shippingRaw.name || "").split(" ").slice(1).join(" ") || "";
+  const email     = customer.email || shippingRaw.email  || webhookBody?.email  || "";
+  const phone     = customer.phone || shippingRaw.phone  || webhookBody?.phone  || "";
+
+  const shippingAddress = {
+    first_name: firstName, last_name: lastName, firstName, lastName,
+    address:       shippingRaw.line1 || shippingRaw.address_line1 || shippingRaw.address || "",
+    address_line1: shippingRaw.line1 || shippingRaw.address_line1 || shippingRaw.address || "",
+    address_line2: shippingRaw.line2 || shippingRaw.address_line2 || "",
+    city:    shippingRaw.city || "", state: shippingRaw.state || "",
+    postcode: shippingRaw.pincode || shippingRaw.postcode || shippingRaw.postal_code || "",
+    country: shippingRaw.country || "India", country_code: shippingRaw.country_code || "IN",
+    landmark: shippingRaw.landmark || "", phone, email,
+  };
+  const billingAddress = {
+    first_name: billingRaw.first_name || firstName, last_name: billingRaw.last_name || lastName,
+    address_line1: billingRaw.line1 || billingRaw.address_line1 || billingRaw.address || shippingAddress.address_line1,
+    address_line2: billingRaw.line2 || billingRaw.address_line2 || "",
+    city:     billingRaw.city    || shippingAddress.city,
+    state:    billingRaw.state   || shippingAddress.state,
+    postcode: billingRaw.pincode || billingRaw.postcode || shippingAddress.postcode,
+    country: billingRaw.country || "India",
+    phone: billingRaw.phone || phone,
+    email: billingRaw.email || email,
+  };
+
+  // ── B: Financial fields ───────────────────────────────────────────────────
+  const subtotalPrice      = Number(orderDetails.subtotal_price      || orderDetails.subtotal        || webhookBody?.subtotal_price  || 0);
+  const shippingCharges    = Number(orderDetails.shipping_charges    || orderDetails.shipping_amount || webhookBody?.shipping_charges || 0);
+  const couponDiscount     = Number(orderDetails.coupon_discount  || 0);
+  const prepaidDiscount    = Number(orderDetails.prepaid_discount || 0);
+  const totalDiscount      = Number(orderDetails.total_discount   || orderDetails.discount_amount || webhookBody?.total_discount || (couponDiscount + prepaidDiscount));
+  const codCharges         = Number(orderDetails.cod_charges      || webhookBody?.cod_charges     || 0);
+  const totalAmountPayable = Number(orderDetails.total_amount_payable || orderDetails.amount      || webhookBody?.total_amount_payable || webhookBody?.amount || 0);
+  const gstAmount          = Number(orderDetails.gst_amount || orderDetails.gst || orderDetails.tax_amount || webhookBody?.tax_amount || 0);
+
+  // ── C: Metadata ───────────────────────────────────────────────────────────
+  const fastrrId        = orderDetails.fastrr_order_id || orderDetails.order_id || webhookBody?.fastrr_order_id || String(shiprocketOrderId);
+  const platformOrderId = orderDetails.platform_order_id || null;
+  const cartId          = orderDetails.cart_id || null;
+  const edd             = orderDetails.edd     || orderDetails.edd_date || webhookBody?.edd || null;
+  const rtoPrediction   = orderDetails.rto_prediction || null;
+  const shippingPlan    = orderDetails.shipping_plan  || null;
+  const tags            = orderDetails.tags            || [];
+  const paymentsArr     = orderDetails.payments        || [];
+  const couponCodesArr  = orderDetails.coupon_codes    || (webhookBody?.coupon_codes || []);
+  const discountDetail  = orderDetails.discount_detail || null;
+
+  const couponCodeStr = Array.isArray(couponCodesArr) && couponCodesArr.length > 0
+    ? (typeof couponCodesArr[0] === "string" ? couponCodesArr[0] : couponCodesArr[0]?.code || null)
+    : (orderDetails.coupon_code || webhookBody?.coupon_code || null);
+
+  // ── D: Status and payment mapping ─────────────────────────────────────────
+  const rawStatus      = orderDetails.status       || webhookBody?.status       || "processing";
+  const localStatus    = mapOrderStatus(rawStatus);
+  const rawPaymentType = orderDetails.payment_type || orderDetails.payment_method || webhookBody?.payment_type || webhookBody?.payment_method || "cod";
+  const mappedPayment  = mapPaymentMethod(rawPaymentType);
+  const rawPmtStatus   = orderDetails.payment_status
+    || (paymentsArr.length > 0 && Number(paymentsArr[0]?.amount_received) > 0 ? "paid" : null);
+  const localPayStatus = rawPmtStatus === "paid" ? "paid"
+    : (mappedPayment === "shiprocket_cod" && localStatus !== "delivered") ? "unpaid" : "paid";
+
+  // ── E: Resolve user account ───────────────────────────────────────────────
+  let userId: string | null = null;
+  if (email) {
+    const { data: pEmail } = await supabase.from("profiles").select("id").ilike("email", email.trim()).maybeSingle();
+    if (pEmail) userId = pEmail.id;
+  }
+  if (!userId && phone) {
+    const { data: pPhone } = await supabase.from("profiles").select("id").eq("phone", phone).maybeSingle();
+    if (pPhone) userId = pPhone.id;
+  }
+
+  // ── F: Build order payload ────────────────────────────────────────────────
+  const gatewayResponse = { order_details_api: orderDetails, webhook_payload: webhookBody || null };
+  const orderPayload: any = {
+    country: "India", currency: "INR",
+    subtotal: subtotalPrice, tax_amount: gstAmount,
+    shipping_amount: shippingCharges, discount_amount: totalDiscount,
+    coupon_code: couponCodeStr, total_amount: totalAmountPayable,
+    order_status: localStatus, payment_status: localPayStatus, payment_method: mappedPayment,
+    delivery_estimate: edd || "3-5 business days",
+    fastrr_order_id: fastrrId, billing_address: billingAddress,
+    total_amount_payable: totalAmountPayable, shipping_address: shippingAddress,
+    customer_email: email || null, customer_phone: phone || null,
+    customer_name: `${firstName} ${lastName}`.trim() || null,
+    is_guest: !userId, source: "Shiprocket", platform: "Web",
+    gateway_response: gatewayResponse, market: "IN",
+    updated_at: new Date().toISOString(),
+    // New detail columns (migration 20260727000000)
+    shiprocket_order_id: String(shiprocketOrderId),
+    cod_charges: codCharges, rto_prediction: rtoPrediction, shipping_plan: shippingPlan,
+    cart_id: cartId, platform_order_id: platformOrderId,
+    order_tags: tags, discount_detail: discountDetail, coupon_codes: couponCodesArr,
+    shiprocket_payments: paymentsArr, edd_date: edd, gst_amount: gstAmount,
+  };
+  if (userId) orderPayload.user_id = userId;
+
+  // ── G: Create or update the order ─────────────────────────────────────────
+  let orderId: string;
+  let created = false;
+  let savedOrder: any;
+
+  if (existingOrderId) {
+    const { data: updated, error: updateErr } = await supabase
+      .from("orders").update(orderPayload).eq("id", existingOrderId).select().single();
+    if (updateErr) { console.error("syncOrderFromDetails UPDATE failed:", updateErr.message, updateErr.code); throw updateErr; }
+    orderId    = existingOrderId;
+    savedOrder = updated;
+    console.log(`syncOrderFromDetails: Updated ${savedOrder.order_number} (${orderId})`);
+  } else {
+    const { data: inserted, error: insertErr } = await supabase
+      .from("orders").insert(orderPayload).select().single();
+    if (insertErr) { console.error("syncOrderFromDetails INSERT failed:", insertErr.message, insertErr.code); throw insertErr; }
+    orderId    = inserted.id;
+    savedOrder = inserted;
+    created    = true;
+    console.log(`syncOrderFromDetails: Created ${savedOrder.order_number} (${orderId})`);
+
+    // Create shiprocket_orders mapping (UNIQUE on shiprocket_order_id)
+    const { error: mapErr } = await supabase.from("shiprocket_orders").insert({
+      order_id: orderId, shiprocket_order_id: String(shiprocketOrderId),
+      tracking_id:  webhookBody?.tracking_id  || orderDetails.tracking_id  || null,
+      courier_name: webhookBody?.courier_name || orderDetails.courier_name || null,
+    } as any);
+
+    if (mapErr) {
+      if (mapErr.code === "23505") {
+        // Concurrent webhook race condition — remove orphan, return existing order
+        console.warn(`syncOrderFromDetails: Concurrent duplicate for ${shiprocketOrderId}. Removing orphan ${orderId}.`);
+        await supabase.from("orders").delete().eq("id", orderId);
+        const { data: existMap } = await supabase.from("shiprocket_orders")
+          .select("order_id").eq("shiprocket_order_id", String(shiprocketOrderId)).maybeSingle();
+        return { orderId: existMap?.order_id || orderId, created: false, itemsCreated: [] };
+      }
+      console.error("syncOrderFromDetails: Mapping insert failed:", mapErr.message); throw mapErr;
+    }
+  }
+
+  // ── H: Update tracking info if present ───────────────────────────────────
+  const hasTracking = webhookBody?.tracking_id || webhookBody?.courier_name || orderDetails.tracking_id || orderDetails.courier_name;
+  if (existingOrderId && hasTracking) {
+    await supabase.from("shiprocket_orders").update({
+      tracking_id:  webhookBody?.tracking_id  || orderDetails.tracking_id  || undefined,
+      courier_name: webhookBody?.courier_name || orderDetails.courier_name || undefined,
+    }).eq("order_id", existingOrderId)
+      .catch((e: any) => console.warn("shiprocket_orders tracking update failed:", e.message));
+  }
+
+  // ── I: Upsert payments ────────────────────────────────────────────────────
+  if (paymentsArr.length > 0) {
+    for (const pmt of paymentsArr) {
+      const txnId = pmt.txn_id || pmt.transaction_id || pmt.id || null;
+      if (!txnId) continue;
+      const { data: existPmt } = await supabase.from("payments").select("id")
+        .eq("order_id", orderId).eq("transaction_id", txnId).maybeSingle();
+      if (!existPmt) {
+        await supabase.from("payments").insert({
+          order_id: orderId, payment_method: mapPaymentMethod(pmt.payment_method || rawPaymentType),
+          payment_status: Number(pmt.amount_received) > 0 ? "paid" : "pending",
+          amount: Number(pmt.amount || 0), transaction_id: txnId,
+          pg_transaction_id: pmt.pg_transaction_id || null,
+          amount_received: Number(pmt.amount_received || 0),
+          gateway: pmt.gateway || null, raw_response: pmt,
+        } as any).catch((e: any) => console.warn("payment insert failed:", e.message));
+      }
+    }
+  } else if (fastrrId) {
+    // Fallback: single payment record from order totals
+    const { data: existPmt } = await supabase.from("payments").select("id")
+      .eq("order_id", orderId).eq("transaction_id", fastrrId).maybeSingle();
+    if (!existPmt) {
+      await supabase.from("payments").insert({
+        order_id: orderId, payment_method: mappedPayment, payment_status: localPayStatus,
+        amount: totalAmountPayable, transaction_id: fastrrId, raw_response: gatewayResponse,
+      } as any).catch((e: any) => console.warn("fallback payment insert failed:", e.message));
+    }
+  }
+
+  // ── J: Resolve cart items ─────────────────────────────────────────────────
+  const rawItems: any[] = (
+    orderDetails.cart_data?.items || orderDetails.items ||
+    webhookBody?.cart_data?.items || webhookBody?.items || []
+  );
+  const cartItems = rawItems.map((it: any) => ({
+    variant_id: String(it.variant_id || it.product_id || ""),
+    quantity:   Number(it.quantity || 1),
+    price:      Number(it.price    || it.selling_price || 0),
+    name:       it.name || it.product_name || "Scalvea Product",
+  }));
+
+  // ── K: Create order items (idempotent — skip if any already exist) ────────
+  const itemsCreated: any[] = [];
+  const { data: existingItems } = await supabase.from("order_items")
+    .select("id, product_name, quantity, price").eq("order_id", orderId);
+  const hasItems = existingItems && existingItems.length > 0;
+
+  if (!hasItems && cartItems.length > 0) {
+    console.log(`syncOrderFromDetails: Creating ${cartItems.length} items for order ${orderId}`);
+    for (const item of cartItems) {
+      const prod = item.variant_id ? await findProductIdByVariantId(supabase, item.variant_id) : null;
+      const itemRow: any = {
+        order_id: orderId, product_id: prod?.id || null,
+        product_name: item.name || prod?.name || "Scalvea Product",
+        quantity: item.quantity, price: item.price, currency: "INR",
+      };
+      await supabase.from("order_items").insert(itemRow as any)
+        .catch((e: any) => console.warn("order_items insert failed:", e.message));
+      itemsCreated.push(itemRow);
+
+      // ── L: Deduct inventory (idempotent via inventory_logs) ───────────────
+      if (prod) {
+        const { data: existLog } = await supabase.from("inventory_logs").select("id")
+          .eq("product_id", prod.id).ilike("reason", `%${shiprocketOrderId}%`).maybeSingle();
+        if (!existLog) {
+          const prevQty = prod.inventory_quantity ?? 0;
+          const newQty  = Math.max(0, prevQty - item.quantity);
+          console.log(`Inventory deduction: product ${prod.id} ${prevQty}→${newQty}`);
+          await supabase.from("products").update({ inventory_quantity: newQty }).eq("id", prod.id)
+            .catch((e: any) => console.warn("inventory update failed:", e.message));
+          await supabase.from("inventory_logs").insert({
+            product_id: prod.id, change_amount: -item.quantity,
+            previous_quantity: prevQty, new_quantity: newQty,
+            reason: `Shiprocket Order ${shiprocketOrderId}`,
+          } as any).catch((e: any) => console.warn("inventory_log insert failed:", e.message));
+        } else {
+          console.log(`Inventory already deducted: product ${prod.id} / order ${shiprocketOrderId}`);
+        }
+      }
+    }
+  } else if (hasItems) {
+    console.log(`syncOrderFromDetails: Order ${orderId} already has ${existingItems!.length} items — skipping.`);
+  } else {
+    console.warn(`syncOrderFromDetails: No cart items for Shiprocket order ${shiprocketOrderId}`);
+  }
+
+  // ── M: Send emails (only on first creation) ───────────────────────────────
+  if (created && savedOrder) {
+    sendOrderEmails(supabase, savedOrder, itemsCreated).catch((err: any) =>
+      console.error("syncOrderFromDetails: email error:", err.message)
+    );
+  }
+
+  console.log(`syncOrderFromDetails COMPLETE — orderId=${orderId} created=${created} items=${itemsCreated.length}`);
+  return { orderId, created, itemsCreated };
 }

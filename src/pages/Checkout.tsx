@@ -55,8 +55,9 @@ const Checkout = () => {
     firstName: "",
     lastName: "",
     address: "",
+    address_line2: "",
     city: "",
-    state: "",
+    state: AUSTRALIA_STATES[0],
     postcode: "",
     phone: "",
   });
@@ -219,6 +220,13 @@ const Checkout = () => {
           phone: form.phone,
           firstName: form.firstName,
           lastName: form.lastName,
+          // Address collected at checkout; stored in pending order for admin visibility.
+          // Stripe will confirm/overwrite the final address via webhook after payment.
+          address: form.address,
+          address_line2: form.address_line2 || "",
+          city: form.city,
+          state: form.state,
+          postcode: form.postcode,
           coupon_code: appliedCoupon?.code || null,
           shipping_type: "standard" // default to standard shipping
         }
@@ -276,6 +284,11 @@ const Checkout = () => {
     // Australia Validation
     if (!form.email || !form.firstName || !form.lastName || !form.phone) {
       toast({ title: "Missing details", description: "Please fill in all required contact fields.", variant: "destructive" });
+      return;
+    }
+
+    if (!form.address || !form.city || !form.state || !form.postcode) {
+      toast({ title: "Missing address", description: "Please fill in your full shipping address.", variant: "destructive" });
       return;
     }
 
@@ -414,11 +427,59 @@ const Checkout = () => {
                     </div>
                   ) : (
                     <div className="space-y-4 pt-4 border-t border-border">
-                      <div>
-                        <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Address</p>
-                        <div className="w-full h-11 px-4 text-sm bg-secondary border border-border flex items-center text-muted-foreground">
-                          Address will be collected securely on the next step
+                      <div className="space-y-1">
+                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Street Address *</label>
+                        <input
+                          value={form.address}
+                          onChange={(e) => setForm({ ...form, address: e.target.value })}
+                          placeholder="123 Example Street"
+                          required
+                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Apartment, Suite, Unit (optional)</label>
+                        <input
+                          value={form.address_line2}
+                          onChange={(e) => setForm({ ...form, address_line2: e.target.value })}
+                          placeholder="Apt 4B"
+                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">City / Suburb *</label>
+                          <input
+                            value={form.city}
+                            onChange={(e) => setForm({ ...form, city: e.target.value })}
+                            placeholder="Sydney"
+                            required
+                            className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
+                          />
                         </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Postcode *</label>
+                          <input
+                            value={form.postcode}
+                            onChange={(e) => setForm({ ...form, postcode: e.target.value })}
+                            placeholder="2000"
+                            required
+                            className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">State / Territory *</label>
+                        <select
+                          value={form.state}
+                          onChange={(e) => setForm({ ...form, state: e.target.value })}
+                          required
+                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors appearance-none"
+                        >
+                          {AUSTRALIA_STATES.map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
                       </div>
                       <div>
                         <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Destination</p>

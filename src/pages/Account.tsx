@@ -93,7 +93,7 @@ const Account = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("orders")
-        .select("*, shiprocket_orders(*)")
+        .select("*, shiprocket_orders(*), order_items(*)")
         .or(`user_id.eq.${user!.id},customer_email.eq.${user!.email}`)
         .order("created_at", { ascending: false });
       return data || [];
@@ -385,9 +385,18 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
                       </div>
                     </button>
 
-                    {expandedOrderId === order.id && (
+                    {expandedOrderId === order.id && (() => {
+                      const isIndia  = order.currency === "INR";
+                      const fmt      = (v: number) => isIndia ? `₹${Math.round(v || 0).toLocaleString("en-IN")}` : `$${Number(v || 0).toFixed(2)}`;
+                      const srMap    = (order as any).shiprocket_orders as any;
+                      const items    = (order as any).order_items as any[] || [];
+                      const addr     = (order.shipping_address as any) || {};
+                      const billing  = (order.billing_address as any) || {};
+                      const srPmts   = (order as any).shiprocket_payments as any[] || [];
+                      const payLabel = (order.payment_method || "").replace("shiprocket_", "").toUpperCase() || "—";
+                      return (
                       <div className="border-t border-border p-4 space-y-4">
-                        {/* Order Tracker */}
+                        {/* Status tracker */}
                         <div>
                           <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-3">Order Status</p>
                           <div className="flex items-center gap-2">
@@ -396,7 +405,6 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
                               return (
                                 <div key={step} className="flex items-center gap-2 flex-1">
                                   <div className={`h-2 flex-1 rounded-full ${active ? "bg-foreground" : "bg-border"}`} />
-                                  {i === statusSteps.length - 1 ? null : null}
                                 </div>
                               );
                             })}
@@ -408,54 +416,118 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
                           </div>
                         </div>
 
-                        {/* Order details */}
+                        {/* Items */}
+                        {items.length > 0 && (
+                          <div>
+                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-2">Items</p>
+                            <div className="space-y-1">
+                              {items.map((item: any) => (
+                                <div key={item.id} className="flex justify-between text-sm">
+                                  <span>{item.product_name} × {item.quantity}</span>
+                                  <span>{fmt(Number(item.price) * Number(item.quantity))}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Financials */}
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
                             <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Subtotal</p>
-                            <p>{order.currency === "INR" ? "₹" : "$"}{Number(order.subtotal).toFixed(2)}</p>
+                            <p>{fmt(Number(order.subtotal))}</p>
                           </div>
-                          {Number(order.tax_amount) > 0 && (
+                          {Number(order.gst_amount || order.tax_amount) > 0 && (
                             <div>
-                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Tax</p>
-                              <p>{order.currency === "INR" ? "₹" : "$"}{Number(order.tax_amount).toFixed(2)}</p>
+                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">{isIndia ? "GST" : "Tax"}</p>
+                              <p>{fmt(Number(order.gst_amount || order.tax_amount))}</p>
                             </div>
                           )}
                           <div>
                             <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping</p>
-                            <p>{order.currency === "INR" ? "₹" : "$"}{Number(order.shipping_amount).toFixed(2)}</p>
+                            <p>{fmt(Number(order.shipping_amount))}</p>
                           </div>
+                          {Number(order.cod_charges) > 0 && (
+                            <div>
+                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">COD Charges</p>
+                              <p>{fmt(Number(order.cod_charges))}</p>
+                            </div>
+                          )}
+                          {Number(order.discount_amount) > 0 && (
+                            <div>
+                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Discount</p>
+                              <p>-{fmt(Number(order.discount_amount))}</p>
+                            </div>
+                          )}
+                          {order.coupon_code && (
+                            <div>
+                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Coupon</p>
+                              <p className="font-mono">{order.coupon_code}</p>
+                            </div>
+                          )}
                           <div>
-                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Delivery Estimate</p>
-                            <p>{order.delivery_estimate || "—"}</p>
+                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">{isIndia ? "Estimated Delivery" : "Delivery Estimate"}</p>
+                            <p>{(order as any).edd_date || order.delivery_estimate || "—"}</p>
                           </div>
                           <div>
                             <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Payment Method</p>
-                            <p className="uppercase">{order.payment_method || "—"}</p>
+                            <p className="uppercase">{payLabel}</p>
                           </div>
                         </div>
 
-                        <div className="border-t border-border/40 pt-4 mt-2 grid grid-cols-2 gap-4 text-sm">
+                        {/* Tracking */}
+                        <div className="border-t border-border/40 pt-4 grid grid-cols-2 gap-4 text-sm">
                           <div>
                             <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Courier Partner</p>
-                            <p>{order.courier || "Assigning..."}</p>
+                            <p>{srMap?.courier_name || order.courier || "Assigning..."}</p>
                           </div>
                           <div>
                             <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Tracking Number</p>
                             <p className="font-mono">
-                              {order.tracking_number ? (
-                                <span className="text-foreground font-semibold">{order.tracking_number}</span>
+                              {srMap?.tracking_id || order.tracking_number ? (
+                                <span className="text-foreground font-semibold">{srMap?.tracking_id || order.tracking_number}</span>
                               ) : (
                                 <span className="text-muted-foreground">Pending shipment</span>
                               )}
                             </p>
                           </div>
+                          {isIndia && (order as any).shipping_plan && (
+                            <div>
+                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Plan</p>
+                              <p className="uppercase">{(order as any).shipping_plan}</p>
+                            </div>
+                          )}
                         </div>
 
+                        {/* Payments detail for India */}
+                        {isIndia && srPmts.length > 0 && (
+                          <div className="border-t border-border/40 pt-3">
+                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-2">Payment Details</p>
+                            {srPmts.map((pmt: any, i: number) => (
+                              <div key={i} className="text-xs space-y-0.5">
+                                <p><span className="text-muted-foreground">Method: </span><span className="uppercase">{(pmt.payment_method || "").replace("shiprocket_","") || payLabel}</span></p>
+                                {pmt.gateway && <p><span className="text-muted-foreground">Gateway: </span>{pmt.gateway}</p>}
+                                {pmt.pg_transaction_id && <p><span className="text-muted-foreground">Ref: </span><span className="font-mono">{pmt.pg_transaction_id}</span></p>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Shipping address */}
                         {order.shipping_address && (
-                          <div className="text-sm">
+                          <div className="border-t border-border/40 pt-3 text-sm">
                             <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Address</p>
-                            <p>{(order.shipping_address as any).firstName || (order.shipping_address as any).first_name} {(order.shipping_address as any).lastName || (order.shipping_address as any).last_name}</p>
-                            <p className="text-muted-foreground">{(order.shipping_address as any).address || (order.shipping_address as any).address_line1}, {(order.shipping_address as any).city} {(order.shipping_address as any).state} {(order.shipping_address as any).postcode}</p>
+                            <p>{(addr.firstName || addr.first_name || "")} {(addr.lastName || addr.last_name || "")}</p>
+                            <p className="text-muted-foreground">{addr.address || addr.address_line1}, {addr.city} {addr.state} {addr.postcode}</p>
+                          </div>
+                        )}
+
+                        {/* Billing address (India only, if different from shipping) */}
+                        {isIndia && order.billing_address && billing.address_line1 && billing.address_line1 !== (addr.address_line1 || addr.address) && (
+                          <div className="text-sm">
+                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Billing Address</p>
+                            <p>{billing.first_name || ""} {billing.last_name || ""}</p>
+                            <p className="text-muted-foreground">{billing.address_line1}, {billing.city} {billing.state} {billing.postcode}</p>
                           </div>
                         )}
 
@@ -463,7 +535,8 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
                           <Download className="h-3 w-3 mr-1.5" /> Download Invoice
                         </Button>
                       </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 ))
               )}
