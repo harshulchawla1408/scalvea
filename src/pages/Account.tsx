@@ -91,10 +91,17 @@ const Account = () => {
   const { data: orders = [] } = useQuery({
     queryKey: ["orders", user?.id],
     queryFn: async () => {
+      let orQuery = `user_id.eq.${user!.id},customer_email.eq.${user!.email}`;
+      if (profile?.phone) {
+        // Strip out +, spaces, hyphens for matching Shiprocket phone logic
+        const normalizedPhone = profile.phone.replace(/[^0-9]/g, "").replace(/^91/, "");
+        orQuery += `,customer_phone.eq.${normalizedPhone},customer_phone.eq.+91${normalizedPhone},customer_phone.eq.91${normalizedPhone}`;
+      }
+
       const { data } = await supabase
         .from("orders")
         .select("*, shiprocket_orders(*), order_items(*)")
-        .or(`user_id.eq.${user!.id},customer_email.eq.${user!.email}`)
+        .or(orQuery)
         .order("created_at", { ascending: false });
       return data || [];
     },

@@ -159,6 +159,8 @@ async function handlePaymentSuccess(event: Stripe.Event, supabase: any) {
       order_status: "processing",
       stripe_session_id: stripeSessionId,
       stripe_payment_intent_id: stripePaymentIntentId,
+      transaction_id: stripePaymentIntentId,
+      paid_at: new Date().toISOString(),
       shipping_address: shippingAddress,
       customer_name: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim(),
     })
@@ -170,59 +172,32 @@ async function handlePaymentSuccess(event: Stripe.Event, supabase: any) {
     throw new Error(`Failed to update order payment status: ${updateError.message}`);
   }
 
-  // 5. Parse cart items and insert order_items & deduct inventory
-  const cartItemsStr = session.metadata?.cart_items;
-  let createdItems = [];
+  // 5. Fetch pre-existing order_items & deduct inventory
+  const { data: createdItems } = await supabase.from("order_items").select("*").eq("order_id", order.id);
 
-  if (cartItemsStr) {
-    const cartItems = cartItemsStr.split(",").map((part: string) => {
-      const [productId, quantity] = part.split(":");
-      return { productId, quantity: parseInt(quantity) || 1 };
-    });
+  if (createdItems && createdItems.length > 0) {
+    for (const item of createdItems) {
+      if (!item.product_id) continue;
 
-    const productIds = cartItems.map((item: any) => item.productId);
-    const { data: dbProducts } = await supabase
-      .from("products")
-      .select("*, product_prices(*)")
-      .in("id", productIds);
+      const { data: prod } = await supabase.from("products").select("id, name, inventory_quantity_australia").eq("id", item.product_id).maybeSingle();
+      if (!prod) continue;
 
-    if (dbProducts && dbProducts.length > 0) {
-      for (const item of cartItems) {
-        const prod = dbProducts.find((p: any) => p.id === item.productId);
-        if (!prod) continue;
+      // Deduct Inventory EXACTLY ONCE
+      const prevQty = prod.inventory_quantity_australia ?? 0;
+      const newQty = Math.max(0, prevQty - item.quantity);
 
-        const prices = Array.isArray(prod.product_prices) ? prod.product_prices[0] : prod.product_prices || {};
-        const priceAud = Number(prices.price_aud) || 0;
+      await supabase
+        .from("products")
+        .update({ inventory_quantity_australia: newQty })
+        .eq("id", prod.id);
 
-        const orderItemPayload = {
-          order_id: order.id,
-          product_id: prod.id,
-          product_name: prod.name,
-          quantity: item.quantity,
-          price: priceAud,
-          currency: "AUD",
-        };
-
-        await supabase.from("order_items").insert(orderItemPayload as any);
-        createdItems.push(orderItemPayload);
-
-        // Deduct Inventory EXACTLY ONCE
-        const prevQty = prod.inventory_quantity_australia ?? 0;
-        const newQty = Math.max(0, prevQty - item.quantity);
-
-        await supabase
-          .from("products")
-          .update({ inventory_quantity_australia: newQty })
-          .eq("id", prod.id);
-
-        await supabase.from("inventory_logs").insert({
-          product_id: prod.id,
-          change_amount: -item.quantity,
-          previous_quantity: prevQty,
-          new_quantity: newQty,
-          reason: `Stripe Order ${updatedOrder.order_number}`,
-        } as any);
-      }
+      await supabase.from("inventory_logs").insert({
+        product_id: prod.id,
+        change_amount: -item.quantity,
+        previous_quantity: prevQty,
+        new_quantity: newQty,
+        reason: `Stripe Order ${updatedOrder.order_number}`,
+      } as any);
     }
   }
 

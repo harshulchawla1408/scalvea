@@ -288,6 +288,33 @@ Deno.serve(async (req) => {
     }
     console.log(`Step 10: ✅ Pending order created: ${newOrder.order_number} (ID: ${newOrder.id})`);
 
+    // ── Step 10.5: Insert Order Items ────────────────────────────────────
+    console.log("Step 10.5: Inserting order items into database...");
+    const orderItemsToInsert = items.map((item: any) => {
+      const prod = dbProducts.find((p: any) => p.id === item.productId);
+      if (!prod) return null;
+      const prices = Array.isArray(prod.product_prices) ? prod.product_prices[0] : prod.product_prices || {};
+      const priceAud = Number(prices?.price_aud) || 0;
+      
+      return {
+        order_id: newOrder.id,
+        product_id: prod.id,
+        product_name: prod.name,
+        quantity: item.quantity,
+        price: priceAud,
+        currency: "AUD",
+      };
+    }).filter(Boolean);
+
+    if (orderItemsToInsert.length > 0) {
+      const { error: itemsError } = await supabase.from("order_items").insert(orderItemsToInsert);
+      if (itemsError) {
+        console.error("Step 10.5: ORDER ITEMS INSERT FAILED:", itemsError.message);
+        throw new Error(`Failed to insert order items: ${itemsError.message}`);
+      }
+      console.log(`Step 10.5: ✅ ${orderItemsToInsert.length} order items inserted successfully.`);
+    }
+
     // ── Mock mode (local development) ─────────────────────────────────────
     if (isMock) {
       const mockSessionId = "cs_test_" + Math.random().toString(36).substring(7);
@@ -303,16 +330,6 @@ Deno.serve(async (req) => {
       for (const item of items) {
         const prod = dbProducts.find((p: any) => p.id === item.productId);
         if (prod) {
-          const prices = Array.isArray(prod.product_prices) ? prod.product_prices[0] : prod.product_prices || {};
-          const priceAud = Number(prices?.price_aud) || 0;
-          await supabase.from("order_items").insert({
-            order_id: newOrder.id,
-            product_id: prod.id,
-            product_name: prod.name,
-            quantity: item.quantity,
-            price: priceAud,
-            currency: "AUD",
-          } as any);
           const prevQty = prod.inventory_quantity_australia ?? 0;
           const newQty = Math.max(0, prevQty - item.quantity);
           await supabase.from("products").update({ inventory_quantity_australia: newQty }).eq("id", prod.id);

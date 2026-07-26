@@ -595,55 +595,84 @@ export async function callOrderDetailsApi(
 export async function syncOrderFromDetails(
   supabase: any,
   shiprocketOrderId: string,
-  orderDetails: any,
+  rawOrderDetails: any,
   existingOrderId: string | null = null,
   webhookBody: any = null
 ): Promise<{ orderId: string; created: boolean; itemsCreated: any[] }> {
   console.log(`[Sync] syncOrderFromDetails START — srId=${shiprocketOrderId} existing=${existingOrderId ?? "null(new)"}`);
+  console.log("=== RAW SHIPROCKET ORDER DETAILS ===");
+  console.log(JSON.stringify(rawOrderDetails, null, 2));
+  console.log("====================================");
+
+  // Aggressive unwrapping with explicit path logging
+  let orderDetails = rawOrderDetails || {};
+  let detectedPath = "root";
+
+  if (orderDetails.data) {
+    if (Array.isArray(orderDetails.data)) {
+      orderDetails = orderDetails.data[0] || {};
+      detectedPath = "data[0]";
+    } else {
+      orderDetails = orderDetails.data;
+      detectedPath = "data";
+    }
+  } else if (orderDetails.order) {
+    orderDetails = orderDetails.order;
+    detectedPath = "order";
+  } else if (orderDetails.order_details) {
+    orderDetails = orderDetails.order_details;
+    detectedPath = "order_details";
+  } else if (Array.isArray(orderDetails) && orderDetails.length > 0) {
+    orderDetails = orderDetails[0];
+    detectedPath = "[0]";
+  }
+
+  console.log(`[Sync] Resolved payload path: ${detectedPath}`);
 
   // ── A: Extract customer / addresses ───────────────────────────────────────
-  // Order Details API uses { customer, shipping, billing }.
-  // Older webhook fallback uses { shipping_address, billing_address }.
-  const customer    = orderDetails.customer    || {};
+  const customer    = orderDetails.customer    || orderDetails.buyer || orderDetails.customer_details || {};
   const shippingRaw = orderDetails.shipping    || orderDetails.shipping_address || webhookBody?.shipping_address || {};
   const billingRaw  = orderDetails.billing     || orderDetails.billing_address  || webhookBody?.billing_address  || shippingRaw;
 
-  const firstName = customer.first_name || shippingRaw.first_name || (shippingRaw.name || "").split(" ")[0] || "Customer";
-  const lastName  = customer.last_name  || shippingRaw.last_name  || (shippingRaw.name || "").split(" ").slice(1).join(" ") || "";
-  const email     = customer.email || shippingRaw.email  || webhookBody?.email  || "";
-  const phone     = customer.phone || shippingRaw.phone  || webhookBody?.phone  || "";
+  const firstName = customer.first_name || customer.name?.split(" ")[0] || shippingRaw.first_name || (shippingRaw.name || "").split(" ")[0] || "Customer";
+  const lastName  = customer.last_name  || customer.name?.split(" ").slice(1).join(" ") || shippingRaw.last_name  || (shippingRaw.name || "").split(" ").slice(1).join(" ") || "";
+  const email     = (customer.email || shippingRaw.email || orderDetails.customer_email || orderDetails.email || webhookBody?.email || "").trim();
+  const phone     = (customer.phone || shippingRaw.phone || orderDetails.customer_phone || orderDetails.phone || webhookBody?.phone || "").trim().replace(/[^0-9+]/g, "").replace(/^\+91/, "");
 
   const shippingAddress = {
     first_name: firstName, last_name: lastName, firstName, lastName,
-    address:       shippingRaw.line1 || shippingRaw.address_line1 || shippingRaw.address || "",
-    address_line1: shippingRaw.line1 || shippingRaw.address_line1 || shippingRaw.address || "",
-    address_line2: shippingRaw.line2 || shippingRaw.address_line2 || "",
-    city:    shippingRaw.city || "", state: shippingRaw.state || "",
-    postcode: shippingRaw.pincode || shippingRaw.postcode || shippingRaw.postal_code || "",
-    country: shippingRaw.country || "India", country_code: shippingRaw.country_code || "IN",
+    address:       shippingRaw.line1 || shippingRaw.address_line1 || shippingRaw.address || shippingRaw.shipping_address || "",
+    address_line1: shippingRaw.line1 || shippingRaw.address_line1 || shippingRaw.address || shippingRaw.shipping_address || "",
+    address_line2: shippingRaw.line2 || shippingRaw.address_line2 || shippingRaw.shipping_address_2 || "",
+    city:    shippingRaw.city || shippingRaw.shipping_city || "", 
+    state:   shippingRaw.state || shippingRaw.shipping_state || "",
+    postcode: shippingRaw.pincode || shippingRaw.postcode || shippingRaw.postal_code || shippingRaw.shipping_pincode || "",
+    country: shippingRaw.country || shippingRaw.shipping_country || "India", 
+    country_code: shippingRaw.country_code || "IN",
     landmark: shippingRaw.landmark || "", phone, email,
   };
   const billingAddress = {
-    first_name: billingRaw.first_name || firstName, last_name: billingRaw.last_name || lastName,
-    address_line1: billingRaw.line1 || billingRaw.address_line1 || billingRaw.address || shippingAddress.address_line1,
-    address_line2: billingRaw.line2 || billingRaw.address_line2 || "",
-    city:     billingRaw.city    || shippingAddress.city,
-    state:    billingRaw.state   || shippingAddress.state,
-    postcode: billingRaw.pincode || billingRaw.postcode || shippingAddress.postcode,
-    country: billingRaw.country || "India",
-    phone: billingRaw.phone || phone,
-    email: billingRaw.email || email,
+    first_name: billingRaw.first_name || billingRaw.billing_name?.split(" ")[0] || firstName, 
+    last_name: billingRaw.last_name || billingRaw.billing_name?.split(" ").slice(1).join(" ") || lastName,
+    address_line1: billingRaw.line1 || billingRaw.address_line1 || billingRaw.address || billingRaw.billing_address || shippingAddress.address_line1,
+    address_line2: billingRaw.line2 || billingRaw.address_line2 || billingRaw.billing_address_2 || "",
+    city:     billingRaw.city    || billingRaw.billing_city || shippingAddress.city,
+    state:    billingRaw.state   || billingRaw.billing_state || shippingAddress.state,
+    postcode: billingRaw.pincode || billingRaw.postcode || billingRaw.billing_pincode || shippingAddress.postcode,
+    country: billingRaw.country || billingRaw.billing_country || "India",
+    phone: billingRaw.phone || billingRaw.billing_phone || phone,
+    email: billingRaw.email || billingRaw.billing_email || email,
   };
 
   // ── B: Financial fields ───────────────────────────────────────────────────
-  const subtotalPrice      = Number(orderDetails.subtotal_price      || orderDetails.subtotal        || webhookBody?.subtotal_price  || 0);
-  const shippingCharges    = Number(orderDetails.shipping_charges    || orderDetails.shipping_amount || webhookBody?.shipping_charges || 0);
+  const subtotalPrice      = Number(orderDetails.subtotal_price      || orderDetails.subtotal        || orderDetails.net_total || webhookBody?.subtotal_price  || 0);
+  const shippingCharges    = Number(orderDetails.shipping_charges    || orderDetails.shipping_amount || orderDetails.shipping || webhookBody?.shipping_charges || 0);
   const couponDiscount     = Number(orderDetails.coupon_discount  || 0);
   const prepaidDiscount    = Number(orderDetails.prepaid_discount || 0);
-  const totalDiscount      = Number(orderDetails.total_discount   || orderDetails.discount_amount || webhookBody?.total_discount || (couponDiscount + prepaidDiscount));
+  const totalDiscount      = Number(orderDetails.total_discount   || orderDetails.discount_amount || orderDetails.discount || webhookBody?.total_discount || (couponDiscount + prepaidDiscount));
   const codCharges         = Number(orderDetails.cod_charges      || webhookBody?.cod_charges     || 0);
-  const totalAmountPayable = Number(orderDetails.total_amount_payable || orderDetails.amount      || webhookBody?.total_amount_payable || webhookBody?.amount || 0);
-  const gstAmount          = Number(orderDetails.gst_amount || orderDetails.gst || orderDetails.tax_amount || webhookBody?.tax_amount || 0);
+  const totalAmountPayable = Number(orderDetails.total_amount_payable || orderDetails.amount || orderDetails.total || webhookBody?.total_amount_payable || webhookBody?.amount || 0);
+  const gstAmount          = Number(orderDetails.gst_amount || orderDetails.gst || orderDetails.tax_amount || orderDetails.tax || webhookBody?.tax_amount || 0);
 
   // ── C: Metadata ───────────────────────────────────────────────────────────
   const fastrrId        = orderDetails.fastrr_order_id || orderDetails.order_id || webhookBody?.fastrr_order_id || String(shiprocketOrderId);
@@ -674,11 +703,12 @@ export async function syncOrderFromDetails(
   // ── E: Resolve user account ───────────────────────────────────────────────
   let userId: string | null = null;
   if (email) {
-    const { data: pEmail } = await supabase.from("profiles").select("id").ilike("email", email.trim()).maybeSingle();
+    const { data: pEmail } = await supabase.from("profiles").select("id").ilike("email", email).maybeSingle();
     if (pEmail) userId = pEmail.id;
   }
   if (!userId && phone) {
-    const { data: pPhone } = await supabase.from("profiles").select("id").eq("phone", phone).maybeSingle();
+    // Attempt multiple formats for phone
+    const { data: pPhone } = await supabase.from("profiles").select("id").or(`phone.eq.${phone},phone.eq.+91${phone}`).maybeSingle();
     if (pPhone) userId = pPhone.id;
   }
 
@@ -713,9 +743,15 @@ export async function syncOrderFromDetails(
   let savedOrder: any;
 
   if (existingOrderId) {
+    // Clean nulls/undefined/empty string from orderPayload so we don't overwrite good data. 
+    // IMPORTANT: We preserve numeric 0 (like shipping_charges = 0)
+    const cleanPayload = Object.fromEntries(
+      Object.entries(orderPayload).filter(([_, v]) => v !== undefined && v !== null && v !== "")
+    );
+    
     const { data: updated, error: updateErr } = await supabase
-      .from("orders").update(orderPayload).eq("id", existingOrderId).select().single();
-    if (updateErr) { console.error("syncOrderFromDetails UPDATE failed:", updateErr.message, updateErr.code); throw updateErr; }
+      .from("orders").update(cleanPayload).eq("id", existingOrderId).select().single();
+    if (updateErr) { console.error("[Sync] UPDATE failed:", updateErr.message); throw updateErr; }
     orderId    = existingOrderId;
     savedOrder = updated;
     console.log(`[Sync] Updated ${savedOrder.order_number} (${orderId})`);
@@ -766,6 +802,7 @@ export async function syncOrderFromDetails(
       const { data: existPmt } = await supabase.from("payments").select("id")
         .eq("order_id", orderId).eq("transaction_id", txnId).maybeSingle();
       if (!existPmt) {
+        console.log(`[Sync] Inserting payment: method=${pmt.payment_method || rawPaymentType}, txn_id=${txnId}, amount=${pmt.amount}`);
         await supabase.from("payments").insert({
           order_id: orderId, payment_method: mapPaymentMethod(pmt.payment_method || rawPaymentType),
           payment_status: Number(pmt.amount_received) > 0 ? "paid" : "pending",
@@ -773,7 +810,9 @@ export async function syncOrderFromDetails(
           pg_transaction_id: pmt.pg_transaction_id || null,
           amount_received: Number(pmt.amount_received || 0),
           gateway: pmt.gateway || null, raw_response: pmt,
-        } as any).catch((e: any) => console.warn("payment insert failed:", e.message));
+        } as any).catch((e: any) => console.warn("[Sync] payment insert failed:", e.message));
+      } else {
+        console.log(`[Sync] Payment skipped because transaction_id ${txnId} already exists`);
       }
     }
   } else if (fastrrId) {
@@ -781,22 +820,29 @@ export async function syncOrderFromDetails(
     const { data: existPmt } = await supabase.from("payments").select("id")
       .eq("order_id", orderId).eq("transaction_id", fastrrId).maybeSingle();
     if (!existPmt) {
+      console.log(`[Sync] Inserting fallback payment: method=${mappedPayment}, txn_id=${fastrrId}, amount=${totalAmountPayable}`);
       await supabase.from("payments").insert({
         order_id: orderId, payment_method: mappedPayment, payment_status: localPayStatus,
         amount: totalAmountPayable, transaction_id: fastrrId, raw_response: gatewayResponse,
-      } as any).catch((e: any) => console.warn("fallback payment insert failed:", e.message));
+      } as any).catch((e: any) => console.warn("[Sync] fallback payment insert failed:", e.message));
+    } else {
+      console.log(`[Sync] Fallback payment skipped because transaction_id ${fastrrId} already exists`);
     }
   }
 
   // ── J: Resolve cart items ─────────────────────────────────────────────────
-  const rawItems: any[] = (
-    orderDetails.cart_data?.items || orderDetails.items ||
-    webhookBody?.cart_data?.items || webhookBody?.items || []
-  );
+  let rawItems: any[] = [];
+  if (Array.isArray(orderDetails.cart_data?.items)) rawItems = orderDetails.cart_data.items;
+  else if (Array.isArray(orderDetails.items)) rawItems = orderDetails.items;
+  else if (Array.isArray(orderDetails.products)) rawItems = orderDetails.products;
+  else if (Array.isArray(webhookBody?.cart_data?.items)) rawItems = webhookBody.cart_data.items;
+  else if (Array.isArray(webhookBody?.items)) rawItems = webhookBody.items;
+  else if (Array.isArray(webhookBody?.products)) rawItems = webhookBody.products;
+
   const cartItems = rawItems.map((it: any) => ({
-    variant_id: String(it.variant_id || it.product_id || ""),
+    variant_id: String(it.variant_id || it.product_id || it.id || ""),
     quantity:   Number(it.quantity || 1),
-    price:      Number(it.price    || it.selling_price || 0),
+    price:      Number(it.price || it.selling_price || 0),
     name:       it.name || it.product_name || "Scalvea Product",
   }));
 
@@ -807,17 +853,23 @@ export async function syncOrderFromDetails(
   const hasItems = existingItems && existingItems.length > 0;
 
   if (!hasItems && cartItems.length > 0) {
-    console.log(`syncOrderFromDetails: Creating ${cartItems.length} items for order ${orderId}`);
+    console.log(`[Sync] Creating ${cartItems.length} items for order ${orderId}`);
     for (const item of cartItems) {
       const prod = item.variant_id ? await findProductIdByVariantId(supabase, item.variant_id) : null;
+      if (!prod) {
+        console.warn(`[Sync] WARNING: Variant ID ${item.variant_id} not found in products table. product_id set to NULL.`);
+      }
       const itemRow: any = {
         order_id: orderId, product_id: prod?.id || null,
         product_name: item.name || prod?.name || "Scalvea Product",
         quantity: item.quantity, price: item.price, currency: "INR",
       };
-      await supabase.from("order_items").insert(itemRow as any)
-        .catch((e: any) => console.warn("order_items insert failed:", e.message));
-      itemsCreated.push(itemRow);
+      const { error: itemErr } = await supabase.from("order_items").insert(itemRow as any);
+      if (itemErr) {
+        console.error(`[Sync] order_items insert failed for ${itemRow.product_name}:`, itemErr.message);
+      } else {
+        itemsCreated.push(itemRow);
+      }
 
       // ── L: Deduct inventory (idempotent via inventory_logs) ───────────────
       if (prod) {
@@ -826,16 +878,16 @@ export async function syncOrderFromDetails(
         if (!existLog) {
           const prevQty = prod.inventory_quantity ?? 0;
           const newQty  = Math.max(0, prevQty - item.quantity);
-          console.log(`Inventory deduction: product ${prod.id} ${prevQty}→${newQty}`);
+          console.log(`[Sync] Inventory deducted for product ${prod.id}: ${prevQty} -> ${newQty}`);
           await supabase.from("products").update({ inventory_quantity: newQty }).eq("id", prod.id)
-            .catch((e: any) => console.warn("inventory update failed:", e.message));
+            .catch((e: any) => console.warn("[Sync] inventory update failed:", e.message));
           await supabase.from("inventory_logs").insert({
             product_id: prod.id, change_amount: -item.quantity,
             previous_quantity: prevQty, new_quantity: newQty,
             reason: `Shiprocket Order ${shiprocketOrderId}`,
-          } as any).catch((e: any) => console.warn("inventory_log insert failed:", e.message));
+          } as any).catch((e: any) => console.warn("[Sync] inventory_log insert failed:", e.message));
         } else {
-          console.log(`Inventory already deducted: product ${prod.id} / order ${shiprocketOrderId}`);
+          console.log(`[Sync] Inventory skipped for product ${prod.id} because already deducted`);
         }
       }
     }
