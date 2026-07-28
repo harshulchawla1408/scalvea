@@ -98,7 +98,7 @@ const AdminInventory = () => {
                   <div className="border border-border/60 p-3 flex items-center justify-between">
                     <div>
                       <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">🇦🇺 Australia Stock</p>
-                      <p className={`text-sm mt-1 font-mono font-medium ${(p.inventory_quantity_australia ?? 0) < (p.low_stock_threshold || 10) ? "text-red-500 font-bold" : ""}`}>
+                      <p className={`text-sm mt-1 font-mono font-medium ${(p.inventory_quantity_australia ?? 0) < (p.low_stock_threshold || 10) ? "text-red-500 font-semibold" : ""}`}>
                         {p.inventory_quantity_australia ?? 0} {(p.inventory_quantity_australia ?? 0) < (p.low_stock_threshold || 10) && "⚠️"}
                       </p>
                     </div>
@@ -118,7 +118,7 @@ const AdminInventory = () => {
                   <div className="border border-border/60 p-3 flex items-center justify-between">
                     <div>
                       <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">🇮🇳 India Stock</p>
-                      <p className={`text-sm mt-1 font-mono font-medium ${(p.inventory_quantity ?? 0) < (p.low_stock_threshold || 10) ? "text-red-500 font-bold" : ""}`}>
+                      <p className={`text-sm mt-1 font-mono font-medium ${(p.inventory_quantity ?? 0) < (p.low_stock_threshold || 10) ? "text-red-500 font-semibold" : ""}`}>
                         {p.inventory_quantity ?? 0} {(p.inventory_quantity ?? 0) < (p.low_stock_threshold || 10) && "⚠️"}
                       </p>
                     </div>

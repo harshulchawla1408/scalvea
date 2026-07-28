@@ -3,318 +3,362 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { Mail, Phone, MapPin, MessageSquare, Share2, Building2, User, Globe } from "lucide-react";
+import { Mail, Instagram, ArrowRight, Send } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
-import { getStoreSettings, StoreSettings, DEFAULT_SETTINGS } from "@/utils/settingsService";
 
 // Asset imports
-import heroPng from "@/assets/hero.avif";
+import worldPng from "@/assets/world.png";
+
+// TikTok icon
+const TiktokIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+  </svg>
+);
 
 const Contact = () => {
-  const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
-  const [scrollY, setScrollY] = useState(0);
-
-  useEffect(() => {
-    getStoreSettings().then(setSettings);
-  }, []);
+  const [submitting, setSubmitting] = useState(false);
 
   useSEO({
-    title: "Contact Us & Regional Offices",
-    description: "Get in touch with Scalvea's customer support and business teams in Australia and India for shipping, orders, or distribution queries.",
-    keywords: "Scalvea contact, Scalvea customer service, hair growth serum support, Craigieburn office, India distribution",
+    title: "Contact Us | Scalvea",
+    description: "Get in touch with Scalvea's support team. Reach us via email, Instagram, or TikTok for product questions, orders, partnerships, or wholesale enquiries.",
+    keywords: "Scalvea contact, Scalvea support, hair growth serum help, Scalvea email",
     schema: {
       "@context": "https://schema.org",
       "@type": "ContactPage",
-      "name": "Contact Us & Regional Offices | Scalvea",
-      "description": "Get in touch with Scalvea's customer support and business teams in Australia and India for shipping, orders, or distribution queries.",
+      "name": "Contact Us | Scalvea",
+      "description": "Get in touch with Scalvea's support team for product questions, orders, and partnerships.",
       "mainEntity": {
         "@type": "Organization",
         "name": "Scalvea",
         "url": "https://scalvea.com",
         "logo": "https://scalvea.com/logo.png",
-        "contactPoint": [
-          {
-            "@type": "ContactPoint",
-            "telephone": "+61 460 309 333",
-            "contactType": "customer service",
-            "areaServed": "AU",
-            "availableLanguage": "en"
-          }
-        ]
+        "email": "info@scalvea.com"
       }
     }
   });
 
-  // Parallax scroll tracker
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast({ 
-      title: "Message Dispatched", 
-      description: "Your inquiry has been successfully sent to our customer care team." 
-    });
-    setForm({ name: "", email: "", subject: "", message: "" });
+    setSubmitting(true);
+    setTimeout(() => {
+      toast({
+        title: "Message Sent",
+        description: "Thank you for reaching out. We'll get back to you within 24 hours."
+      });
+      setForm({ name: "", email: "", subject: "", message: "" });
+      setSubmitting(false);
+    }, 800);
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden relative flex flex-col justify-between">
+    <div className="min-h-screen bg-white overflow-hidden relative flex flex-col">
       {/* Film Grain overlay */}
       <div className="fixed inset-0 noise-bg pointer-events-none z-40 select-none opacity-[0.015]" />
 
-      <div>
-        <Header />
+      <Header />
 
-        <main className="relative z-10">
-          
-          {/* 1. CONTACT HERO SECTION */}
-          <section className="relative h-[50vh] min-h-[380px] w-full overflow-hidden bg-black flex items-center justify-center">
-            <div 
-              className="absolute inset-0 z-0 overflow-hidden pointer-events-none"
-              style={{ transform: `translateY(${scrollY * 0.15}px)` }}
+      <main className="relative z-10 flex-1">
+
+        {/* ─────────────────────────────────────────────────────
+            1. MINIMAL HERO
+        ───────────────────────────────────────────────────── */}
+        <section className="bg-white pt-32 pb-16 md:pt-40 md:pb-20 border-b border-neutral-100">
+          <div className="max-w-5xl mx-auto px-6 lg:px-16 text-center">
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+              className="text-4xl md:text-5xl lg:text-7xl font-heading text-neutral-800 leading-tight tracking-tight mb-6"
+            >
+              Contact Scalvea
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-sm md:text-base text-neutral-400 font-body font-light leading-relaxed max-w-lg mx-auto"
+            >
+              Whether you have a question about our products, an order, a partnership, or anything else — our team is ready to help.
+            </motion.p>
+          </div>
+        </section>
+
+        {/* ─────────────────────────────────────────────────────
+            2. WORLD MAP — GLOBAL PRESENCE
+        ───────────────────────────────────────────────────── */}
+        <section className="bg-[#F9F9F7] py-16 md:py-24 border-b border-neutral-100 overflow-hidden">
+          <div className="max-w-6xl mx-auto px-6 lg:px-16">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+              className="text-center mb-12"
+            >
+              <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-body font-light block mb-4">
+                WHERE WE ARE
+              </span>
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-heading text-neutral-900 leading-tight mb-3">
+                Global Presence
+              </h2>
+              <p className="text-xs md:text-sm text-neutral-500 font-body font-light leading-relaxed max-w-md mx-auto">
+                Scalvea operates across Australia and India — combining Australian innovation with trusted on-ground operations.
+              </p>
+            </motion.div>
+
+            {/* World map image */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+              className="relative w-full"
             >
               <img
-                src={heroPng}
-                alt="Scalvea Minimalist Laboratory Setup"
-                className="absolute inset-0 w-full h-full object-cover object-bottom opacity-40 scale-105"
+                src={worldPng}
+                alt="Scalvea global presence — Australia and India"
+                className="w-full h-auto object-contain select-none"
+                loading="lazy"
+                draggable={false}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-background" />
-            </div>
+            </motion.div>
 
-            <div className="relative z-10 text-center max-w-2xl px-6 space-y-5 pt-12">
-              <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-light block">
-                COMMUNICATION NODE
-              </span>
-              <h1 className="text-3xl md:text-5xl text-white font-extralight tracking-[0.1em] uppercase select-none">
-                Contact Scalvea
-              </h1>
-              <div className="h-[1px] bg-neutral-800 w-16 mx-auto" />
-              <p className="text-xs text-neutral-400 font-light max-w-md mx-auto leading-relaxed">
-                Connect with our regional offices and support channels in Australia and India. We respond to all inquiries within 24 hours.
-              </p>
-            </div>
-          </section>
-
-          {/* 2. SPLIT CONTACT & OFFICE SECTION */}
-          <section className="py-20 md:py-28 bg-white relative z-20 border-b border-neutral-100">
-            <div className="max-w-7xl mx-auto px-6 lg:px-16">
-              
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-                
-                {/* LEFT COLUMN: Contact Form */}
-                <div className="lg:col-span-7 space-y-8">
+            {/* Location info cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 max-w-xl mx-auto">
+              {[
+                { flag: "🇦🇺", label: "Australian Headquarters", city: "Craigieburn, Victoria", country: "Australia" },
+                { flag: "🇮🇳", label: "India Operations", city: "Patiala, Punjab", country: "India" },
+              ].map((loc, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.7, delay: i * 0.15 }}
+                  className="flex items-start gap-4 bg-white border border-neutral-100 rounded-2xl px-5 py-4 shadow-[0_2px_16px_rgba(0,0,0,0.04)]"
+                >
+                  <span className="text-2xl mt-0.5 select-none">{loc.flag}</span>
                   <div>
-                    <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-light block mb-2">
-                      INQUIRIES
-                    </span>
-                    <h2 className="text-2xl font-light text-neutral-900 tracking-wide uppercase">
-                      Direct Message
-                    </h2>
-                    <p className="text-xs text-neutral-500 font-light mt-1">
-                      Complete the details below to start a formal inquiry log with our support desks.
-                    </p>
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-1">{loc.label}</p>
+                    <p className="text-sm font-heading text-neutral-900">{loc.city}</p>
+                    <p className="text-[11px] text-neutral-500 font-body font-light">{loc.country}</p>
                   </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-                  <form onSubmit={handleSubmit} className="space-y-6 bg-white border border-neutral-100 p-8 shadow-sm">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Name */}
-                      <div className="space-y-1.5">
-                        <label className="text-[9px] tracking-[0.15em] uppercase text-neutral-400 font-medium block">Your Name</label>
-                        <input
-                          value={form.name}
-                          onChange={e => setForm({ ...form, name: e.target.value })}
-                          required
-                          placeholder="e.g. Puneet"
-                          className="w-full h-10 px-3 text-xs bg-transparent border border-neutral-200 outline-none focus:border-black transition-all font-light rounded-none"
-                        />
-                      </div>
+        {/* ─────────────────────────────────────────────────────
+            3. CONTACT CHANNELS + FORM (split layout)
+        ───────────────────────────────────────────────────── */}
+        <section className="bg-white py-20 md:py-28">
+          <div className="max-w-6xl mx-auto px-6 lg:px-16">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
 
-                      {/* Email */}
-                      <div className="space-y-1.5">
-                        <label className="text-[9px] tracking-[0.15em] uppercase text-neutral-400 font-medium block">Email Address</label>
-                        <input
-                          type="email"
-                          value={form.email}
-                          onChange={e => setForm({ ...form, email: e.target.value })}
-                          required
-                          placeholder="e.g. you@example.com"
-                          className="w-full h-10 px-3 text-xs bg-transparent border border-neutral-200 outline-none focus:border-black transition-all font-light rounded-none"
-                        />
-                      </div>
+              {/* LEFT — channels */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                className="space-y-10"
+              >
+                <div>
+                  <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-body font-light block mb-4">
+                    REACH US
+                  </span>
+                  <h2 className="text-2xl md:text-3xl lg:text-4xl font-heading text-neutral-900 leading-tight mb-4">
+                    We'd Love to<br className="hidden md:block" /> Hear From You
+                  </h2>
+                  <p className="text-sm text-neutral-500 font-body font-light leading-relaxed max-w-sm">
+                    Every conversation matters to us. Reach out via any of the channels below and we'll respond as quickly as possible.
+                  </p>
+                </div>
+
+                {/* Contact channel cards */}
+                <div className="space-y-4">
+                  {/* Email */}
+                  <a
+                    href="mailto:info@scalvea.com"
+                    className="group flex items-center gap-5 p-5 border border-neutral-100 rounded-2xl bg-[#F9F9F7] hover:border-neutral-300 hover:bg-white hover:shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition-all duration-300"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-white border border-neutral-100 flex items-center justify-center shadow-sm shrink-0 group-hover:bg-black group-hover:border-black transition-all duration-300">
+                      <Mail className="h-4.5 w-4.5 text-neutral-700 group-hover:text-white transition-colors duration-300" />
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-0.5">Email</p>
+                      <p className="text-sm font-body font-medium text-neutral-900 truncate">info@scalvea.com</p>
+                      <p className="text-[10px] text-neutral-400 font-body font-light">We respond within 24 hours</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-neutral-300 group-hover:text-neutral-600 group-hover:translate-x-1 transition-all duration-300 shrink-0" />
+                  </a>
 
-                    {/* Subject */}
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] tracking-[0.15em] uppercase text-neutral-400 font-medium block">Subject</label>
+                  {/* Instagram */}
+                  <a
+                    href="https://www.instagram.com/scalvea_/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center gap-5 p-5 border border-neutral-100 rounded-2xl bg-[#F9F9F7] hover:border-neutral-300 hover:bg-white hover:shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition-all duration-300"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-white border border-neutral-100 flex items-center justify-center shadow-sm shrink-0 group-hover:bg-black group-hover:border-black transition-all duration-300">
+                      <Instagram className="h-4.5 w-4.5 text-neutral-700 group-hover:text-white transition-colors duration-300" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-0.5">Instagram</p>
+                      <p className="text-sm font-body font-medium text-neutral-900">@scalvea_</p>
+                      <p className="text-[10px] text-neutral-400 font-body font-light">DM us for quick responses</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-neutral-300 group-hover:text-neutral-600 group-hover:translate-x-1 transition-all duration-300 shrink-0" />
+                  </a>
+
+                  {/* TikTok */}
+                  <a
+                    href="https://www.tiktok.com/@scalvea/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center gap-5 p-5 border border-neutral-100 rounded-2xl bg-[#F9F9F7] hover:border-neutral-300 hover:bg-white hover:shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition-all duration-300"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-white border border-neutral-100 flex items-center justify-center shadow-sm shrink-0 group-hover:bg-black group-hover:border-black transition-all duration-300">
+                      <TiktokIcon className="h-4 w-4 text-neutral-700 group-hover:text-white transition-colors duration-300" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-0.5">TikTok</p>
+                      <p className="text-sm font-body font-medium text-neutral-900">@scalvea</p>
+                      <p className="text-[10px] text-neutral-400 font-body font-light">Follow for updates & tips</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-neutral-300 group-hover:text-neutral-600 group-hover:translate-x-1 transition-all duration-300 shrink-0" />
+                  </a>
+                </div>
+
+                {/* Response time note */}
+                <div className="border-t border-neutral-100 pt-6">
+                  <p className="text-[10px] text-neutral-400 font-body font-light leading-relaxed">
+                    Our team operates across Australian Eastern Time (AEST) and Indian Standard Time (IST). Response times may vary slightly based on timezone.
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* RIGHT — form */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div className="mb-8">
+                  <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-body font-light block mb-4">
+                    SEND A MESSAGE
+                  </span>
+                  <h2 className="text-2xl md:text-3xl font-heading text-neutral-900 leading-tight mb-2">
+                    Direct Enquiry
+                  </h2>
+                  <p className="text-sm text-neutral-500 font-body font-light leading-relaxed">
+                    Fill in the form and we'll get back to you within 24 hours.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {/* Name */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] tracking-[0.18em] uppercase text-neutral-500 font-body font-medium block">
+                        Your Name
+                      </label>
                       <input
-                        value={form.subject}
-                        onChange={e => setForm({ ...form, subject: e.target.value })}
+                        value={form.name}
+                        onChange={e => setForm({ ...form, name: e.target.value })}
                         required
-                        placeholder="Inquiry subject summary"
-                        className="w-full h-10 px-3 text-xs bg-transparent border border-neutral-200 outline-none focus:border-black transition-all font-light rounded-none"
+                        placeholder="e.g. Puneet"
+                        className="w-full h-11 px-4 text-xs bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-400"
                       />
                     </div>
 
-                    {/* Message */}
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] tracking-[0.15em] uppercase text-neutral-400 font-medium block">Message</label>
-                      <textarea
-                        value={form.message}
-                        onChange={e => setForm({ ...form, message: e.target.value })}
+                    {/* Email */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] tracking-[0.18em] uppercase text-neutral-500 font-body font-medium block">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={e => setForm({ ...form, email: e.target.value })}
                         required
-                        rows={6}
-                        placeholder="Provide details about your query..."
-                        className="w-full px-3 py-3 text-xs bg-transparent border border-neutral-200 outline-none focus:border-black transition-all font-light resize-none rounded-none"
+                        placeholder="you@example.com"
+                        className="w-full h-11 px-4 text-xs bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-400"
                       />
                     </div>
-
-                    {/* Button */}
-                    <div className="pt-2">
-                      <button 
-                        type="submit" 
-                        className="group relative overflow-hidden w-full h-11 flex items-center justify-center text-[10px] tracking-[0.2em] uppercase font-medium bg-black text-white hover:text-black border border-black transition-all duration-300 rounded-none"
-                      >
-                        <span className="absolute inset-0 w-0 bg-white transition-all duration-300 ease-out group-hover:w-full" />
-                        <span className="relative z-10">Send Message</span>
-                      </button>
-                    </div>
-                  </form>
-                </div>
-
-                {/* RIGHT COLUMN: Premium Contact Cards */}
-                <div className="lg:col-span-5 space-y-6 lg:pl-4">
-                  <div>
-                    <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-light block mb-2">
-                      LOCATIONS
-                    </span>
-                    <h2 className="text-2xl font-light text-neutral-900 tracking-wide uppercase">
-                      Regional Offices
-                    </h2>
-                    <p className="text-xs text-neutral-500 font-light mt-1">
-                      Our official administrative and logistics operations branches.
-                    </p>
                   </div>
 
-                  {/* Card 1: Australia Office */}
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6 }}
-                    className="p-6 md:p-8 bg-[#fafafa]/80 backdrop-blur-md border border-neutral-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transform transition-all duration-300 space-y-5"
+                  {/* Subject */}
+                  <div className="space-y-2">
+                    <label className="text-[9px] tracking-[0.18em] uppercase text-neutral-500 font-body font-medium block">
+                      Subject
+                    </label>
+                    <input
+                      value={form.subject}
+                      onChange={e => setForm({ ...form, subject: e.target.value })}
+                      required
+                      placeholder="What is your enquiry about?"
+                      className="w-full h-11 px-4 text-xs bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-400"
+                    />
+                  </div>
+
+                  {/* Message */}
+                  <div className="space-y-2">
+                    <label className="text-[9px] tracking-[0.18em] uppercase text-neutral-500 font-body font-medium block">
+                      Message
+                    </label>
+                    <textarea
+                      value={form.message}
+                      onChange={e => setForm({ ...form, message: e.target.value })}
+                      required
+                      rows={5}
+                      placeholder="Please describe your question or concern in detail..."
+                      className="w-full px-4 py-3.5 text-xs bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light resize-none text-neutral-900 placeholder:text-neutral-400"
+                    />
+                  </div>
+
+                  {/* Submit */}
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="group w-full h-12 flex items-center justify-center gap-2.5 bg-black text-white text-[10px] tracking-[0.22em] uppercase font-semibold rounded-xl hover:bg-neutral-800 hover:-translate-y-0.5 transition-all duration-300 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
                   >
-                    <div className="flex justify-between items-center border-b border-neutral-200/50 pb-3">
-                      <div>
-                        <h3 className="text-xs tracking-[0.2em] uppercase font-semibold text-neutral-900">{settings.au_business_name}</h3>
-                        <span className="text-[8px] tracking-[0.1em] text-neutral-400 uppercase">ABN: {settings.au_abn}</span>
-                      </div>
-                      <span className="text-[7px] tracking-[0.15em] uppercase bg-black text-white px-2 py-0.5 font-medium">AU HQ</span>
-                    </div>
-                    
-                    <div className="space-y-3.5 text-xs font-light text-neutral-600">
-                      <div className="flex items-start gap-2.5">
-                        <User className="h-4 w-4 text-neutral-400 shrink-0 mt-0.5" />
-                        <p><span className="text-neutral-400">Owner:</span> {settings.au_owner_name}</p>
-                      </div>
-                      <div className="flex items-start gap-2.5">
-                        <MapPin className="h-4 w-4 text-neutral-400 shrink-0 mt-0.5" />
-                        <p>{settings.au_address}</p>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <Phone className="h-4 w-4 text-neutral-400 shrink-0" />
-                        <a href={`tel:${settings.au_phone.replace(/\s+/g, '')}`} className="hover:text-black hover:underline transition-colors">{settings.au_phone}</a>
-                      </div>
-                    </div>
-                  </motion.div>
+                    {submitting ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Sending...
+                      </span>
+                    ) : (
+                      <>
+                        Send Message
+                        <Send className="h-3.5 w-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
+                      </>
+                    )}
+                  </button>
 
-                  {/* Card 2: India Operations */}
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.15 }}
-                    className="p-6 md:p-8 bg-[#fafafa]/80 backdrop-blur-md border border-neutral-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transform transition-all duration-300 space-y-5"
-                  >
-                    <div className="flex justify-between items-center border-b border-neutral-200/50 pb-3">
-                      <div>
-                        <h3 className="text-xs tracking-[0.2em] uppercase font-semibold text-neutral-900">India Operations</h3>
-                        <span className="text-[8px] tracking-[0.1em] text-neutral-400 uppercase">Secondary Office</span>
-                      </div>
-                      <span className="text-[7px] tracking-[0.15em] uppercase bg-neutral-100 text-neutral-800 px-2 py-0.5 font-medium border border-neutral-200">IN Hub</span>
-                    </div>
-                    
-                    <div className="space-y-3.5 text-xs font-light text-neutral-600">
-                      <div className="flex items-start gap-2.5">
-                        <User className="h-4 w-4 text-neutral-400 shrink-0 mt-0.5" />
-                        <p><span className="text-neutral-400">Owner:</span> {settings.in_owner_name}</p>
-                      </div>
-                      <div className="flex items-start gap-2.5">
-                        <MapPin className="h-4 w-4 text-neutral-400 shrink-0 mt-0.5" />
-                        <p>{settings.in_address}</p>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <Phone className="h-4 w-4 text-neutral-400 shrink-0" />
-                        <a href={`tel:${settings.in_phone.replace(/\s+/g, '')}`} className="hover:text-black hover:underline transition-colors">{settings.in_phone}</a>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <Mail className="h-4 w-4 text-neutral-400 shrink-0" />
-                        <a href={`mailto:${settings.in_email}`} className="hover:text-black hover:underline transition-colors break-all">{settings.in_email}</a>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                </div>
-
-              </div>
+                  <p className="text-[9px] text-neutral-400 font-body font-light text-center tracking-wide">
+                    We respect your privacy and will never share your details.
+                  </p>
+                </form>
+              </motion.div>
 
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* 3. SUPPORT TYPES SECTION */}
-          <section className="py-20 bg-[#fafafa]/50 border-b border-neutral-100 relative z-20">
-            <div className="max-w-7xl mx-auto px-6 lg:px-16">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                
-                {/* Card 1 */}
-                <div className="p-8 bg-white border border-neutral-100 shadow-sm hover:shadow-md transition-all duration-300 space-y-4">
-                  <MessageSquare className="h-6 w-6 text-neutral-800" />
-                  <h3 className="text-xs tracking-[0.15em] uppercase font-semibold text-neutral-900">Customer Support</h3>
-                  <p className="text-xs text-neutral-500 font-light leading-relaxed">
-                    Direct channel for tracking details, returns processing, order issues, or ingredients guidance.
-                  </p>
-                </div>
-
-                {/* Card 2 */}
-                <div className="p-8 bg-white border border-neutral-100 shadow-sm hover:shadow-md transition-all duration-300 space-y-4">
-                  <Share2 className="h-6 w-6 text-neutral-800" />
-                  <h3 className="text-xs tracking-[0.15em] uppercase font-semibold text-neutral-900">Partnerships</h3>
-                  <p className="text-xs text-neutral-500 font-light leading-relaxed">
-                    Join the Scalvea hair wellness community. Inquire about research alignment or collaborative content.
-                  </p>
-                </div>
-
-                {/* Card 3 */}
-                <div className="p-8 bg-white border border-neutral-100 shadow-sm hover:shadow-md transition-all duration-300 space-y-4">
-                  <Building2 className="h-6 w-6 text-neutral-800" />
-                  <h3 className="text-xs tracking-[0.15em] uppercase font-semibold text-neutral-900">Wholesale & Clinics</h3>
-                  <p className="text-xs text-neutral-500 font-light leading-relaxed">
-                    Request clinical stocking parameters or direct bulk distributions of our Follicle 8 product line.
-                  </p>
-                </div>
-
-              </div>
-            </div>
-          </section>
-
-        </main>
-      </div>
+      </main>
 
       <Footer />
     </div>

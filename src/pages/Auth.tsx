@@ -10,13 +10,9 @@ import { toast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/useSEO";
 
 // Import beauty/lifestyle assets
-import hero3 from "@/assets/hero3.png";
-import client1 from "@/assets/client-1.jpg";
-import client4 from "@/assets/client-4.jpg";
-import about1 from "@/assets/about1.png";
+import about1 from "@/assets/hero2.png";
 
-// Rotating images array
-const images = [hero3, client1, client4, about1];
+const authImage = about1;
 
 // Monochrome Google Icon for luxury brand aesthetic
 const GoogleIcon = () => (
@@ -189,9 +185,6 @@ const Auth = () => {
   const [rightLightPos, setRightLightPos] = useState({ x: 0, y: 0 });
   const [rightLightOpacity, setRightLightOpacity] = useState(0);
 
-  // Carousel index
-  const [currentImgIndex, setCurrentImgIndex] = useState(0);
-
   const { user, loading: authLoading } = useAuth();
   const { currency } = useCountry();
   const navigate = useNavigate();
@@ -224,18 +217,12 @@ const Auth = () => {
     const hashParams = new URLSearchParams(location.hash.substring(1));
     const isRecovery = params.get("type") === "recovery" || hashParams.get("type") === "recovery" || location.hash.includes("type=recovery");
 
+    const returnTo = params.get("returnTo") || "/account";
+
     if (!authLoading && user && !isRecovery) {
-      navigate("/account", { replace: true });
+      navigate(returnTo, { replace: true });
     }
   }, [authLoading, user, navigate, location]);
-
-  // Rotate background images
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentImgIndex((prev) => (prev + 1) % images.length);
-    }, 5500);
-    return () => clearInterval(timer);
-  }, []);
 
   // Left panel mouse movements
   const handleLeftMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -267,10 +254,12 @@ const Auth = () => {
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
+      const params = new URLSearchParams(location.search);
+      const returnTo = params.get("returnTo") || "/account";
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/account`,
+          redirectTo: `${window.location.origin}${returnTo}`,
         },
       });
       if (error) throw error;
@@ -298,18 +287,22 @@ const Auth = () => {
         }
 
         toast({ title: "Welcome back!" });
-        navigate("/account");
+        const params = new URLSearchParams(location.search);
+        const returnTo = params.get("returnTo") || "/account";
+        navigate(returnTo);
       } else if (view === "signup") {
         if (password !== confirmPassword) {
           throw new Error("Passwords do not match");
         }
 
+        const params = new URLSearchParams(location.search);
+        const returnTo = params.get("returnTo") ? `?returnTo=${params.get("returnTo")}` : "";
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: { full_name: name },
-            emailRedirectTo: window.location.origin + "/auth",
+            emailRedirectTo: window.location.origin + "/auth" + returnTo,
           },
         });
         if (error) throw error;
@@ -366,17 +359,11 @@ const Auth = () => {
 
       {/* MOBILE FULLSCREEN BACKGROUND IMAGE */}
       <div className="absolute inset-0 md:hidden z-0 overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={currentImgIndex}
-            src={images[currentImgIndex]}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.28 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
-            className="absolute inset-0 w-full h-full object-cover filter blur-[1px]"
-          />
-        </AnimatePresence>
+        <img
+          src={authImage}
+          alt="Scalvea aesthetic background"
+          className="absolute inset-0 w-full h-full object-contain opacity-30"
+        />
         <div className="absolute inset-0 bg-white/35 backdrop-blur-[2px]" />
       </div>
 
@@ -385,28 +372,19 @@ const Auth = () => {
         onMouseMove={handleLeftMouseMove}
         className="hidden md:flex md:w-1/2 lg:w-[55%] relative overflow-hidden bg-neutral-950 text-white select-none"
       >
-        {/* Carousel Image container */}
-        <div className="absolute inset-0 w-full h-full">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentImgIndex}
-              initial={{ opacity: 0, scale: 1.05 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 1.6, ease: [0.25, 1, 0.5, 1] }}
-              style={{
-                transform: `translate3d(${leftParallax.x}px, ${leftParallax.y}px, 0)`,
-                transition: "transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)"
-              }}
-              className="absolute inset-0 w-full h-full"
-            >
-              <img
-                src={images[currentImgIndex]}
-                alt="Scalvea Clean Beauty Aesthetic"
-                className="w-full h-full object-cover opacity-85 filter contrast-[1.02] brightness-90"
-              />
-            </motion.div>
-          </AnimatePresence>
+        {/* Single image panel */}
+        <div
+          className="absolute inset-0 w-full h-full"
+          style={{
+            transform: `translate3d(${leftParallax.x}px, ${leftParallax.y}px, 0)`,
+            transition: "transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)"
+          }}
+        >
+          <img
+            src={authImage}
+            alt="Scalvea Clean Beauty Aesthetic"
+            className="w-full h-full object-contain opacity-85 filter contrast-[1.02] brightness-90"
+          />
         </div>
 
         {/* Soft luxury lighting spot overlay */}
@@ -425,26 +403,6 @@ const Auth = () => {
           {/* Top Logo Watermark */}
           <div className="text-[10px] tracking-[0.25em] uppercase font-light opacity-60">
             SCALVEA · LABS
-          </div>
-
-          {/* Central Editorial Heading */}
-          <div className="space-y-4 max-w-md">
-            <motion.h2
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-              className="text-4xl lg:text-5xl font-light leading-tight text-neutral-100 editorial-heading"
-            >
-              Care You Deserve
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-              className="text-xs uppercase tracking-[0.15em] text-neutral-300/80 font-light leading-relaxed"
-            >
-              Science-backed hair care designed for real results.
-            </motion.p>
           </div>
 
           {/* Bottom Captions */}

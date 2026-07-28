@@ -1,8 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@200;300;400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+  font-family: 'Chillax';
+  src: url('/fonts/Chillax/WEB/fonts/Chillax-Medium.woff2') format('woff2'),
+       url('/fonts/Chillax/WEB/fonts/Chillax-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Chillax';
+  src: url('/fonts/Chillax/WEB/fonts/Chillax-Light.woff2') format('woff2'),
+       url('/fonts/Chillax/WEB/fonts/Chillax-Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Thunder';
+  src: url('/fonts/Thunder.woff2') format('woff2'),
+       url('/fonts/Thunder.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* Luxury Animation Keyframes */
 @keyframes drawLine {
@@ -122,11 +147,6 @@
   animation: noiseMove 6s steps(10) infinite;
 }
 
-.editorial-heading {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 300;
-  letter-spacing: -0.01em;
-}
 
 @keyframes marquee {
   0% { transform: translateX(0); }
@@ -147,6 +167,11 @@
 
 @layer base {
   :root {
+    --font-hero: 'Thunder', sans-serif;
+    --font-heading: 'Clash Display', sans-serif;
+    --font-body: 'Cabinet Grotesk', sans-serif;
+    --font-chillax: 'Chillax', sans-serif;
+    
     --background: 0 0% 100%;
     --foreground: 0 0% 8%;
 
@@ -195,14 +220,15 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', sans-serif;
-    font-weight: 300;
-    letter-spacing: 0.01em;
+    font-family: var(--font-body);
+    font-weight: 400;
+    letter-spacing: 0.02em;
   }
 
   h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
     font-weight: 400;
-    letter-spacing: 0.02em;
+    letter-spacing: normal;
   }
 }
 

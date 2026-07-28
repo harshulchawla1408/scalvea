@@ -7,37 +7,152 @@ const faqs = [
   {
     category: "Orders & Shipping",
     items: [
-      { q: "How long does shipping take?", a: "Shipping times vary by country. Australia: 3–7 business days, India: 7–14 business days, USA: 5–10 business days. You'll receive a tracking number once your order ships." },
-      { q: "Do you offer free shipping?", a: "Yes! Free shipping is available on orders above a certain threshold, which varies by country. Check the announcement bar at the top of the site for your country's free shipping minimum." },
-      { q: "Can I track my order?", a: "Absolutely. Once your order has been dispatched, you'll receive an email with a tracking link. You can also check your order status from your Account page." },
-      { q: "Do you ship internationally?", a: "We currently ship to Australia, India, and the USA. Select your country from the globe icon in the navigation bar to see local pricing and shipping details." },
-    ],
+      {
+        q: "Which countries does Scalvea currently ship to?",
+        a: "Scalvea currently ships exclusively to Australia and India. Select your country using the country selector to view local pricing, payment methods, and shipping information."
+      },
+      {
+        q: "How long does shipping take?",
+        a: "Australia: approximately 3–7 business days. India: approximately 4–6 business days depending on your location. Delivery estimates are shown during checkout."
+      },
+      {
+        q: "Can I track my order?",
+        a: "Yes. Once your order has been dispatched, you'll receive a tracking link via email. You can also view your order status anytime from your Scalvea account."
+      },
+      {
+        q: "Do you offer free shipping?",
+        a: "Yes. Free shipping is available once your order reaches the minimum purchase amount for your selected country. The current threshold is displayed throughout the website."
+      },
+      {
+        q: "Can I change or cancel my order after placing it?",
+        a: "If your order has not yet been processed or shipped, please contact our support team as soon as possible. Once an order has been dispatched, modifications or cancellations may no longer be possible."
+      }
+    ]
   },
+
   {
     category: "Products",
     items: [
-      { q: "What is Follicle 8 Serum?", a: "Follicle 8 is our flagship hair growth serum formulated with 8 clinically proven active ingredients including Redensyl, Baicapil, Procapil, and Anagain. It targets hair thinning at the root cause." },
-      { q: "Are your products suitable for all hair types?", a: "Yes, all SCALVEA products are formulated to work across all hair types — straight, wavy, curly, and coily. They are also suitable for both men and women." },
-      { q: "Are your products cruelty-free?", a: "Yes. SCALVEA is 100% cruelty-free. We never test on animals and our formulations are vegan-friendly." },
-      { q: "How long before I see results?", a: "Most customers begin noticing reduced hair fall within 4–6 weeks and visible new growth within 8–12 weeks of consistent daily use." },
-    ],
+      {
+        q: "What is Follicle 8 Hair Growth Serum?",
+        a: "Follicle 8 is Scalvea's advanced hair growth serum formulated with clinically researched active ingredients including Anagain®, Redensyl®, Baicapil®, and Procapil® to support stronger, healthier-looking hair from the root."
+      },
+      {
+        q: "What is Scalp-5 Anti Dandruff Serum?",
+        a: "Scalp-5 is a lightweight scalp serum formulated with Rosemary Oil, Piroctone Olamine, Salicylic Acid, and Vitamin E to help reduce visible dandruff, soothe scalp irritation, and promote a healthier scalp environment."
+      },
+      {
+        q: "Can I use both products together?",
+        a: "Yes. Follicle 8 and Scalp-5 are designed to complement each other. A healthy scalp creates a better environment for stronger, healthier hair growth."
+      },
+      {
+        q: "Are Scalvea products suitable for both men and women?",
+        a: "Yes. All Scalvea products are suitable for both men and women and work across all hair types including straight, wavy, curly, and coily hair."
+      },
+      {
+        q: "Are your products cruelty-free?",
+        a: "Yes. Scalvea products are cruelty-free and are never tested on animals."
+      }
+    ]
   },
+
+  {
+    category: "Hair Care & Results",
+    items: [
+      {
+        q: "How long does it take to see results?",
+        a: "Results vary from person to person depending on hair condition and consistency of use. Many customers notice reduced hair fall within 4–6 weeks, while healthier-looking hair growth typically becomes more visible after 8–12 weeks."
+      },
+      {
+        q: "How often should I use the serums?",
+        a: "For best results, use the products consistently as directed on the packaging. Daily application is recommended unless otherwise instructed."
+      },
+      {
+        q: "Can I use the serums with other hair care products?",
+        a: "Yes. Scalvea serums can be incorporated into most hair care routines. Apply them to a clean scalp and allow sufficient time for absorption before using styling products."
+      },
+      {
+        q: "Will the serum make my hair greasy?",
+        a: "No. Our lightweight formulations are designed for everyday use and absorb quickly without leaving a heavy or greasy residue."
+      }
+    ]
+  },
+
+  {
+    category: "Ingredients & Safety",
+    items: [
+      {
+        q: "What makes Scalvea different?",
+        a: "Scalvea focuses on ingredient transparency and clinically researched formulations. Every product is developed using carefully selected active ingredients at effective concentrations without unnecessary fillers."
+      },
+      {
+        q: "Are the ingredients clinically researched?",
+        a: "Yes. Our formulations feature clinically researched ingredients such as Anagain®, Redensyl®, Baicapil®, Procapil®, Piroctone Olamine, Rosemary Oil, Salicylic Acid, and Vitamin E."
+      },
+      {
+        q: "Are your products suitable for sensitive scalps?",
+        a: "Our formulations are designed to be gentle for everyday use. If you have a particularly sensitive scalp or known allergies, we recommend performing a patch test before full application."
+      },
+      {
+        q: "Can pregnant or breastfeeding individuals use these products?",
+        a: "If you are pregnant, breastfeeding, or under medical treatment, we recommend consulting your healthcare professional before using any new hair care product."
+      }
+    ]
+  },
+
   {
     category: "Returns & Refunds",
     items: [
-      { q: "What is your return policy?", a: "We accept returns within 30 days of delivery for unopened products in their original packaging. Please visit our Returns Policy page for full details." },
-      { q: "How do I initiate a return?", a: "Contact us at scalvea.operations@gmail.com with your order number and reason for return. Our team will provide return instructions within 24 hours." },
-      { q: "When will I receive my refund?", a: "Refunds are processed within 5–7 business days after we receive and inspect the returned product. The refund will be credited to your original payment method." },
-    ],
+      {
+        q: "What is your return policy?",
+        a: "We accept returns for eligible unopened products in accordance with our Returns & Refund Policy. Please review the policy page for complete eligibility requirements."
+      },
+      {
+        q: "How do I request a return?",
+        a: "Simply contact our support team through the Contact page with your order number and reason for the request. We'll guide you through the process."
+      },
+      {
+        q: "When will I receive my refund?",
+        a: "Once your returned product has been received and inspected, eligible refunds are generally processed within 5–7 business days back to the original payment method."
+      }
+    ]
   },
+
   {
     category: "Account & Payments",
     items: [
-      { q: "Do I need an account to place an order?", a: "Yes, you'll need to create an account or sign in before checkout. This allows you to track orders, save addresses, and manage your profile." },
-      { q: "What payment methods do you accept?", a: "We accept all major credit and debit cards via Stripe, as well as Cash on Delivery (COD) for eligible regions." },
-      { q: "Is my payment information secure?", a: "Absolutely. All payments are processed through Stripe, which uses bank-level encryption and is PCI DSS compliant. We never store your card details." },
-    ],
+      {
+        q: "Do I need an account to place an order?",
+        a: "Yes. Creating a Scalvea account allows you to securely place orders, track deliveries, manage addresses, and view your order history."
+      },
+      {
+        q: "Which payment methods are available?",
+        a: "Payment options depend on your selected country. Australian orders are securely processed through Stripe using major debit and credit cards. Eligible Indian orders may also have Cash on Delivery available where applicable."
+      },
+      {
+        q: "Is my payment information secure?",
+        a: "Absolutely. Payments are processed using secure, industry-standard payment providers. Scalvea never stores your complete card details."
+      }
+    ]
   },
+
+  {
+    category: "Scalvea",
+    items: [
+      {
+        q: "Where is Scalvea based?",
+        a: "Scalvea is an Australian hair care brand with operations in both Australia and India, focused on delivering clinically inspired, science-backed hair care solutions."
+      },
+      {
+        q: "How can I contact Scalvea?",
+        a: "Our support team is available through the Contact page. Simply submit your enquiry and we'll respond as quickly as possible."
+      },
+      {
+        q: "Where can I learn more about your ingredients?",
+        a: "Detailed ingredient information is available on individual product pages, where you'll find the purpose and benefits of every key active ingredient used in our formulations."
+      }
+    ]
+  }
 ];
 
 const FAQ = () => {

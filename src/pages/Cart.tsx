@@ -102,7 +102,7 @@ const Cart = () => {
                   <span>Total</span>
                   <div className="text-right font-mono">
                     <span className="block font-medium">{formatVal(total + shipping)} {currencyCode}</span>
-                    <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5 font-sans">Inclusive of all taxes</span>
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5 font-body">Inclusive of all taxes</span>
                   </div>
                 </div>
               </div>

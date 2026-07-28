@@ -119,20 +119,18 @@ const Header = () => {
         initial="hidden"
         animate="visible"
         variants={headerVariants}
-        className={`z-50 transition-all duration-300 ${
-          isHome ? "fixed top-0 left-0 right-0" : "sticky top-0"
-        } bg-white w-full ${
+        className={`z-50 transition-all duration-300 sticky top-0 bg-white w-full ${
           isScrolled ? "shadow-sm border-b border-[#F3F3F3]" : "border-b border-transparent shadow-none"
         }`}
       >
-        <nav className="max-w-8xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 h-[68px] lg:h-[80px] flex items-center justify-between relative">
+        <nav className="max-w-8xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 h-[62px] lg:h-[74px] flex items-center justify-between relative">
           {/* Left: Logo */}
           <motion.div variants={logoVariants} className="flex items-center">
             <Link to="/" className="flex items-center">
               <img 
                 src={logo1} 
                 alt="Scalvea" 
-                className="h-[52px] lg:h-[64px] w-auto object-contain transition-all duration-300" 
+                className="h-[46px] lg:h-[58px] w-auto object-contain transition-all duration-300" 
               />
             </Link>
           </motion.div>
@@ -153,7 +151,7 @@ const Header = () => {
                 <motion.div key={item.label} variants={navItemVariants}>
                   <Link
                     to={item.path}
-                    className={`relative py-2 text-xs font-semibold tracking-[0.15em] uppercase text-[#111111] hover:text-black transition-colors duration-250
+                    className={`relative py-2 text-[13px] font-semibold tracking-[0.15em] uppercase text-[#111111] hover:text-black transition-colors duration-250
                       after:absolute after:bottom-0 after:left-0 after:h-[1px] after:bg-[#111111] after:transition-all after:duration-250
                       ${isActive ? "after:w-full" : "after:w-0 hover:after:w-full"}
                     `}
@@ -236,7 +234,7 @@ const Header = () => {
               >
                 <Heart className="size-[22px]" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-black text-white text-[8px] font-mono w-4 h-4 flex items-center justify-center rounded-full font-bold scale-90 border border-white">
+                  <span className="absolute -top-0.5 -right-0.5 bg-black text-white text-[8px] font-mono w-4 h-4 flex items-center justify-center rounded-full font-semibold scale-90 border border-white">
                     {wishlistCount}
                   </span>
                 )}
@@ -252,7 +250,7 @@ const Header = () => {
             >
               <ShoppingBag className="size-[22px]" />
               {itemCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-black text-white text-[8px] font-mono w-4 h-4 flex items-center justify-center rounded-full font-bold scale-90 border border-white">
+                <span className="absolute -top-0.5 -right-0.5 bg-black text-white text-[8px] font-mono w-4 h-4 flex items-center justify-center rounded-full font-semibold scale-90 border border-white">
                   {itemCount}
                 </span>
               )}

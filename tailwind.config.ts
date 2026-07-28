@@ -14,7 +14,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        hero: ["var(--font-hero)", "sans-serif"],
+        heading: ["var(--font-heading)", "sans-serif"],
+        body: ["var(--font-body)", "sans-serif"],
+        chillax: ["var(--font-chillax)", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

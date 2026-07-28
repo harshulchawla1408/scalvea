@@ -32,8 +32,14 @@ const Checkout = () => {
 
   const { items, total, clearCart } = useCart();
   const { settings, currencySymbol, currencyCode, market } = useCountry();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth?returnTo=/checkout");
+    }
+  }, [authLoading, user, navigate]);
 
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount_percentage: number } | null>(null);
@@ -135,8 +141,11 @@ const Checkout = () => {
     const capturedNativeEvent: Event | null = (e?.nativeEvent as Event) || null;
     e?.preventDefault();
 
-    // NOTE: India Shiprocket checkout supports GUEST checkout.
-    // Do NOT add an auth guard here. Login is NOT required for Indian customers.
+    if (!user) {
+      toast({ title: "Please sign in", description: "You need an account to complete checkout.", variant: "destructive" });
+      navigate("/auth?returnTo=/checkout");
+      return;
+    }
 
     setPlacing(true);
 
@@ -266,9 +275,9 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user && !isIndia) {
+    if (!user) {
       toast({ title: "Please sign in", description: "You need an account to place an order.", variant: "destructive" });
-      navigate("/auth");
+      navigate("/auth?returnTo=/checkout");
       return;
     }
 
@@ -309,6 +318,18 @@ const Checkout = () => {
         <div className="text-center py-32 space-y-4">
           <p className="text-sm text-muted-foreground">Your bag is empty</p>
           <Button asChild variant="outline" className="text-xs tracking-[0.1em] uppercase"><Link to="/shop">Continue Shopping</Link></Button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center py-32">
+          <div className="animate-spin w-8 h-8 border-2 border-foreground border-t-transparent rounded-full" />
         </div>
         <Footer />
       </div>
@@ -581,7 +602,7 @@ const Checkout = () => {
                     <span>Total Due</span>
                     <div className="text-right font-mono">
                       <span className="block font-medium text-base">{formatVal(grandTotal)}</span>
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5 font-sans">Inclusive of all taxes</span>
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5 font-body">Inclusive of all taxes</span>
                     </div>
                   </div>
                 </div>

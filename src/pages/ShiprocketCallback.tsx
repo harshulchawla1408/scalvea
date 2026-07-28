@@ -143,7 +143,7 @@ const ShiprocketCallback = () => {
               </div>
             )}
 
-            <h1 className="text-2xl font-bold tracking-tight text-foreground mb-3">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground mb-3">
               {status === "success" && "Order Verified"}
               {status === "failed" && "Verification Timeout"}
               {status === "checking" && "Processing Order"}

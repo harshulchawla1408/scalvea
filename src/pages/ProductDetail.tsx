@@ -677,6 +677,7 @@ const ProductDetail = () => {
         {/* ══════════════════════════════════════════
             SECTION 2 — WHY YOU'LL LOVE IT
         ══════════════════════════════════════════ */}
+        {/*
         <section className="px-6 lg:px-12 py-16 bg-[#fafafa]">
           <RevealSection className="max-w-5xl mx-auto">
             <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground text-center mb-3">Benefits</p>
@@ -700,9 +701,7 @@ const ProductDetail = () => {
           </RevealSection>
         </section>
 
-        {/* ══════════════════════════════════════════
-            SECTION 3 — WHAT MAKES IT DIFFERENT
-        ══════════════════════════════════════════ */}
+        SECTION 3 — WHAT MAKES IT DIFFERENT
         <section className="px-6 lg:px-12 py-16">
           <RevealSection className="max-w-4xl mx-auto">
             <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground text-center mb-3">The Difference</p>
@@ -728,9 +727,7 @@ const ProductDetail = () => {
           </RevealSection>
         </section>
 
-        {/* ══════════════════════════════════════════
-            SECTION 4 — INGREDIENT SHOWCASE
-        ══════════════════════════════════════════ */}
+        SECTION 4 — INGREDIENT SHOWCASE
         {ingredientCards.length > 0 && (
           <section className="px-6 lg:px-12 py-16 bg-[#fafafa]">
             <RevealSection className="max-w-5xl mx-auto">
@@ -765,9 +762,7 @@ const ProductDetail = () => {
           </section>
         )}
 
-        {/* ══════════════════════════════════════════
-            SECTION 5 — HOW IT WORKS
-        ══════════════════════════════════════════ */}
+        SECTION 5 — HOW IT WORKS
         {product.how_to_use && (
           <section className="px-6 lg:px-12 py-16">
             <RevealSection className="max-w-2xl mx-auto">
@@ -780,12 +775,10 @@ const ProductDetail = () => {
           </section>
         )}
 
-        {/* ══════════════════════════════════════════
-            SECTION 6 — SCIENCE BEHIND SCALVEA
-        ══════════════════════════════════════════ */}
+        SECTION 6 — SCIENCE BEHIND SCALVEA
         <section className="px-6 lg:px-12 py-20 pd-science-bg">
           <RevealSection className="max-w-4xl mx-auto text-center">
-            {/* Decorative molecule SVG */}
+            Decorative molecule SVG
             <div className="flex justify-center mb-8 opacity-40">
               <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="40" cy="40" r="8" fill="white" opacity="0.9"/>
@@ -825,15 +818,13 @@ const ProductDetail = () => {
           </RevealSection>
         </section>
 
-        {/* ══════════════════════════════════════════
-            SECTION 7 — RESULTS TIMELINE
-        ══════════════════════════════════════════ */}
+        SECTION 7 — RESULTS TIMELINE
         <section className="px-6 lg:px-12 py-16 bg-[#fafafa]">
           <RevealSection className="max-w-4xl mx-auto">
             <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground text-center mb-3">What to Expect</p>
             <h2 className="text-2xl md:text-3xl font-light text-center tracking-tight mb-12">Your Results Timeline</h2>
             <div className="relative">
-              {/* Connecting line */}
+              Connecting line
               <div className="absolute top-5 left-0 right-0 h-px bg-neutral-200 hidden md:block" style={{ left: "12.5%", right: "12.5%" }} />
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {[
@@ -858,9 +849,7 @@ const ProductDetail = () => {
           </RevealSection>
         </section>
 
-        {/* ══════════════════════════════════════════
-            SECTION 8 — BEFORE & AFTER
-        ══════════════════════════════════════════ */}
+        SECTION 8 — BEFORE & AFTER
         <section className="px-6 lg:px-12 py-16">
           <RevealSection className="max-w-2xl mx-auto">
             <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground text-center mb-3">Transformation</p>
@@ -869,9 +858,7 @@ const ProductDetail = () => {
           </RevealSection>
         </section>
 
-        {/* ══════════════════════════════════════════
-            SECTION 9 — TRUST BADGES
-        ══════════════════════════════════════════ */}
+        SECTION 9 — TRUST BADGES
         <section className="px-6 lg:px-12 py-14 bg-[#fafafa]">
           <RevealSection className="max-w-4xl mx-auto">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -894,9 +881,7 @@ const ProductDetail = () => {
           </RevealSection>
         </section>
 
-        {/* ══════════════════════════════════════════
-            SECTION 10 — SOCIAL PROOF COUNTERS
-        ══════════════════════════════════════════ */}
+        SECTION 10 — SOCIAL PROOF COUNTERS
         <section className="px-6 lg:px-12 py-16 bg-black">
           <RevealSection className="max-w-3xl mx-auto text-center">
             <div className="flex items-center justify-center gap-1 mb-4">
@@ -921,6 +906,7 @@ const ProductDetail = () => {
           </RevealSection>
         </section>
 
+        */}
         {/* ══════════════════════════════════════════
             SECTION 11 — PREMIUM REVIEWS
         ══════════════════════════════════════════ */}
@@ -1093,7 +1079,7 @@ const ProductDetail = () => {
                           </div>
                         ) : (
                           <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-                            <span className="text-red-400 text-xs font-bold">✕</span>
+                            <span className="text-red-400 text-xs font-semibold">✕</span>
                           </div>
                         )}
                       </td>
@@ -1104,7 +1090,7 @@ const ProductDetail = () => {
                           </div>
                         ) : ordinary === false ? (
                           <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-                            <span className="text-red-400 text-xs font-bold">✕</span>
+                            <span className="text-red-400 text-xs font-semibold">✕</span>
                           </div>
                         ) : (
                           <span className="text-amber-400 text-sm">△</span>
