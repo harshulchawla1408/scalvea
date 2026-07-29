@@ -1,6 +1,10 @@
-import follicle8Serum from "@/assets/follicle8-serum.png";
-import follicle8Black from "@/assets/follicle8-black.png";
-import follicle8Spray from "@/assets/follicle8-spray.png";
+import hero2 from "@/assets/hero2.png";
+import hero3 from "@/assets/hero3.png";
+import scalpPng from "@/assets/scalp.png";
+
+const follicle8Serum = hero2;
+const follicle8Black = scalpPng;
+const follicle8Spray = hero3;
 
 export interface Product {
   id: string;

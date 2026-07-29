@@ -312,6 +312,8 @@ export type Database = {
           australia_price: number | null
           id: string
           india_price: number | null
+          mrp_aud: number | null
+          mrp_inr: number | null
           price_aud: number
           price_inr: number
           price_usd: number
@@ -321,6 +323,8 @@ export type Database = {
           australia_price?: number | null
           id?: string
           india_price?: number | null
+          mrp_aud?: number | null
+          mrp_inr?: number | null
           price_aud?: number
           price_inr?: number
           price_usd?: number
@@ -330,6 +334,8 @@ export type Database = {
           australia_price?: number | null
           id?: string
           india_price?: number | null
+          mrp_aud?: number | null
+          mrp_inr?: number | null
           price_aud?: number
           price_inr?: number
           price_usd?: number

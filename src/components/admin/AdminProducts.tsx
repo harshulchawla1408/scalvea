@@ -23,6 +23,7 @@ const AdminProducts = () => {
     name: "", slug: "", description: "", category: "Serums", ingredients: "", how_to_use: "",
     key_ingredients: "", size: "30 mL / 1.01 fl oz", imageUrls: [] as string[], featured: false, badge: "",
     price_aud: 0, price_inr: 0,
+    mrp_aud: 0, mrp_inr: 0,
     inventory_quantity_india: 0, inventory_quantity_australia: 0,
     is_active_india: true, is_active_australia: true,
     sku_india: "", sku_australia: "",
@@ -63,7 +64,7 @@ const AdminProducts = () => {
   const resetForm = () => {
     setForm({
       name: "", slug: "", description: "", category: "Serums", ingredients: "", how_to_use: "", key_ingredients: "", size: "30 mL / 1.01 fl oz", imageUrls: [], featured: false, badge: "",
-      price_aud: 0, price_inr: 0,
+      price_aud: 0, price_inr: 0, mrp_aud: 0, mrp_inr: 0,
       inventory_quantity_india: 0, inventory_quantity_australia: 0,
       is_active_india: true, is_active_australia: true,
       sku_india: "", sku_australia: "",
@@ -76,11 +77,16 @@ const AdminProducts = () => {
 
   const handleEdit = (p: any) => {
     const prices = Array.isArray(p.product_prices) ? p.product_prices[0] : p.product_prices || {};
+    const price_aud = Number(prices.price_aud) || 0;
+    const price_inr = Number(prices.price_inr) || 0;
+    const mrp_aud = prices.mrp_aud !== undefined && prices.mrp_aud !== null ? Number(prices.mrp_aud) : price_aud;
+    const mrp_inr = prices.mrp_inr !== undefined && prices.mrp_inr !== null ? Number(prices.mrp_inr) : price_inr;
+
     setForm({
       name: p.name, slug: p.slug, description: p.description || "", category: p.category, ingredients: p.ingredients || "",
       how_to_use: p.how_to_use || "", key_ingredients: (p.key_ingredients || []).join(", "), size: p.size || "",
       imageUrls: p.images || [], featured: p.featured, badge: p.badge || "",
-      price_aud: Number(prices.price_aud) || 0, price_inr: Number(prices.price_inr) || 0,
+      price_aud, price_inr, mrp_aud, mrp_inr,
       inventory_quantity_india: p.inventory_quantity || 0, inventory_quantity_australia: p.inventory_quantity_australia || 0,
       is_active_india: p.is_active_india ?? true, is_active_australia: p.is_active_australia ?? true,
       sku_india: p.sku_india || "", sku_australia: p.sku_australia || "",
@@ -126,6 +132,19 @@ const AdminProducts = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate MRP vs Selling Price
+    if (form.mrp_aud > 0 && form.mrp_aud < form.price_aud) {
+      toast({ title: "Validation Error", description: "Australia MRP cannot be lower than selling price.", variant: "destructive" });
+      return;
+    }
+    if (form.mrp_inr > 0 && form.mrp_inr < form.price_inr) {
+      toast({ title: "Validation Error", description: "India MRP cannot be lower than selling price.", variant: "destructive" });
+      return;
+    }
+
+    const finalMrpAud = form.mrp_aud > 0 ? form.mrp_aud : form.price_aud;
+    const finalMrpInr = form.mrp_inr > 0 ? form.mrp_inr : form.price_inr;
+
     // Base product data — no shiprocket IDs on CREATE (DB sequence assigns them)
     const baseProductData: Record<string, any> = {
       name: form.name, slug: form.slug, description: form.description, category: form.category,
@@ -149,14 +168,27 @@ const AdminProducts = () => {
       if (editProduct) {
         // On EDIT: keep the existing shiprocket IDs exactly as-is (never change them)
         await supabase.from("products").update(baseProductData as any).eq("id", editProduct.id);
-        await supabase.from("product_prices").update({ price_aud: form.price_aud, price_inr: form.price_inr, price_usd: 0 } as any).eq("product_id", editProduct.id);
+        await supabase.from("product_prices").update({
+          price_aud: form.price_aud,
+          price_inr: form.price_inr,
+          mrp_aud: finalMrpAud,
+          mrp_inr: finalMrpInr,
+          price_usd: 0
+        } as any).eq("product_id", editProduct.id);
         toast({ title: "Product updated" });
       } else {
         // On CREATE: omit shiprocket IDs entirely — DB nextval() sequence assigns them
         // This guarantees sequential, unique, non-zero IDs with no admin input required
         const { data, error } = await supabase.from("products").insert(baseProductData as any).select().single();
         if (error) throw error;
-        await supabase.from("product_prices").insert({ product_id: data.id, price_aud: form.price_aud, price_inr: form.price_inr, price_usd: 0 } as any);
+        await supabase.from("product_prices").insert({
+          product_id: data.id,
+          price_aud: form.price_aud,
+          price_inr: form.price_inr,
+          mrp_aud: finalMrpAud,
+          mrp_inr: finalMrpInr,
+          price_usd: 0
+        } as any);
         toast({
           title: "Product created",
           description: `Shiprocket IDs auto-assigned: Product ${data.shiprocket_product_id ?? "(pending)"} · Variant ${data.shiprocket_variant_id ?? "(pending)"}`,
@@ -350,9 +382,13 @@ const AdminProducts = () => {
           {/* Australia specific settings */}
           <div className="border border-border p-4 space-y-4">
             <h4 className="text-xs uppercase tracking-[0.15em] font-medium border-b border-border pb-2 flex items-center gap-2">🇦🇺 Australia Settings</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div>
-                <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block mb-1">Price (AUD)</label>
+                <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block mb-1">MRP (AUD)</label>
+                <input type="number" step="0.01" value={form.mrp_aud || ""} onChange={(e) => setForm({ ...form, mrp_aud: parseFloat(e.target.value) || 0 })} placeholder="MRP / Original" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block mb-1">Selling Price (AUD)</label>
                 <input type="number" step="0.01" value={form.price_aud} onChange={(e) => setForm({ ...form, price_aud: parseFloat(e.target.value) || 0 })} className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
               </div>
               <div>
@@ -370,9 +406,13 @@ const AdminProducts = () => {
           {/* India specific settings */}
           <div className="border border-border p-4 space-y-4">
             <h4 className="text-xs uppercase tracking-[0.15em] font-medium border-b border-border pb-2 flex items-center gap-2">🇮🇳 India Settings</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div>
-                <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block mb-1">Price (INR)</label>
+                <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block mb-1">MRP (INR)</label>
+                <input type="number" step="0.01" value={form.mrp_inr || ""} onChange={(e) => setForm({ ...form, mrp_inr: parseFloat(e.target.value) || 0 })} placeholder="MRP / Original" className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block mb-1">Selling Price (INR)</label>
                 <input type="number" step="0.01" value={form.price_inr} onChange={(e) => setForm({ ...form, price_inr: parseFloat(e.target.value) || 0 })} className="w-full h-10 px-3 text-sm border border-border bg-transparent outline-none focus:border-foreground" />
               </div>
               <div>

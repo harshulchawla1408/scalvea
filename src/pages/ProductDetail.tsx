@@ -107,7 +107,7 @@ function RichDescription({ text, className = "" }: { text: string; className?: s
   const blocks = text.split(/\n{2,}/);
 
   return (
-    <div className={`space-y-3 ${className}`}>
+    <div className={`space-y-4 ${className}`}>
       {blocks.map((block, bi) => {
         const lines = block.split("\n").map((l) => l.trimEnd()).filter((l) => l !== "");
         if (lines.length === 0) return null;
@@ -119,25 +119,28 @@ function RichDescription({ text, className = "" }: { text: string; className?: s
 
         if (isBullet) {
           return (
-            <ul key={bi} className="space-y-1.5 pl-0">
-              {lines.map((l, li) => (
-                <li key={li} className="flex items-start gap-2.5 text-sm text-muted-foreground leading-relaxed">
-                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-neutral-400 flex-shrink-0" />
-                  <span>{l.replace(/^[\u2022\-\*\u25cf\u25e6]\s+/, "")}</span>
-                </li>
-              ))}
+            <ul key={bi} className="space-y-2.5 pl-0 my-3">
+              {lines.map((l, li) => {
+                const content = l.replace(/^[\u2022\-\*\u25cf\u25e6]\s+/, "");
+                return (
+                  <li key={li} className="flex items-start gap-3 text-[15px] md:text-[16px] text-neutral-700 leading-[1.8]">
+                    <span className="mt-2.5 w-1.5 h-1.5 rounded-full bg-neutral-900 flex-shrink-0" />
+                    <span>{content}</span>
+                  </li>
+                );
+              })}
             </ul>
           );
         }
 
         if (isNumbered) {
           return (
-            <ol key={bi} className="space-y-1.5 pl-0">
+            <ol key={bi} className="space-y-2.5 pl-0 my-3">
               {lines.map((l, li) => {
                 const match = l.match(/^(\d+[\.\)])\s+(.*)/);
                 return (
-                  <li key={li} className="flex items-start gap-2.5 text-sm text-muted-foreground leading-relaxed">
-                    <span className="flex-shrink-0 font-medium text-neutral-500 min-w-[1.25rem]">
+                  <li key={li} className="flex items-start gap-3 text-[15px] md:text-[16px] text-neutral-700 leading-[1.8]">
+                    <span className="flex-shrink-0 font-semibold text-neutral-900 min-w-[1.25rem]">
                       {match ? match[1] : `${li + 1}.`}
                     </span>
                     <span>{match ? match[2] : l}</span>
@@ -148,9 +151,21 @@ function RichDescription({ text, className = "" }: { text: string; className?: s
           );
         }
 
-        // Mixed block — render line-by-line within one paragraph block
+        // Check if block is a heading (e.g., "Key Benefits:", "How to Use:")
+        const firstLine = lines[0];
+        const isHeading = lines.length === 1 && (/^(key benefits|benefits|features|how it works|why it works|ingredients|direction|how to use):?/i.test(firstLine) || (firstLine.endsWith(":") && firstLine.length < 40));
+
+        if (isHeading) {
+          return (
+            <h4 key={bi} className="text-base md:text-[17px] font-semibold text-neutral-900 tracking-tight mt-6 mb-2">
+              {firstLine}
+            </h4>
+          );
+        }
+
+        // Paragraph block — render line-by-line within one paragraph block
         return (
-          <p key={bi} className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+          <p key={bi} className="text-[15px] md:text-[16px] text-neutral-700 leading-[1.8] whitespace-pre-line">
             {lines.join("\n")}
           </p>
         );
@@ -384,23 +399,52 @@ const ProductDetail = () => {
   });
 
   const handleSubmitReview = async () => {
-    if (!user) { toast({ title: "Please sign in to leave a review" }); return; }
-    setSubmittingReview(true);
-    const { error } = await supabase.from("reviews").insert({
-      product_id: product!.id,
-      user_id: user.id,
-      rating: reviewRating,
-      comment: reviewComment,
-      reviewer_name: reviewName || "Anonymous",
-    });
-    if (error) {
-      toast({ title: "Failed to submit review", variant: "destructive" });
-    } else {
-      toast({ title: "Review submitted!" });
-      setReviewComment(""); setReviewName(""); setReviewRating(5);
-      refetchReviews();
+    if (!user) {
+      toast({ title: "Please sign in to leave a review", description: "You must be signed in to submit a review.", variant: "destructive" });
+      return;
     }
-    setSubmittingReview(false);
+    if (!reviewRating || reviewRating < 1 || reviewRating > 5) {
+      toast({ title: "Please select a rating", description: "Star rating is required.", variant: "destructive" });
+      return;
+    }
+    setSubmittingReview(true);
+
+    try {
+      // Check if user already reviewed this product
+      const existingReview = reviews.find((r: any) => r.user_id === user.id);
+
+      if (existingReview) {
+        // Update existing review
+        const { error } = await supabase
+          .from("reviews")
+          .update({
+            rating: reviewRating,
+            comment: reviewComment.trim() || null,
+            reviewer_name: reviewName.trim() || user.user_metadata?.full_name || "Verified Customer",
+          })
+          .eq("id", existingReview.id);
+
+        if (error) throw error;
+        toast({ title: "Your review has been updated!" });
+      } else {
+        // Create new review
+        const { error } = await supabase.from("reviews").insert({
+          product_id: product!.id,
+          user_id: user.id,
+          rating: reviewRating,
+          comment: reviewComment.trim() || null,
+          reviewer_name: reviewName.trim() || user.user_metadata?.full_name || "Verified Customer",
+        });
+
+        if (error) throw error;
+        toast({ title: "Thank you for your review!" });
+      }
+      refetchReviews();
+    } catch (err: any) {
+      toast({ title: "Failed to submit review", description: err.message, variant: "destructive" });
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   const handleShare = async () => {
@@ -553,9 +597,25 @@ const ProductDetail = () => {
                   </div>
                 )}
 
-                <div className="flex items-baseline gap-3 mb-1">
-                  <span className="text-2xl font-medium">{formatPrice(product.price_aud, product.price_inr, product.price_usd)}</span>
-                </div>
+                {(() => {
+                  const isIndia = selectedCountry === "india";
+                  const sellingPrice = isIndia ? product.price_inr : product.price_aud;
+                  const mrpPrice = isIndia ? (product.mrp_inr || product.price_inr) : (product.mrp_aud || product.price_aud);
+                  const hasDiscount = mrpPrice > sellingPrice;
+
+                  return (
+                    <div className="flex items-baseline gap-3 mb-1 flex-wrap">
+                      {hasDiscount && (
+                        <span className="text-xl md:text-2xl font-normal text-neutral-400 line-through">
+                          {formatPrice(product.mrp_aud || product.price_aud, product.mrp_inr || product.price_inr)}
+                        </span>
+                      )}
+                      <span className="text-2xl md:text-3xl font-semibold text-neutral-900">
+                        {formatPrice(product.price_aud, product.price_inr)}
+                      </span>
+                    </div>
+                  );
+                })()}
                 <p className="text-[10px] text-emerald-600 tracking-wide">Inclusive of all taxes</p>
               </div>
 
@@ -583,9 +643,9 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Description — preserves full formatting from admin input */}
+              {/* Description — Full natural height with high-contrast typography */}
               {product.description && (
-                <div className="border-l-2 border-neutral-200 pl-4 max-h-72 overflow-y-auto scrollbar-none">
+                <div className="border-l-2 border-neutral-300 pl-4 md:pl-5 py-1 my-3">
                   <RichDescription text={product.description} />
                 </div>
               )}
@@ -999,38 +1059,54 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Write a review */}
-            <div className="pd-glass-card p-6 max-w-xl mx-auto">
-              <h3 className="text-sm font-medium tracking-wide mb-5">Write a Review</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground block mb-1.5">Your Rating</label>
-                  <div className="flex gap-1">
-                    {[1,2,3,4,5].map((s) => (
-                      <button key={s} onClick={() => setReviewRating(s)} id={`review-star-${s}`}>
-                        <Star className={`h-6 w-6 transition-colors ${s <= reviewRating ? "fill-amber-400 text-amber-400" : "text-neutral-200 hover:text-amber-300"}`} />
-                      </button>
-                    ))}
+            {/* Write / Edit a review */}
+            {(() => {
+              const existingUserReview = user ? reviews.find((r: any) => r.user_id === user.id) : null;
+              return (
+                <div className="pd-glass-card p-6 max-w-xl mx-auto">
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="text-sm font-medium tracking-wide">
+                      {existingUserReview ? "Update Your Review" : "Write a Review"}
+                    </h3>
+                    {existingUserReview && (
+                      <span className="text-[9px] tracking-wider uppercase text-emerald-600 font-medium bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                        Already Reviewed
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground block mb-1.5">
+                        Your Rating <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex gap-1">
+                        {[1,2,3,4,5].map((s) => (
+                          <button type="button" key={s} onClick={() => setReviewRating(s)} id={`review-star-${s}`}>
+                            <Star className={`h-6 w-6 transition-colors ${s <= reviewRating ? "fill-amber-400 text-amber-400" : "text-neutral-200 hover:text-amber-300"}`} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground block mb-1.5">Name (optional)</label>
+                      <Input id="review-name-input" value={reviewName} onChange={(e) => setReviewName(e.target.value)} placeholder="Your name (optional)" className="h-10 text-sm rounded-xl" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground block mb-1.5">Share your experience (optional)</label>
+                      <Textarea id="review-comment-input" value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="Write your review here... (optional)" className="text-sm min-h-[90px] rounded-xl" />
+                    </div>
+                    <Button
+                      id="review-submit-btn"
+                      onClick={handleSubmitReview}
+                      disabled={submittingReview}
+                      className="h-11 bg-black text-white hover:bg-black/90 text-xs tracking-[0.1em] uppercase rounded-xl w-full"
+                    >
+                      {submittingReview ? "Saving…" : existingUserReview ? "Update Review" : "Submit Rating"}
+                    </Button>
                   </div>
                 </div>
-                <div>
-                  <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground block mb-1.5">Name</label>
-                  <Input id="review-name-input" value={reviewName} onChange={(e) => setReviewName(e.target.value)} placeholder="Your name" className="h-10 text-sm rounded-xl" />
-                </div>
-                <div>
-                  <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground block mb-1.5">Review</label>
-                  <Textarea id="review-comment-input" value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="Share your experience with this product..." className="text-sm min-h-[90px] rounded-xl" />
-                </div>
-                <Button
-                  id="review-submit-btn"
-                  onClick={handleSubmitReview}
-                  disabled={submittingReview}
-                  className="h-11 bg-black text-white hover:bg-black/90 text-xs tracking-[0.1em] uppercase rounded-xl w-full"
-                >
-                  {submittingReview ? "Submitting…" : "Submit Review"}
-                </Button>
-              </div>
-            </div>
+              );
+            })()}
           </RevealSection>
         </section>
 

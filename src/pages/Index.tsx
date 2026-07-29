@@ -11,8 +11,8 @@ import Lenis from "lenis";
 import { useSEO } from "@/hooks/useSEO";
 
 // Asset imports
-import follicle8Serum from "@/assets/follicle8-serum.png";
-import follicle8Black from "@/assets/follicle8-black.png";
+const follicle8Serum = hero2;
+const follicle8Black = scalpPng;
 
 import lap1 from "@/assets/lap1.png";
 import lap2 from "@/assets/lap2.png";
@@ -23,8 +23,6 @@ import mob3 from "@/assets/mob3.png";
 import hero2 from "@/assets/hero2.png";
 import hero3 from "@/assets/hero3.png";
 import heroMp4 from "@/assets/hero.mp4";
-import about1 from "@/assets/about1.png";
-import about2 from "@/assets/about2.png";
 import scalpPng from "@/assets/scalp.png";
 import puneetPng from "@/assets/puneet.png";
 import puneetMobPng from "@/assets/puneet-mob.png";
@@ -33,18 +31,6 @@ import hairFollicleIcon from "@/assets/hair.svg";
 import microscopeIcon from "@/assets/microscope.svg";
 import shieldCheckIcon from "@/assets/shield-check.svg";
 
-const MARQUEE_ITEMS = [
-  { icon: Truck, text: "FREE SHIPPING" },
-  { icon: Shield, text: "CLINICALLY PROVEN" },
-  { icon: Microscope, text: "SCIENCE-BACKED FORMULAS" },
-  { icon: Globe, text: "MADE IN AUSTRALIA" },
-  { icon: Globe, text: "TRUSTED IN INDIA & AUSTRALIA" },
-  { icon: Leaf, text: "CLEAN INGREDIENTS" },
-  { icon: CheckCircle, text: "LAB TESTED" },
-  { icon: Beaker, text: "REDENSYL • BAICAPIL • PROCAPIL • ANAGAIN" },
-  { icon: Truck, text: "FAST SHIPPING" },
-  { icon: Star, text: "PREMIUM HAIR CARE" },
-];
 
 // Helper CountUp Component
 const CountUp = ({ value, duration = 1.8 }: { value: number; duration?: number }) => {
@@ -148,7 +134,6 @@ const Index = () => {
   
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const [scienceInView, setScienceInView] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
   const scrollToProducts = (e: React.MouseEvent) => {
@@ -210,13 +195,13 @@ const Index = () => {
 
       {/* 1. HERO SLIDER SECTION */}
       <section 
-        className="relative w-full overflow-hidden bg-white select-none group max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)]"
+        className="relative w-full overflow-hidden bg-white select-none group max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)] lg:max-h-[calc(100vh-74px)]"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="w-full relative overflow-hidden max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)]">
+        <div className="w-full relative overflow-hidden max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)] lg:max-h-[calc(100vh-74px)]">
           {SLIDES.map((slide, idx) => {
             const isFirst = idx === 0;
             return (
@@ -229,14 +214,14 @@ const Index = () => {
                 }`}
                 style={{ transitionDuration: "800ms" }}
               >
-                <picture>
+                <picture className="block lg:pt-5">
                   <source media="(max-width: 768px)" srcSet={slide.mob} />
                   <img
                     src={slide.lap}
                     alt={slide.alt}
                     loading={isFirst ? "eager" : "lazy"}
                     fetchPriority={isFirst ? "high" : "low"}
-                    className="w-full object-cover object-center block max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)] h-auto"
+                    className="w-full object-cover object-center block max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)] lg:max-h-[calc(100vh-74px)] h-auto"
                   />
                 </picture>
                 <a
@@ -324,10 +309,9 @@ const Index = () => {
               ))}
             </div>
           ) : (
-            // Mobile horizontal swipe, Desktop 3-column grid
-            <div className="overflow-x-auto flex md:grid md:grid-cols-3 gap-8 pb-6 md:pb-0 scrollbar-none snap-x snap-mandatory">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
               {(featured.length > 0 ? featured : products.slice(0, 3)).map((product) => (
-                <div key={product.id} className="min-w-[280px] md:min-w-0 flex-shrink-0 snap-start w-[85%] md:w-auto">
+                <div key={product.id} className="w-full">
                   <ProductCard product={product} />
                 </div>
               ))}

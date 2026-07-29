@@ -43,12 +43,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const priceInr = "price_inr" in product ? product.price_inr : 0;
   const priceUsd = "price_usd" in product ? product.price_usd : 0;
 
-  const comparePriceAud = "compare_at_price_aud" in product ? product.compare_at_price_aud : 0;
-  const comparePriceInr = "compare_at_price_inr" in product ? product.compare_at_price_inr : 0;
-  const comparePriceUsd = "compare_at_price_usd" in product ? product.compare_at_price_usd : 0;
+  const mrpAud = "mrp_aud" in product && (product as any).mrp_aud ? (product as any).mrp_aud : priceAud;
+  const mrpInr = "mrp_inr" in product && (product as any).mrp_inr ? (product as any).mrp_inr : priceInr;
 
-  const hasDiscount = comparePriceAud > 0 && comparePriceAud > priceAud;
-  const savePercentage = hasDiscount ? Math.round(((comparePriceAud - priceAud) / comparePriceAud) * 100) : 0;
+  const { selectedCountry } = useCountry();
+  const currentSellingPrice = selectedCountry === "india" ? priceInr : priceAud;
+  const currentMrpPrice = selectedCountry === "india" ? mrpInr : mrpAud;
+  const hasDiscount = currentMrpPrice > currentSellingPrice;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -72,18 +73,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const isFavorited = isInWishlist(product.id);
   const hasSecondImage = product.images && product.images.length > 1;
 
-  // Tap-to-toggle logic for touch devices
-  const handleCardClick = (e: React.MouseEvent) => {
-    const isTouch = window.matchMedia("(pointer: coarse)").matches;
-    if (isTouch && hasSecondImage) {
-      if (mobileImageIndex === 0) {
-        e.preventDefault();
-        e.stopPropagation();
-        setMobileImageIndex(1);
-      }
-    }
-  };
-
   // Swipe support for touch devices
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -102,12 +91,19 @@ const ProductCard = ({ product }: ProductCardProps) => {
     <>
       <Link 
         to={`/product/${product.slug}`} 
-        onClick={handleCardClick}
         className="group block relative bg-background border border-border/40 hover:border-border transition-all duration-700 hover:shadow-2xl hover:shadow-neutral-200/40 hover:-translate-y-1.5 transform-gpu w-full h-full flex flex-col justify-between"
       >
-        <div className="relative bg-[#fafafa] aspect-[3/4] overflow-hidden flex-shrink-0"
-             onTouchStart={handleTouchStart}
-             onTouchEnd={handleTouchEnd}
+        <div 
+          className="relative bg-[#fafafa] aspect-[3/4] overflow-hidden flex-shrink-0 cursor-pointer"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onClick={(e) => {
+            if (hasSecondImage && (window.innerWidth < 1024 || window.matchMedia("(pointer: coarse)").matches)) {
+              e.preventDefault();
+              e.stopPropagation();
+              setMobileImageIndex((prev) => (prev === 0 ? 1 : 0));
+            }
+          }}
         >
           {/* Out of stock label overlay */}
           {product.inventory === 0 && (
@@ -124,16 +120,11 @@ const ProductCard = ({ product }: ProductCardProps) => {
             <img
               src={product.images[0]}
               alt={product.name}
-              className={`w-full h-full object-contain p-6 object-center transition-all duration-300 absolute inset-0 ${
-                hasSecondImage 
-                  ? "opacity-100 group-hover:lg:opacity-0 lg:block hidden" 
-                  : "opacity-100"
+              className={`w-full h-full object-contain p-4 md:p-6 object-center transition-opacity duration-300 absolute inset-0 ${
+                mobileImageIndex === 0
+                  ? (hasSecondImage ? "opacity-100 group-hover:opacity-0" : "opacity-100")
+                  : "opacity-0"
               }`}
-              style={{
-                opacity: window.matchMedia("(pointer: coarse)").matches 
-                  ? (mobileImageIndex === 0 ? 1 : 0) 
-                  : undefined
-              }}
               loading="lazy"
             />
             
@@ -142,15 +133,24 @@ const ProductCard = ({ product }: ProductCardProps) => {
               <img
                 src={product.images[1]}
                 alt={`${product.name} alternate`}
-                className={`w-full h-full object-contain p-6 object-center transition-all duration-300 absolute inset-0 ${
-                  window.matchMedia("(pointer: coarse)").matches 
-                    ? (mobileImageIndex === 1 ? "opacity-100" : "opacity-0")
-                    : "opacity-0 group-hover:lg:opacity-100"
+                className={`w-full h-full object-contain p-4 md:p-6 object-center transition-opacity duration-300 absolute inset-0 ${
+                  mobileImageIndex === 1
+                    ? "opacity-100"
+                    : "opacity-0 group-hover:opacity-100"
                 }`}
                 loading="lazy"
               />
             )}
           </div>
+
+          {/* Mobile Image Indicator Badge / Hint */}
+          {hasSecondImage && (
+            <div className="absolute bottom-2 right-2 z-20 lg:hidden">
+              <span className="text-[8px] tracking-wider bg-black/60 backdrop-blur-sm text-white px-1.5 py-0.5 font-mono rounded">
+                {mobileImageIndex === 0 ? "1/2" : "2/2"}
+              </span>
+            </div>
+          )}
           
           {/* Future Ready Badges */}
           {product.badge && (
@@ -224,21 +224,16 @@ const ProductCard = ({ product }: ProductCardProps) => {
           </div>
           
           <div className="space-y-1.5 pt-1">
-            {/* Price Component with Discount Support */}
+            {/* Price Component with MRP Support */}
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="font-body font-semibold text-xs md:text-sm text-neutral-900">
-                {formatPrice(priceAud, priceInr, priceUsd)}
-              </span>
               {hasDiscount && (
-                <>
-                  <span className="font-body font-normal text-[10px] md:text-xs text-neutral-400 line-through">
-                    {formatPrice(comparePriceAud, comparePriceInr, comparePriceUsd)}
-                  </span>
-                  <span className="text-[8px] tracking-wider uppercase bg-red-50 text-red-650 px-1.5 py-0.5 font-medium rounded-sm">
-                    -{savePercentage}%
-                  </span>
-                </>
+                <span className="font-body font-normal text-[11px] md:text-xs text-neutral-400 line-through">
+                  {formatPrice(mrpAud, mrpInr)}
+                </span>
               )}
+              <span className="font-body font-semibold text-xs md:text-sm text-neutral-900">
+                {formatPrice(priceAud, priceInr)}
+              </span>
             </div>
 
             {/* Future Ready Colors */}
@@ -317,19 +312,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 )}
 
                 <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="font-body font-semibold text-lg text-neutral-900">
-                    {formatPrice(priceAud, priceInr, priceUsd)}
-                  </span>
                   {hasDiscount && (
-                    <>
-                      <span className="font-body font-normal text-sm text-neutral-400 line-through">
-                        {formatPrice(comparePriceAud, comparePriceInr, comparePriceUsd)}
-                      </span>
-                      <span className="text-[9px] tracking-wider uppercase bg-red-50 text-red-650 px-2 py-0.5 font-medium rounded-sm">
-                        Save {savePercentage}%
-                      </span>
-                    </>
+                    <span className="font-body font-normal text-sm text-neutral-400 line-through">
+                      {formatPrice(mrpAud, mrpInr)}
+                    </span>
                   )}
+                  <span className="font-body font-semibold text-lg text-neutral-900">
+                    {formatPrice(priceAud, priceInr)}
+                  </span>
                 </div>
 
                 <p className="text-xs text-neutral-500 leading-relaxed font-body font-light pt-2">

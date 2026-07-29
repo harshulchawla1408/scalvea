@@ -20,6 +20,8 @@ export interface DBProduct {
   price_aud: number;
   price_inr: number;
   price_usd: number;
+  mrp_aud?: number;
+  mrp_inr?: number;
   // Raw fields for admin dashboard use
   inventory_quantity_india?: number;
   inventory_quantity_australia?: number;
@@ -52,6 +54,9 @@ export function useProducts() {
           ? (p.is_active_india ?? true) 
           : (p.is_active_australia ?? true);
 
+        const price_aud = Number(prices.price_aud) || 0;
+        const price_inr = Number(prices.price_inr) || 0;
+
         return {
           id: p.id,
           name: p.name,
@@ -67,9 +72,11 @@ export function useProducts() {
           featured: p.featured,
           badge: p.badge,
           inventory_quantity,
-          price_aud: Number(prices.price_aud) || 0,
-          price_inr: Number(prices.price_inr) || 0,
+          price_aud,
+          price_inr,
           price_usd: Number(prices.price_usd) || 0,
+          mrp_aud: prices.mrp_aud !== undefined && prices.mrp_aud !== null ? Number(prices.mrp_aud) : price_aud,
+          mrp_inr: prices.mrp_inr !== undefined && prices.mrp_inr !== null ? Number(prices.mrp_inr) : price_inr,
           inventory_quantity_india: p.inventory_quantity ?? 0,
           inventory_quantity_australia: p.inventory_quantity_australia ?? 0,
           is_active_india: p.is_active_india ?? true,
@@ -119,6 +126,9 @@ export function useProduct(slug: string) {
             ? (data.is_active_india ?? true) 
             : (data.is_active_australia ?? true);
 
+          const price_aud = Number(prices.price_aud) || 0;
+          const price_inr = Number(prices.price_inr) || 0;
+
           setProduct({
             id: data.id,
             name: data.name,
@@ -134,9 +144,11 @@ export function useProduct(slug: string) {
             featured: data.featured,
             badge: data.badge,
             inventory_quantity,
-            price_aud: Number(prices.price_aud) || 0,
-            price_inr: Number(prices.price_inr) || 0,
+            price_aud,
+            price_inr,
             price_usd: Number(prices.price_usd) || 0,
+            mrp_aud: prices.mrp_aud !== undefined && prices.mrp_aud !== null ? Number(prices.mrp_aud) : price_aud,
+            mrp_inr: prices.mrp_inr !== undefined && prices.mrp_inr !== null ? Number(prices.mrp_inr) : price_inr,
             inventory_quantity_india: data.inventory_quantity ?? 0,
             inventory_quantity_australia: data.inventory_quantity_australia ?? 0,
             is_active_india: data.is_active_india ?? true,

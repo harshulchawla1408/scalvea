@@ -87,43 +87,49 @@ const Checkout = () => {
     return `A$${val.toFixed(2)}`;
   };
 
-  const applyCoupon = async () => {
-    if (!couponCode.trim()) return;
+  const applyCoupon = async (codeOverride?: string) => {
+    const code = (codeOverride || couponCode).trim().toUpperCase();
+    if (!code) return;
     setApplyingCoupon(true);
     try {
       // Find coupon that is active AND matches the selected country
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("coupons")
         .select("*")
-        .eq("code", couponCode.trim().toUpperCase())
+        .eq("code", code)
         .eq("is_active", true)
-        .eq("country", settings?.country || "Australia")
         .maybeSingle();
 
-      if (error || !data) {
-        toast({ title: "Invalid coupon", description: `This coupon is not valid for ${settings?.country || "Australia"}.`, variant: "destructive" });
-        setApplyingCoupon(false);
-        return;
-      }
+      if (data) {
+        // Check expiry
+        if (data.expires_at && new Date(data.expires_at) < new Date()) {
+          toast({ title: "Coupon expired", variant: "destructive" });
+          setApplyingCoupon(false);
+          return;
+        }
 
-      // Check expiry
-      if (data.expires_at && new Date(data.expires_at) < new Date()) {
-        toast({ title: "Coupon expired", variant: "destructive" });
-        setApplyingCoupon(false);
-        return;
-      }
+        // Check usage limit
+        if (data.max_usage && (data.usage_count || 0) >= data.max_usage) {
+          toast({ title: "Coupon usage limit reached", variant: "destructive" });
+          setApplyingCoupon(false);
+          return;
+        }
 
-      // Check usage limit
-      if (data.max_usage && (data.usage_count || 0) >= data.max_usage) {
-        toast({ title: "Coupon usage limit reached", variant: "destructive" });
-        setApplyingCoupon(false);
-        return;
+        setAppliedCoupon({ code: data.code, discount_percentage: Number(data.discount_percentage) });
+        toast({ title: `Coupon ${data.code} applied! ${Number(data.discount_percentage)}% off` });
+      } else if (code === "FIRST100") {
+        setAppliedCoupon({ code: "FIRST100", discount_percentage: 20 });
+        toast({ title: "Coupon FIRST100 applied! 20% off" });
+      } else {
+        toast({ title: "Invalid coupon", description: `This coupon code is not valid.`, variant: "destructive" });
       }
-
-      setAppliedCoupon({ code: data.code, discount_percentage: Number(data.discount_percentage) });
-      toast({ title: `Coupon applied! ${Number(data.discount_percentage)}% off` });
     } catch {
-      toast({ title: "Error applying coupon", variant: "destructive" });
+      if (code === "FIRST100") {
+        setAppliedCoupon({ code: "FIRST100", discount_percentage: 20 });
+        toast({ title: "Coupon FIRST100 applied! 20% off" });
+      } else {
+        toast({ title: "Error applying coupon", variant: "destructive" });
+      }
     }
     setApplyingCoupon(false);
   };
@@ -556,7 +562,18 @@ const Checkout = () => {
 
                 {/* Coupon Code Selection */}
                 <div className="space-y-2">
-                  <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Promo / Discount Code</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Promo / Discount Code</p>
+                    {!appliedCoupon && (
+                      <button
+                        type="button"
+                        onClick={() => applyCoupon("FIRST100")}
+                        className="text-[9px] tracking-wide text-amber-500 hover:text-amber-600 font-bold uppercase underline transition-colors cursor-pointer"
+                      >
+                        ⚡ Apply FIRST100 (20% OFF)
+                      </button>
+                    )}
+                  </div>
                   {appliedCoupon ? (
                     <div className="flex items-center justify-between bg-background border border-border px-4 py-2 animate-fade-in">
                       <span className="text-xs font-mono font-medium">{appliedCoupon.code} — {appliedCoupon.discount_percentage}% off</span>
@@ -567,10 +584,10 @@ const Checkout = () => {
                       <input
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                        placeholder="COUPON10"
+                        placeholder="FIRST100"
                         className="flex-1 h-10 px-3 text-xs bg-transparent border border-border outline-none focus:border-foreground uppercase tracking-wider font-mono"
                       />
-                      <Button type="button" onClick={applyCoupon} disabled={applyingCoupon} variant="outline" className="h-10 text-xs tracking-[0.1em] uppercase">
+                      <Button type="button" onClick={() => applyCoupon()} disabled={applyingCoupon} variant="outline" className="h-10 text-xs tracking-[0.1em] uppercase">
                         {applyingCoupon ? "..." : "Apply"}
                       </Button>
                     </div>

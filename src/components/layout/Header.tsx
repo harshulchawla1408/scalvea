@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Search, ShoppingBag, User, Heart, Menu } from "lucide-react";
+import { Search, ShoppingBag, User, Heart, Menu, Copy, Check } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useCountry } from "@/contexts/CountryContext";
@@ -103,6 +103,14 @@ const Header = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const [couponCopied, setCouponCopied] = useState(false);
+
+  const handleCopyCoupon = () => {
+    navigator.clipboard.writeText("FIRST100");
+    setCouponCopied(true);
+    setTimeout(() => setCouponCopied(false), 2000);
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -267,6 +275,37 @@ const Header = () => {
             </motion.button>
           </motion.div>
         </nav>
+
+        {/* HIGHLIGHTED COUPON DISCOUNT BANNER */}
+        <div className="bg-black text-white border-t border-neutral-800/80 py-1 sm:py-1.5 px-3 text-center select-none relative lg:absolute lg:top-full lg:left-0 lg:right-0 z-30 shadow-sm lg:bg-black/90 lg:backdrop-blur-md">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-1.5 sm:gap-2.5 text-[11px] sm:text-xs font-medium tracking-wide flex-wrap">
+            <span className="inline-flex items-center gap-1 text-amber-400 font-bold uppercase tracking-wider">
+              <span>⚡</span> SPECIAL OFFER:
+            </span>
+            <span className="text-neutral-200">Use coupon code</span>
+            <button
+              onClick={handleCopyCoupon}
+              className="group relative inline-flex items-center gap-1.5 bg-white/15 hover:bg-white text-white hover:text-black border border-white/30 px-2.5 py-0.5 rounded font-mono font-bold text-[11px] sm:text-xs tracking-wider transition-all duration-200 active:scale-95 cursor-pointer shadow-sm"
+              title="Click to copy coupon code"
+              type="button"
+            >
+              <span>FIRST100</span>
+              {couponCopied ? (
+                <Check className="h-3 w-3 text-emerald-400 group-hover:text-emerald-600" />
+              ) : (
+                <Copy className="h-3 w-3 opacity-75 group-hover:opacity-100" />
+              )}
+              {couponCopied && (
+                <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[9px] px-2 py-0.5 rounded font-sans font-bold shadow-lg whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                  Copied!
+                </span>
+              )}
+            </button>
+            <span className="text-neutral-200">
+              to get <span className="text-amber-400 font-bold tracking-wider">20% DISCOUNT</span> on your order!
+            </span>
+          </div>
+        </div>
 
         {/* Search bar drawer */}
         {isSearchOpen && (
