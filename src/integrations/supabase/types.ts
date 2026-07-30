@@ -225,16 +225,23 @@ export type Database = {
       }
       orders: {
         Row: {
+          admin_created_at: string | null
           country: string
           coupon_code: string | null
           created_at: string | null
+          created_by_admin: string | null
+          courier_name: string | null
           currency: string
           delivery_estimate: string | null
+          delivery_method: string | null
           discount_amount: number | null
           gst: number | null
           id: string
+          manual_payment_method: string | null
           market: string | null
           order_number: string | null
+          order_source: string
+          sales_channel: string
           order_status: string | null
           payment_method: string | null
           payment_provider: string | null
@@ -252,16 +259,23 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          admin_created_at?: string | null
           country?: string
           coupon_code?: string | null
           created_at?: string | null
+          created_by_admin?: string | null
+          courier_name?: string | null
           currency?: string
           delivery_estimate?: string | null
+          delivery_method?: string | null
           discount_amount?: number | null
           gst?: number | null
           id?: string
+          manual_payment_method?: string | null
           market?: string | null
           order_number?: string | null
+          order_source?: string
+          sales_channel?: string
           order_status?: string | null
           payment_method?: string | null
           payment_provider?: string | null
@@ -279,16 +293,23 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          admin_created_at?: string | null
           country?: string
           coupon_code?: string | null
           created_at?: string | null
+          created_by_admin?: string | null
+          courier_name?: string | null
           currency?: string
           delivery_estimate?: string | null
+          delivery_method?: string | null
           discount_amount?: number | null
           gst?: number | null
           id?: string
+          manual_payment_method?: string | null
           market?: string | null
           order_number?: string | null
+          order_source?: string
+          sales_channel?: string
           order_status?: string | null
           payment_method?: string | null
           payment_provider?: string | null

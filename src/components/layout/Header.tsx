@@ -212,18 +212,18 @@ const Header = () => {
               )}
             </motion.div>
 
-            {/* Search */}
+            {/* Search (Desktop Only) */}
             <motion.button 
               variants={iconItemVariants}
               onClick={() => setIsSearchOpen(!isSearchOpen)} 
-              className="hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-1 flex items-center justify-center" 
+              className="hidden md:flex hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-1 items-center justify-center" 
               aria-label="Search"
             >
               <Search className="size-[22px]" />
             </motion.button>
 
-            {/* Account (Desktop Only) */}
-            <motion.div variants={iconItemVariants} className="hidden md:block">
+            {/* Account */}
+            <motion.div variants={iconItemVariants}>
               <Link 
                 to="/account" 
                 className="hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-1 flex items-center justify-center" 

@@ -253,13 +253,27 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
   }
 
   const statusColor = (s: string) => {
-    if (s === "delivered") return "text-green-600";
-    if (s === "processing" || s === "shipped") return "text-amber-600";
+    if (["delivered", "hand_delivered", "store_pickup", "completed"].includes(s)) return "text-green-600";
+    if (["processing", "shipped", "packed", "out_for_delivery"].includes(s)) return "text-amber-600";
+    if (s === "cancelled" || s === "refunded") return "text-red-500";
     return "text-muted-foreground";
   };
 
-  const statusSteps = ["pending", "processing", "shipped", "delivered"];
-  const getStepIndex = (status: string) => statusSteps.indexOf(status);
+  // Extended steps: standard linear + manual-order-specific milestones
+  const statusSteps = ["pending", "processing", "shipped", "delivered", "completed"];
+  const manualStatusSteps = ["pending", "processing", "packed", "hand_delivered", "completed"];
+  const pickupStatusSteps = ["pending", "processing", "packed", "store_pickup", "completed"];
+
+  const getStatusSteps = (order: any) => {
+    if (order.delivery_method === "HAND_DELIVERY") return manualStatusSteps;
+    if (order.delivery_method === "STORE_PICKUP") return pickupStatusSteps;
+    return statusSteps;
+  };
+
+  const getStepIndex = (steps: string[], status: string) => {
+    const idx = steps.indexOf(status);
+    return idx === -1 ? 0 : idx;
+  };
 
   const AddressForm = ({ onSave, onCancel, initial }: { onSave: (d: Partial<Address>) => void; onCancel: () => void; initial: Partial<Address> }) => {
     const { country: selectedCountry } = useCountry();
@@ -379,7 +393,15 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
                       <div className="flex items-center gap-4">
                         <Package className="h-5 w-5 text-muted-foreground" />
                         <div className="text-left">
-                          <p className="text-sm font-medium">{order.order_number}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-medium">{order.order_number}</p>
+                            {/* item 8: Offline Purchase badge for manual orders */}
+                            {(order as any).order_source === "MANUAL" && (
+                              <span className="text-[9px] tracking-wider uppercase font-semibold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5">
+                                Offline Purchase
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString()}</p>
                         </div>
                       </div>
@@ -403,24 +425,40 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
                       const payLabel = (order.payment_method || "").replace("shiprocket_", "").toUpperCase() || "—";
                       return (
                       <div className="border-t border-border p-4 space-y-4">
-                        {/* Status tracker */}
+                        {/* Status tracker (item 6 — uses dynamic steps based on delivery method) */}
                         <div>
                           <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-3">Order Status</p>
-                          <div className="flex items-center gap-2">
-                            {statusSteps.map((step, i) => {
-                              const active = i <= getStepIndex(order.order_status);
+                          {(() => {
+                            const steps = getStatusSteps(order);
+                            const stepIdx = getStepIndex(steps, order.order_status);
+                            const isCancelled = order.order_status === "cancelled" || order.order_status === "refunded";
+                            if (isCancelled) {
                               return (
-                                <div key={step} className="flex items-center gap-2 flex-1">
-                                  <div className={`h-2 flex-1 rounded-full ${active ? "bg-foreground" : "bg-border"}`} />
+                                <div className="flex items-center gap-2">
+                                  <div className="h-2 flex-1 bg-red-300 rounded-full" />
+                                  <span className="text-[9px] tracking-[0.08em] uppercase text-red-500 font-medium">{order.order_status}</span>
                                 </div>
                               );
-                            })}
-                          </div>
-                          <div className="flex justify-between mt-1">
-                            {statusSteps.map((step) => (
-                              <span key={step} className="text-[9px] tracking-[0.08em] uppercase text-muted-foreground">{step}</span>
-                            ))}
-                          </div>
+                            }
+                            return (
+                              <>
+                                <div className="flex items-center gap-1">
+                                  {steps.map((step, i) => (
+                                    <div key={step} className="flex items-center gap-1 flex-1">
+                                      <div className={`h-2 flex-1 rounded-full ${i <= stepIdx ? "bg-foreground" : "bg-border"}`} />
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="flex justify-between mt-1">
+                                  {steps.map((step) => (
+                                    <span key={step} className="text-[9px] tracking-[0.06em] uppercase text-muted-foreground" style={{ maxWidth: `${100 / steps.length}%`, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                      {step.replace(/_/g, "\u00a0")}
+                                    </span>
+                                  ))}
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
 
                         {/* Items */}

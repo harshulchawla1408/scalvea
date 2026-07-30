@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -290,6 +290,7 @@ function RevealSection({ children, className = "" }: { children: React.ReactNode
 const ProductDetail = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { product, loading } = useProduct(productId || "");
   const { products: allProducts } = useProducts();
   const { addItem } = useCart();
@@ -398,11 +399,21 @@ const ProductDetail = () => {
     } : undefined,
   });
 
-  const handleSubmitReview = async () => {
+  const handleRequireAuth = () => {
     if (!user) {
-      toast({ title: "Please sign in to leave a review", description: "You must be signed in to submit a review.", variant: "destructive" });
-      return;
+      toast({
+        title: "Please sign in to leave a review",
+        description: "Redirecting you to the login page...",
+        variant: "destructive",
+      });
+      navigate(`/auth?returnTo=${encodeURIComponent(location.pathname + location.search)}`);
+      return true;
     }
+    return false;
+  };
+
+  const handleSubmitReview = async () => {
+    if (handleRequireAuth()) return;
     if (!reviewRating || reviewRating < 1 || reviewRating > 5) {
       toast({ title: "Please select a rating", description: "Star rating is required.", variant: "destructive" });
       return;
@@ -439,6 +450,9 @@ const ProductDetail = () => {
         if (error) throw error;
         toast({ title: "Thank you for your review!" });
       }
+      setReviewComment("");
+      setReviewName("");
+      setReviewRating(5);
       refetchReviews();
     } catch (err: any) {
       toast({ title: "Failed to submit review", description: err.message, variant: "destructive" });
@@ -1062,25 +1076,93 @@ const ProductDetail = () => {
             {/* Write / Edit a review */}
             {(() => {
               const existingUserReview = user ? reviews.find((r: any) => r.user_id === user.id) : null;
+              
+              if (!user) {
+                return (
+                  <div className="pd-glass-card p-8 max-w-xl mx-auto text-center">
+                    <div className="w-12 h-12 rounded-full bg-black/5 flex items-center justify-center mx-auto mb-4 text-black">
+                      <MessageCircle className="h-6 w-6" />
+                    </div>
+                    <h3 className="text-base font-medium tracking-wide mb-2">Have you tried this product?</h3>
+                    <p className="text-xs text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">
+                      Please sign in to write a review. Your honest feedback helps others make informed decisions.
+                    </p>
+                    <Button
+                      id="review-login-redirect-btn"
+                      onClick={() => handleRequireAuth()}
+                      className="h-11 bg-black text-white hover:bg-black/90 text-xs tracking-[0.1em] uppercase rounded-xl px-8"
+                    >
+                      Sign In to Leave a Review
+                    </Button>
+                  </div>
+                );
+              }
+
               return (
                 <div className="pd-glass-card p-6 max-w-xl mx-auto">
+                  {existingUserReview ? (
+                    <div className="mb-6 p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 text-emerald-950">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 font-medium text-xs text-emerald-800 tracking-wide">
+                          <Check className="h-4 w-4 text-emerald-600 bg-emerald-100 rounded-full p-0.5" />
+                          Already Reviewed
+                        </div>
+                        <span className="text-[10px] text-emerald-700 font-medium">
+                          {new Date(existingUserReview.created_at).toLocaleDateString("en-GB", { month: "short", day: "numeric", year: "numeric" })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 mb-2">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star
+                            key={s}
+                            className={`h-3.5 w-3.5 ${s <= existingUserReview.rating ? "fill-amber-400 text-amber-400" : "text-emerald-200"}`}
+                          />
+                        ))}
+                      </div>
+                      {existingUserReview.comment ? (
+                        <p className="text-xs text-emerald-900/90 leading-relaxed font-light italic bg-white/60 p-3 rounded-xl border border-emerald-100">
+                          "{existingUserReview.comment}"
+                        </p>
+                      ) : (
+                        <p className="text-xs text-emerald-700 italic">No written comment provided with rating.</p>
+                      )}
+                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-emerald-200/60">
+                        <span className="text-[10px] text-emerald-700">Reviewer: {existingUserReview.reviewer_name || "Verified Customer"}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReviewRating(existingUserReview.rating);
+                            setReviewName(existingUserReview.reviewer_name || "");
+                            setReviewComment(existingUserReview.comment || "");
+                            toast({ title: "Review loaded into editing box" });
+                          }}
+                          className="text-[10px] uppercase font-semibold text-emerald-800 hover:text-black underline tracking-wider transition-colors cursor-pointer"
+                        >
+                          Load into box to edit
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
                   <div className="flex items-center justify-between mb-5">
                     <h3 className="text-sm font-medium tracking-wide">
                       {existingUserReview ? "Update Your Review" : "Write a Review"}
                     </h3>
                     {existingUserReview && (
-                      <span className="text-[9px] tracking-wider uppercase text-emerald-600 font-medium bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                      <span className="text-[9px] tracking-wider uppercase text-emerald-600 font-medium bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded flex items-center gap-1">
+                        <Check className="h-3 w-3 text-emerald-500" />
                         Already Reviewed
                       </span>
                     )}
                   </div>
+
                   <div className="space-y-4">
                     <div>
                       <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground block mb-1.5">
-                        Your Rating <span className="text-red-500">*</span>
+                        {existingUserReview ? "Update Rating" : "Your Rating"} <span className="text-red-500">*</span>
                       </label>
                       <div className="flex gap-1">
-                        {[1,2,3,4,5].map((s) => (
+                        {[1, 2, 3, 4, 5].map((s) => (
                           <button type="button" key={s} onClick={() => setReviewRating(s)} id={`review-star-${s}`}>
                             <Star className={`h-6 w-6 transition-colors ${s <= reviewRating ? "fill-amber-400 text-amber-400" : "text-neutral-200 hover:text-amber-300"}`} />
                           </button>
@@ -1092,8 +1174,16 @@ const ProductDetail = () => {
                       <Input id="review-name-input" value={reviewName} onChange={(e) => setReviewName(e.target.value)} placeholder="Your name (optional)" className="h-10 text-sm rounded-xl" />
                     </div>
                     <div>
-                      <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground block mb-1.5">Share your experience (optional)</label>
-                      <Textarea id="review-comment-input" value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="Write your review here... (optional)" className="text-sm min-h-[90px] rounded-xl" />
+                      <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground block mb-1.5">
+                        {existingUserReview ? "Update your experience (optional)" : "Share your experience (optional)"}
+                      </label>
+                      <Textarea
+                        id="review-comment-input"
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        placeholder={existingUserReview ? "Type new review comment to update..." : "Write your review here... (optional)"}
+                        className="text-sm min-h-[90px] rounded-xl"
+                      />
                     </div>
                     <Button
                       id="review-submit-btn"
