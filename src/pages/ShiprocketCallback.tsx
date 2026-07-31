@@ -29,7 +29,6 @@ const ShiprocketCallback = () => {
                         searchParams.get("shiprocket_order_id") || 
                         searchParams.get("token") || 
                         searchParams.get("id");
-  const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
     if (hasExecuted.current) return;
@@ -59,51 +58,52 @@ const ShiprocketCallback = () => {
       return;
     }
 
-    // Fast polling: 1 second intervals, max 30 seconds
-    const maxRetries = 30;
-    const retryDelay = 1000;
+    // Exponential backoff logic (max 3 retries)
+    // 1st call: instant
+    // 2nd call: wait 1.5s
+    // 3rd call: wait 3s
+    const delays = [0, 1500, 3000];
 
     const syncOrder = async (attempt: number) => {
       try {
         setStatus("syncing");
-        setMessage(attempt === 0 ? "Payment received. Please wait while we confirm your order." : "Confirming your order...");
+        setMessage(attempt === 0 ? "Verifying payment details with Shiprocket..." : `Retrying verification (Attempt ${attempt + 1}/3)...`);
         
-        if (attempt > 0) {
-          await new Promise(res => setTimeout(res, retryDelay));
+        if (delays[attempt] > 0) {
+          await new Promise(res => setTimeout(res, delays[attempt]));
         }
 
-        console.log(`[Callback] Calling process-shiprocket-payment for ${orderIdParam} (session: ${sessionId})`);
-        const { data, error } = await supabase.functions.invoke("process-shiprocket-payment", {
-          body: { shiprocketOrderId: orderIdParam, sessionId }
+        console.log(`[Callback] Calling fetch-shiprocket-order for ${orderIdParam}`);
+        const { data, error } = await supabase.functions.invoke("fetch-shiprocket-order", {
+          body: { orderId: orderIdParam }
         });
 
         if (error) {
           throw new Error(error.message || "Function invocation failed");
         }
         
-        if (!data || !data.success || !data.order_id) {
+        if (!data || !data.success || !data.order?.id) {
           throw new Error(data?.error || "Order verification returned invalid response");
         }
 
-        console.log(`[Callback] Order Verified. Local UUID: ${data.order_id}`);
+        console.log(`[Callback] Order Verified. Local UUID: ${data.order.id}`);
         setStatus("success");
         setMessage("Payment verified! Redirecting to success page...");
         
         // Immediate redirect using the newly created local UUID
         setTimeout(() => {
-          navigate(`/order-success?id=${data.order_id}`);
+          navigate(`/order-success?id=${data.order.id}`);
         }, 800);
 
       } catch (err: any) {
         console.warn(`[Callback] Sync attempt ${attempt + 1} failed:`, err.message);
         
-        if (attempt < maxRetries - 1) {
+        if (attempt < delays.length - 1) {
           syncOrder(attempt + 1);
         } else {
           console.error("[Callback] Exhausted all retries syncing order.");
           setStatus("failed");
-          setMessage("Order received. We're still processing your payment. You can safely leave this page. Your order will appear in My Orders shortly.");
-          
+          setMessage("We couldn't sync your order details immediately. Redirecting to your success page where syncing will continue...");
           // Fallback to order-success with shiprocket_order_id in case webhook creates it later
           setTimeout(() => {
             navigate(`/order-success?shiprocket_order_id=${orderIdParam}`);

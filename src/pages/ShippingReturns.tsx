@@ -91,8 +91,8 @@ const ShippingReturns = () => {
                   <div className="border border-border p-6 flex gap-4 items-start">
                     <Truck className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <h3 className="text-xs tracking-[0.12em] uppercase font-medium mb-1">Flat-Rate Shipping</h3>
-                      <p className="text-xs text-muted-foreground leading-relaxed">Standard flat-rate shipping applies to all orders, regardless of cart value, coupons, or discounts.</p>
+                      <h3 className="text-xs tracking-[0.12em] uppercase font-medium mb-1">Free Shipping Available</h3>
+                      <p className="text-xs text-muted-foreground leading-relaxed">Free standard shipping on orders over $75 AUD in Australia, and corresponding thresholds globally.</p>
                     </div>
                   </div>
                   <div className="border border-border p-6 flex gap-4 items-start">
@@ -108,15 +108,16 @@ const ShippingReturns = () => {
                   <div>
                     <h2 className="text-foreground text-xs tracking-[0.12em] uppercase mb-3 font-semibold">Domestic Shipping (Australia)</h2>
                     <ul className="space-y-2 border-l border-border pl-4">
-                      <li><strong className="text-foreground">Standard Delivery:</strong> 3-7 business days — <strong className="font-semibold text-foreground">$9.50 AUD</strong></li>
+                      <li><strong className="text-foreground">Standard Delivery:</strong> 3-7 business days — <span className="line-through text-muted-foreground/60 mr-1">$10.00 AUD</span> <strong className="font-semibold text-foreground">$7.50 AUD</strong></li>
                       <li><strong className="text-foreground">Express Delivery:</strong> 1-3 business days — $14.95 AUD</li>
+                      <li>Free standard shipping applies automatically to all orders over $75 AUD.</li>
                     </ul>
                   </div>
 
                   <div>
                     <h2 className="text-foreground text-xs tracking-[0.12em] uppercase mb-3 font-semibold">International Shipping & India</h2>
                     <ul className="space-y-2 border-l border-border pl-4">
-                      <li><strong className="text-foreground">Standard Delivery (India):</strong> 3-5 business days — <strong className="font-semibold text-foreground">₹50</strong></li>
+                      <li><strong className="text-foreground">Standard Delivery (India):</strong> 3-5 business days — <span className="line-through text-muted-foreground/60 mr-1">₹100</span> <strong className="font-semibold text-foreground">₹50</strong></li>
                       <li><strong className="text-foreground">Standard International:</strong> 7-14 business days — $19.95 AUD / Regional equivalent</li>
                       <li><strong className="text-foreground">Express International:</strong> 3-7 business days — $29.95 AUD</li>
                       <li>We ship directly to Australia, India, and the USA with local courier integrations.</li>

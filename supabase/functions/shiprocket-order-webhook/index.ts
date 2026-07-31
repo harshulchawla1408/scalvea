@@ -17,7 +17,6 @@ import {
   callOrderDetailsApi,
   syncOrderFromDetails,
   mapOrderStatus,
-  parseOrderDetailsToSessionUpdate
 } from "../_shared/shiprocket-mapper.ts";
 
 const corsHeaders = {
@@ -97,77 +96,56 @@ async function processWebhook(
   // ── 2B. Order DOES NOT exist. Webhook is the fallback creator. ──────────
   console.log(`[Webhook] No mapping found for ${shiprocketOrderId}. Callback may have failed or not fired. Proceeding with Fallback Creation.`);
 
-  // ── 3. Find Checkout Session ──────────
-  const { data: session } = await supabase
-    .from("checkout_sessions")
-    .select("id")
-    .eq("stripe_session_id", shiprocketOrderId)
-    .eq("status", "PENDING")
-    .maybeSingle();
+  let orderDetails: any;
 
-  if (session) {
-    console.log(`[Webhook] Found PENDING checkout session ${session.id} for Shiprocket order ${shiprocketOrderId}. Initiating transaction...`);
-    
-    if (!isMock) {
-      const result = await callOrderDetailsApi(shiprocketOrderId, apiKey, secretKey);
-      if (result.ok && result.data) {
-        const sessionUpdate = parseOrderDetailsToSessionUpdate(result.data, body);
-        console.log(`[Webhook] Updating session ${session.id} with Shiprocket data.`);
-        const { error: updateErr } = await supabase
-          .from("checkout_sessions")
-          .update(sessionUpdate)
-          .eq("id", session.id);
-        
-        if (updateErr) {
-          console.error("[Webhook] Failed to update session:", updateErr);
-        }
-      }
+  if (isMock) {
+    orderDetails = {
+      order_id:            shiprocketOrderId,
+      fastrr_order_id:     body.fastrr_order_id     || shiprocketOrderId,
+      status:              body.status               || "completed",
+      payment_type:        body.payment_type         || body.payment_method || "cod",
+      payment_status:      body.payment_status       || null,
+      subtotal_price:      body.subtotal_price       || body.amount         || 0,
+      shipping_charges:    body.shipping_charges     || 0,
+      coupon_discount:     body.coupon_discount      || 0,
+      prepaid_discount:    body.prepaid_discount     || 0,
+      total_discount:      body.total_discount       || body.coupon_discount || 0,
+      cod_charges:         body.cod_charges          || 0,
+      total_amount_payable:body.total_amount_payable || body.amount         || 0,
+      gst_amount:          body.gst_amount           || body.tax_amount     || 0,
+      edd:                 body.edd                  || null,
+      shipping_address:    body.shipping_address     || null,
+      billing_address:     body.billing_address      || null,
+      cart_data:           body.cart_data            || { items: body.items || [] },
+      coupon_codes:        body.coupon_codes         || [],
+      payments:            body.payments             || [],
+      discount_detail:     body.discount_detail      || null,
+      tags:                body.tags                 || [],
+      customer:            body.customer             || null,
+      shipping:            body.shipping             || null,
+      billing:             body.billing              || null,
+    };
+  } else {
+    const result = await callOrderDetailsApi(shiprocketOrderId, apiKey, secretKey);
+    if (result.ok && result.data) {
+      orderDetails = result.data;
+      console.log(`[Webhook] Order Details API success for fallback creation of ${shiprocketOrderId}`);
+    } else {
+      console.warn(`[Webhook] Order Details API failed (${result.error}). Using webhook payload as fallback.`);
+      orderDetails = { ...body, order_id: shiprocketOrderId };
     }
-
-    const paymentDetails = { payment_method: "shiprocket", transaction_id: shiprocketOrderId };
-
-    const { data: rpcResult, error: rpcError } = await supabase.rpc("process_checkout_transaction", {
-      p_session_id: session.id,
-      p_payment_details: paymentDetails,
-      p_order_source: "SHIPROCKET"
-    });
-
-    if (rpcError) {
-      console.error(`[Webhook] RPC error:`, rpcError);
-      await supabase.from("system_logs").insert({
-        level: "ERROR",
-        source: "shiprocket-order-webhook",
-        message: `Transaction failed for session ${session.id}`,
-        metadata: { error: rpcError.message || rpcError, session_id: session.id }
-      } as any);
-      return;
-    }
-
-    if (!rpcResult || !rpcResult.success) {
-      console.log(`[Webhook] RPC returned false:`, rpcResult);
-      return;
-    }
-
-    const localOrderId = rpcResult.order_id;
-    console.log(`[Webhook] ✅ Order created successfully via RPC: ${localOrderId}`);
-
-    await supabase.from("shiprocket_orders").insert({
-      order_id: localOrderId,
-      shiprocket_order_id: shiprocketOrderId,
-      status: "NEW",
-    });
-
-    await supabase.from("orders").update({ fastrr_order_id: shiprocketOrderId }).eq("id", localOrderId);
-    return;
   }
 
-  console.log(`[Webhook] No PENDING checkout_sessions found for ${shiprocketOrderId}. Cannot create order transactionally.`);
-  await supabase.from("system_logs").insert({
-    level: "WARN",
-    source: "shiprocket-order-webhook",
-    message: `No pending session found for webhook ${shiprocketOrderId}`,
-    metadata: { shiprocket_order_id: shiprocketOrderId }
-  } as any);
+  console.log(`[Sync] Order Created via Webhook Fallback for srId=${shiprocketOrderId}`);
+  const { orderId, created } = await syncOrderFromDetails(
+    supabase,
+    shiprocketOrderId,
+    orderDetails,
+    null,
+    body
+  );
+
+  console.log(`[Webhook] Fallback creation complete. Local Order UUID: ${orderId} Created: ${created}`);
 }
 
 // ─── Handler ──────────────────────────────────────────────────────────────────

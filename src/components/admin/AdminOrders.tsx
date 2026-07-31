@@ -232,7 +232,6 @@ const CancelConfirm = ({ order, onConfirm, onClose }: CancelConfirmProps) => (
 const AdminOrders = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [orderItems, setOrderItems] = useState<Record<string, any[]>>({});
-  const [auditLogs, setAuditLogs] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
   const [countryFilter, setCountryFilter] = useState("All");
   const [sourceFilter, setSourceFilter] = useState<OrderSource>("All");
@@ -288,10 +287,6 @@ const AdminOrders = () => {
     if (!orderItems[orderId]) {
       const { data } = await supabase.from("order_items").select("*").eq("order_id", orderId);
       setOrderItems(prev => ({ ...prev, [orderId]: data || [] }));
-    }
-    if (!auditLogs[orderId]) {
-      const { data } = await supabase.from("order_audit_logs").select("*").eq("order_id", orderId).order("created_at", { ascending: true });
-      setAuditLogs(prev => ({ ...prev, [orderId]: data || [] }));
     }
     setExpandedOrder(orderId);
   };
@@ -534,25 +529,12 @@ const AdminOrders = () => {
                       <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground font-medium">Order Items</p>
                       {orderItems[order.id].length === 0
                         ? <p className="text-xs text-muted-foreground italic">No items stored.</p>
-                        : (
-                          <div className="space-y-2">
-                            {orderItems[order.id].map((item: any) => (
-                              <div key={item.id} className="flex justify-between items-center text-xs font-light bg-background p-2 border border-border/50">
-                                <div className="flex items-center gap-3">
-                                  {item.image_url ? (
-                                    <img src={item.image_url} alt={item.product_name} className="w-8 h-8 object-contain bg-[#fafafa] border border-border/50" />
-                                  ) : (
-                                    <div className="w-8 h-8 bg-secondary flex items-center justify-center border border-border/50">
-                                      <span className="text-[8px] text-muted-foreground">IMG</span>
-                                    </div>
-                                  )}
-                                  <span>{item.product_name} <span className="text-muted-foreground ml-1">× {item.quantity}</span></span>
-                                </div>
-                                <span>{fmt(Number(item.price * item.quantity))}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )
+                        : orderItems[order.id].map((item: any) => (
+                            <div key={item.id} className="flex justify-between text-xs font-light">
+                              <span>{item.product_name} × {item.quantity}</span>
+                              <span>{fmt(Number(item.price * item.quantity))}</span>
+                            </div>
+                          ))
                       }
                     </div>
                   )}
@@ -665,28 +647,6 @@ const AdminOrders = () => {
                         </div>
                       </div>
 
-                      {/* Stripe Details */}
-                      {order.stripe_session_id && (
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs font-mono border border-blue-200 bg-blue-50/30 p-3">
-                          <div>
-                            <p className="text-[9px] uppercase text-blue-600 tracking-widest mb-1">Stripe Session</p>
-                            <p className="truncate" title={order.stripe_session_id}>{order.stripe_session_id}</p>
-                          </div>
-                          {order.stripe_payment_intent_id && (
-                            <div>
-                              <p className="text-[9px] uppercase text-blue-600 tracking-widest mb-1">Payment Intent</p>
-                              <p className="truncate" title={order.stripe_payment_intent_id}>{order.stripe_payment_intent_id}</p>
-                            </div>
-                          )}
-                          {order.transaction_id && order.transaction_id !== order.stripe_payment_intent_id && (
-                            <div>
-                              <p className="text-[9px] uppercase text-blue-600 tracking-widest mb-1">Transaction ID</p>
-                              <p className="truncate" title={order.transaction_id}>{order.transaction_id}</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
                       {/* Manual order audit panel (item 1 — shows admin name) */}
                       {isManual && (
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs font-mono border border-amber-200 bg-amber-50/40 p-3">
@@ -774,23 +734,6 @@ const AdminOrders = () => {
                         <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Admin Notes</p>
                         <p className="text-xs italic text-muted-foreground">{order.admin_notes || "No notes."}</p>
                       </div>
-
-                      {/* Audit Logs */}
-                      {auditLogs[order.id] && auditLogs[order.id].length > 0 && (
-                        <div className="border-t border-border/10 pt-3 space-y-2">
-                          <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Transaction Audit Logs</p>
-                          <div className="space-y-1 bg-secondary/30 p-3 border border-border/50">
-                            {auditLogs[order.id].map((log: any) => (
-                              <div key={log.id} className="flex flex-wrap gap-3 items-center text-[10px] font-mono border-b border-border/40 pb-2 mb-2 last:border-0 last:pb-0 last:mb-0">
-                                <span className="text-muted-foreground w-[120px] shrink-0">{new Date(log.created_at).toLocaleString()}</span>
-                                <span className="bg-foreground text-background px-1.5 py-0.5 uppercase shrink-0 font-bold tracking-widest">{log.event_type}</span>
-                                <span className="text-foreground flex-1 break-all">{log.description}</span>
-                                <span className="text-muted-foreground shrink-0 ml-auto">By: {log.created_by}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>

@@ -156,8 +156,8 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
 
   /* Country settings (dynamic free-shipping thresholds) */
   const [countrySettings, setCountrySettings] = useState<Record<string, { free_shipping_above: number; shipping_charge: number }>>({
-    Australia: { free_shipping_above: 0, shipping_charge: 9.5 },
-    India:     { free_shipping_above: 0, shipping_charge: 50 },
+    Australia: { free_shipping_above: 100, shipping_charge: 7.5 },
+    India:     { free_shipping_above: 999, shipping_charge: 50 },
   });
 
   /* Product search */
@@ -205,8 +205,8 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
         const map: Record<string, { free_shipping_above: number; shipping_charge: number }> = {};
         data.forEach((row: any) => {
           map[row.country] = {
-            free_shipping_above: 0,
-            shipping_charge: Number(row.shipping_charge) || (row.country === "India" ? 50 : 9.5),
+            free_shipping_above: Number(row.free_shipping_above) || (row.country === "India" ? 2999 : 100),
+            shipping_charge: Number(row.shipping_charge) || (row.country === "India" ? 50 : 7.5),
           };
         });
         if (Object.keys(map).length > 0) setCountrySettings(prev => ({ ...prev, ...map }));
@@ -289,8 +289,8 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
 
   /* ── Calculations — using live country_settings thresholds ── */
   const currentSettings = countrySettings[country] || (isIndia
-    ? { free_shipping_above: 0, shipping_charge: 50 }
-    : { free_shipping_above: 0, shipping_charge: 9.5 });
+    ? { free_shipping_above: 999, shipping_charge: 50 }
+    : { free_shipping_above: 100, shipping_charge: 7.5 });
 
   const subtotal = lineItems.reduce((sum, li) => sum + getItemPrice(li.product) * li.quantity, 0);
 
@@ -299,6 +299,8 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
       ? 0
       : deliveryMethod === "MANUAL_COURIER"
       ? customShippingCharge
+      : subtotal >= currentSettings.free_shipping_above
+      ? 0
       : currentSettings.shipping_charge;
 
   const grandTotal = subtotal + shippingAmount;
@@ -447,61 +449,95 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
     setPendingAction(null);
 
     try {
-      const orderData = {
-        tax_amount: 0,
-        shipping_amount: shippingAmount,
-        discount_amount: 0,
-        total_amount: grandTotal,
-        order_status: "pending",
-        payment_status: paymentStatus,
-        payment_method: manualPaymentMethod,
-        payment_provider: "manual",
-        shipping_address: {
-          ...shippingAddress,
-          firstName: customerName.split(" ")[0] || customerName,
-          lastName: customerName.split(" ").slice(1).join(" ") || "",
-          phone: customerPhone,
-          email: customerEmail,
-        },
-        market: isIndia ? "IN" : "AU",
-        customer_name: customerName.trim(),
-        customer_email: customerEmail.trim().toLowerCase(),
-        customer_phone: customerPhone.trim(),
-        is_guest: false,
-        source: "ADMIN",
-        order_source: "MANUAL",
-        sales_channel: salesChannel,
-        delivery_method: deliveryMethod,
-        manual_payment_method: manualPaymentMethod,
-        courier_name: deliveryMethod === "MANUAL_COURIER" ? courierName.trim() || null : null,
-        tracking_number: deliveryMethod === "MANUAL_COURIER" ? trackingNumber.trim() || null : null,
-        created_by_admin: adminUser?.id ?? null,
-        admin_notes: adminNotes.trim() || null,
-        courier: deliveryMethod === "MANUAL_COURIER" ? courierName.trim() || null : null,
-        user_id: foundUser?.id || null,
-      };
+      const userId = foundUser?.id ?? null;
 
-      const lineItemsPayload = lineItems.map(li => ({
-        product_id: li.product.id,
-        product_name: li.product.name,
-        quantity: li.quantity,
-        price: getItemPrice(li.product),
-        currency,
-      }));
+      /* 1. Insert order */
+      const { data: orderData, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          user_id: userId,
+          country,
+          currency,
+          subtotal,
+          tax_amount: 0,
+          shipping_amount: shippingAmount,
+          discount_amount: 0,
+          total_amount: grandTotal,
+          order_status: "pending",
+          payment_status: paymentStatus,
+          payment_method: manualPaymentMethod,
+          payment_provider: "manual",
+          shipping_address: {
+            ...shippingAddress,
+            firstName: customerName.split(" ")[0] || customerName,
+            lastName: customerName.split(" ").slice(1).join(" ") || "",
+            phone: customerPhone,
+            email: customerEmail,
+          },
+          market: isIndia ? "IN" : "AU",
+          customer_name: customerName.trim(),
+          customer_email: customerEmail.trim().toLowerCase(),
+          customer_phone: customerPhone.trim(),
+          is_guest: !userId,
+          source: "ADMIN",
+          order_source: "MANUAL",
+          sales_channel: salesChannel,
+          delivery_method: deliveryMethod,
+          manual_payment_method: manualPaymentMethod,
+          courier_name: deliveryMethod === "MANUAL_COURIER" ? courierName.trim() || null : null,
+          tracking_number: deliveryMethod === "MANUAL_COURIER" ? trackingNumber.trim() || null : null,
+          created_by_admin: adminUser?.id ?? null,
+          admin_created_at: new Date().toISOString(),
+          admin_notes: adminNotes.trim() || null,
+          courier: deliveryMethod === "MANUAL_COURIER" ? courierName.trim() || null : null,
+        } as any)
+        .select("id, order_number")
+        .single();
 
-      const { data: rpcData, error: rpcError } = await supabase.rpc("create_admin_manual_order", {
-        p_order_data: orderData,
-        p_line_items: lineItemsPayload,
-      });
+      if (orderError) throw orderError;
+      const orderId = orderData.id;
+      const orderNumber = orderData.order_number;
 
-      if (rpcError) throw rpcError;
-      if (!rpcData || !rpcData.success) {
-        throw new Error(rpcData?.error || "Failed to create transactional manual order.");
+      /* 2. Insert order items */
+      const { error: itemsError } = await supabase.from("order_items").insert(
+        lineItems.map(li => ({
+          order_id: orderId,
+          product_id: li.product.id,
+          product_name: li.product.name,
+          quantity: li.quantity,
+          price: getItemPrice(li.product),
+          currency,
+        })) as any
+      );
+      if (itemsError) throw itemsError;
+
+      /* 3. Deduct inventory */
+      for (const li of lineItems) {
+        const currentStock = getStock(li.product);
+        const newStock = currentStock - li.quantity;
+        const updatePayload = isIndia
+          ? { inventory_quantity: newStock }
+          : { inventory_quantity_australia: newStock };
+
+        await supabase.from("products").update(updatePayload as any).eq("id", li.product.id);
+        await supabase.from("inventory_logs").insert({
+          product_id: li.product.id,
+          change_amount: -li.quantity,
+          previous_quantity: currentStock,
+          new_quantity: newStock,
+          reason: `Manual Order ${orderNumber} (${country})`,
+        } as any);
       }
 
-      const orderNumber = rpcData.order_number;
+      /* 4. Status history */
+      await supabase.from("order_status_history").insert({
+        order_id: orderId,
+        previous_status: null,
+        new_status: "pending",
+        changed_by: `Admin (${salesChannel})`,
+      } as any);
 
-      toast({ title: `Order ${orderNumber} created!`, description: `${fmt(grandTotal)} · ${foundUser?.email || ""}` });
+      toast({ title: `Order ${orderNumber} created!`, description: `${fmt(grandTotal)} · ${foundUser ? foundUser.email : "Guest"}` });
 
       /* 5. Invoice action */
       if (action === "create_print") printInvoice(orderNumber);
@@ -623,7 +659,7 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
                   {userNotFound && (
                     <p className="text-[10px] text-amber-600 flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
-                      User account not found. Orders must be linked to an existing account.
+                      No account — guest order (links on registration)
                     </p>
                   )}
                 </div>
@@ -758,7 +794,14 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
                 </div>
               )}
 
-
+              {/* Free shipping threshold indicator (item 10) */}
+              {lineItems.length > 0 && deliveryMethod !== "HAND_DELIVERY" && deliveryMethod !== "STORE_PICKUP" && deliveryMethod !== "MANUAL_COURIER" && (
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  {subtotal >= currentSettings.free_shipping_above
+                    ? "✓ Free shipping threshold met"
+                    : `${fmt(currentSettings.free_shipping_above - subtotal)} more for free shipping (threshold: ${fmt(currentSettings.free_shipping_above)})`}
+                </p>
+              )}
             </section>
 
             {/* ── SECTION 4: Delivery ── */}
@@ -846,7 +889,7 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
           {userNotFound && customerEmail && (
             <div className="flex items-center gap-2 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 mb-3">
               <AlertTriangle className="h-3 w-3 flex-shrink-0" />
-              Orders must be linked to an existing customer account.
+              Guest order — links automatically when customer registers
             </div>
           )}
 
@@ -855,7 +898,7 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
             <Button
               id="admin-manual-order-submit"
               onClick={() => submitOrder("create")}
-              disabled={submitting || lineItems.length === 0 || !foundUser}
+              disabled={submitting || lineItems.length === 0}
               className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase"
             >
               {submitting ? "Creating Order…" : `Create Order — ${fmt(grandTotal)}`}
@@ -865,7 +908,7 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
               <Button
                 id="admin-manual-order-print"
                 onClick={() => submitOrder("create_print")}
-                disabled={submitting || lineItems.length === 0 || !foundUser}
+                disabled={submitting || lineItems.length === 0}
                 variant="outline"
                 className="h-10 text-xs tracking-[0.08em] uppercase flex items-center justify-center gap-1.5"
               >
@@ -874,7 +917,7 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
               <Button
                 id="admin-manual-order-download"
                 onClick={() => submitOrder("create_download")}
-                disabled={submitting || lineItems.length === 0 || !foundUser}
+                disabled={submitting || lineItems.length === 0}
                 variant="outline"
                 className="h-10 text-xs tracking-[0.08em] uppercase flex items-center justify-center gap-1.5"
               >

@@ -29,38 +29,13 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { items, totals, market } = await req.json();
-    if (market !== "IN") {
-      return new Response(
-        JSON.stringify({ error: "Shiprocket checkout is only available for the India market (INR)." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const { items, couponCode, discountAmount, catalogData } = await req.json();
     if (!items || !Array.isArray(items) || items.length === 0) {
       return new Response(
         JSON.stringify({ error: "Missing or invalid items in cart" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Missing authorization header" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Invalid user token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    const userId = user.id;
-    const authEmail = user.email;
 
     // Map frontend productIds to their shiprocket_variant_ids
     const productIds = items.map((item: any) => item.productId);
@@ -83,57 +58,9 @@ serve(async (req) => {
     });
 
     const origin = req.headers.get("origin") || "https://scalvea.com";
-    let callbackRedirectUrl = origin.includes("localhost")
+    const callbackRedirectUrl = origin.includes("localhost")
       ? `${origin}/shiprocket-callback`
       : "https://scalvea.com/shiprocket-callback";
-
-    // Create checkout_sessions record
-    const lineItemsToStore = items.map((item: any) => {
-      const prod = (products || []).find((p: any) => p.id === item.productId);
-      if (!prod) return null;
-      return {
-        product_id: prod.id,
-        product_name: prod.name,
-        quantity: item.quantity,
-        price: null, // To be filled if needed, or fetched
-        currency: "INR",
-        image_url: null,
-      };
-    }).filter(Boolean);
-
-    const { data: newSession, error: sessionError } = await supabase
-      .from("checkout_sessions")
-      .insert({
-        user_id: userId,
-        status: "PENDING",
-        total_amount: totals?.total || 0,
-        subtotal: totals?.subtotal || 0,
-        shipping_amount: totals?.shipping || 0,
-        tax_amount: totals?.tax || 0,
-        discount_amount: totals?.discount || 0,
-        coupon_code: null, // Applied inside Shiprocket
-        customer_email: authEmail, // Use auth email if available, otherwise null until Shiprocket fills it
-        customer_phone: null,
-        customer_name: null,
-        shipping_address: null, // Collected inside Shiprocket
-        line_items: lineItemsToStore,
-        market: "IN",
-        currency: "INR",
-        totals: totals,
-      } as any)
-      .select()
-      .single();
-
-    if (sessionError || !newSession) {
-      console.error("Failed to create checkout session:", sessionError?.message);
-      return new Response(
-        JSON.stringify({ error: "Failed to create checkout session" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Append session_id to Shiprocket's redirect_url
-    callbackRedirectUrl += `?session_id=${newSession.id}`;
 
     const isMock = apiKey === "mock_key" || secretKey === "mock_secret";
 
@@ -160,8 +87,19 @@ serve(async (req) => {
       timestamp: new Date().toISOString()
     };
 
-    // Note: We no longer send cart_discount or catalog_data.
-    // Shiprocket headless checkout will handle coupons directly in their UI.
+    // Custom Price Checkout: cart_discount (coupon / fixed amount)
+    if (couponCode || (discountAmount && Number(discountAmount) > 0)) {
+      payload.cart_discount = {
+        ...(couponCode ? { coupon_code: String(couponCode).trim() } : {}),
+        ...(discountAmount && Number(discountAmount) > 0 ? { amount: Number(discountAmount) } : {})
+      };
+    }
+
+    // Custom Price Checkout: catalog_data (per-item price/name/image overrides)
+    // Only included when the caller explicitly supplies override data
+    if (catalogData && Array.isArray(catalogData) && catalogData.length > 0) {
+      payload.catalog_data = catalogData;
+    }
 
     const payloadString = JSON.stringify(payload);
     const signature = await generateHmacSha256(cleanSecret, payloadString);
@@ -210,10 +148,6 @@ serve(async (req) => {
           JSON.stringify({ error: "Shiprocket returned success but no token", raw: resData }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
-      }
-
-      if (orderId && newSession) {
-         await supabase.from("checkout_sessions").update({ stripe_session_id: String(orderId) }).eq("id", newSession.id);
       }
 
       // Return ONLY the token, expires_at, and order_id to the browser.

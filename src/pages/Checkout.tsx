@@ -47,18 +47,13 @@ const Checkout = () => {
 
   const isIndia = settings?.country?.toLowerCase() === "india";
 
-  useEffect(() => {
-    if (isIndia) {
-      navigate("/cart");
-    }
-  }, [isIndia, navigate]);
-
   const discountAmount = appliedCoupon ? total * (appliedCoupon.discount_percentage / 100) : 0;
   const subtotalAfterDiscount = total - discountAmount;
   const taxRate = isIndia ? (settings?.tax_percentage || 0) / 100 : 0; // Prices are tax-inclusive for AU
   const taxAmount = subtotalAfterDiscount * taxRate;
   
-  const shippingAmount = settings?.shipping_charge || (isIndia ? 50 : 9.50);
+  const freeShippingThreshold = settings?.free_shipping_above || (isIndia ? 999 : 100);
+  const shippingAmount = subtotalAfterDiscount >= freeShippingThreshold ? 0 : (isIndia ? (settings?.shipping_charge || 100) : 7.50);
   const grandTotal = subtotalAfterDiscount + taxAmount + shippingAmount;
 
   const [form, setForm] = useState({
@@ -80,12 +75,15 @@ const Checkout = () => {
   useEffect(() => {
     setForm(prev => ({
       ...prev,
-      state: AUSTRALIA_STATES[0]
+      state: isIndia ? "" : AUSTRALIA_STATES[0]
     }));
-    setPaymentMethod("stripe");
-  }, []);
+    setPaymentMethod(isIndia ? "shiprocket" : "stripe");
+  }, [isIndia]);
 
   const formatVal = (val: number) => {
+    if (isIndia) {
+      return `₹${Math.round(val).toLocaleString("en-IN")}`;
+    }
     return `A$${val.toFixed(2)}`;
   };
 
@@ -141,7 +139,62 @@ const Checkout = () => {
     setCouponCode("");
   };
 
-  // Shiprocket assets are loaded dynamically at checkout via launchShiprocketCheckout in Cart.tsx
+  // Shiprocket assets are loaded dynamically at checkout via launchShiprocketCheckout
+
+  const handleShiprocketCheckout = async (e?: React.MouseEvent<HTMLButtonElement>) => {
+    // Capture the native DOM event synchronously BEFORE any async work.
+    // React's synthetic event pool may null the event during the token fetch (500ms–15s).
+    const capturedNativeEvent: Event | null = (e?.nativeEvent as Event) || null;
+    e?.preventDefault();
+
+    if (!user) {
+      toast({ title: "Please sign in", description: "You need an account to complete checkout.", variant: "destructive" });
+      navigate("/auth?returnTo=/checkout");
+      return;
+    }
+
+    setPlacing(true);
+
+    try {
+      // 1. Invoke Supabase Edge Function to generate access token
+      const { data, error } = await supabase.functions.invoke("create-shiprocket-checkout-token", {
+        body: {
+          items: items.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity
+          })),
+          // Pass coupon and discount so Shiprocket can apply cart_discount
+          couponCode: appliedCoupon?.code || null,
+          discountAmount: discountAmount > 0 ? discountAmount : null
+        }
+      });
+
+      if (error || !data || !data.token) {
+        throw new Error(error?.message || data?.error || "Failed to create checkout token");
+      }
+
+      const token = data.token;
+
+      // 2. Launch Official Shiprocket Headless Checkout via SDK.
+      // The SDK opens the Shiprocket iframe using HeadlessCheckout.addToCart(event, token, options).
+      // The capturedNativeEvent is required by the SDK to correctly position the iframe.
+      // fallbackUrl is the MERCHANT'S native checkout page — not a Shiprocket URL.
+      const { launchShiprocketCheckout } = await import("@/lib/shiprocketCheckout");
+      const fallbackUrl = window.location.origin + "/checkout";
+      
+      launchShiprocketCheckout(capturedNativeEvent, token, fallbackUrl);
+
+      // Note: Do NOT clear the cart here. 
+      // If the user cancels or the checkout fails, they must be able to return to their cart.
+      
+    } catch (err: any) {
+      console.error("Shiprocket checkout error:", err);
+      toast({ title: "Checkout Error", description: err.message, variant: "destructive" });
+    } finally {
+      // Restore UI state
+      setPlacing(false);
+    }
+  };
 
   const startStripeCheckout = async () => {
     try {
@@ -174,7 +227,6 @@ const Checkout = () => {
       // 2. Call our create-stripe-session Edge Function
       const { data, error } = await supabase.functions.invoke("create-stripe-session", {
         body: {
-          market: "AU",
           items: items.map(item => ({
             productId: item.productId,
             quantity: item.quantity
@@ -235,6 +287,15 @@ const Checkout = () => {
       return;
     }
 
+    if (isIndia) {
+      if (!form.email || !form.firstName || !form.lastName || !form.address || !form.city || !form.state || !form.postcode || !form.phone) {
+        toast({ title: "Missing details", description: "Please fill in all required fields.", variant: "destructive" });
+        return;
+      }
+      handleShiprocketCheckout(e as unknown as React.MouseEvent<HTMLButtonElement>);
+      return;
+    }
+
     // Australia Validation
     if (!form.email || !form.firstName || !form.lastName || !form.phone) {
       toast({ title: "Missing details", description: "Please fill in all required contact fields.", variant: "destructive" });
@@ -289,7 +350,110 @@ const Checkout = () => {
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             <div className="space-y-8">
-                  <div className="space-y-4 pt-4 border-t border-border">
+              {isIndia ? (
+                <div className="space-y-6 pt-4">
+                  <div>
+                    <h2 className="text-xs tracking-[0.15em] uppercase mb-4">
+                      Secure Checkout
+                    </h2>
+                    <p className="text-xs text-muted-foreground font-light mb-6">
+                      Complete your order securely using your preferred payment method.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-4 text-[11px] uppercase tracking-[0.05em] text-muted-foreground">
+                      <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-foreground" /> UPI</div>
+                      <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-foreground" /> Credit & Debit Cards</div>
+                      <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-foreground" /> Net Banking & Wallets</div>
+                      <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-foreground" /> Cash on Delivery</div>
+                      <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-foreground" /> EMI / Pay Later</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <h2 className="text-xs tracking-[0.15em] uppercase mb-6">Contact</h2>
+                    <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email address" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+                  </div>
+
+                  <div>
+                    <h2 className="text-xs tracking-[0.15em] uppercase mb-6">
+                      🇦🇺 Australian Shipping Details
+                    </h2>
+                    
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder="First name" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+                        <input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder="Last name" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+                      </div>
+                      
+                      <div className="flex flex-col gap-1">
+                        <input 
+                          value={form.phone} 
+                          onChange={(e) => setForm({ ...form, phone: e.target.value })} 
+                          placeholder="Phone number" 
+                          required
+                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Address fields only shown for India, as Stripe Hosted Checkout collects AU address natively */}
+                  {isIndia ? (
+                    <div className="space-y-4 pt-4 border-t border-border">
+                      <div className="space-y-1">
+                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Address / Apartment / Suite</label>
+                        <input 
+                          value={form.address} 
+                          onChange={(e) => setForm({ ...form, address: e.target.value })} 
+                          required 
+                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">City / Suburb</label>
+                          <input 
+                            value={form.city} 
+                            onChange={(e) => setForm({ ...form, city: e.target.value })} 
+                            required 
+                            className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">State / Territory</label>
+                          <input
+                            value={form.state}
+                            onChange={(e) => setForm({ ...form, state: e.target.value })}
+                            required
+                            placeholder="State"
+                            className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Postcode / PIN</label>
+                          <input 
+                            value={form.postcode} 
+                            onChange={(e) => setForm({ ...form, postcode: e.target.value })} 
+                            required 
+                            className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground"
+                          />
+                        </div>
+
+                        <div>
+                          <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Destination</p>
+                          <div className="w-full h-11 px-4 text-sm bg-secondary border border-border flex items-center text-muted-foreground cursor-not-allowed">
+                            🇮🇳 India
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 pt-4 border-t border-border">
                       <div className="space-y-1">
                         <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Street Address *</label>
                         <input
@@ -353,8 +517,28 @@ const Checkout = () => {
                     </div>
                   )}
 
+                  <div className="pt-4">
+                    <h2 className="text-xs tracking-[0.15em] uppercase mb-4">Secure Payment</h2>
+                    <p className="text-xs text-muted-foreground font-light mb-6">
+                      Pay securely using your preferred payment method.
+                    </p>
+                    <div className="p-5 border border-border/60 bg-transparent flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-light block">Credit / Debit Card, Apple Pay, Google Pay</span>
+                        <div className="flex gap-1.5 text-[9px] tracking-wider font-mono text-muted-foreground uppercase">
+                          <span>Visa</span> · <span>MC</span> · <span>Amex</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] tracking-[0.05em] uppercase text-muted-foreground mt-1">
+                        <Lock className="w-3 h-3" /> Secure encrypted payment
+                      </div>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground font-light text-right mt-2 uppercase tracking-[0.05em]">
+                      Secure payments powered by Stripe
+                    </p>
                   </div>
                 </>
+              )}
             </div>
 
             <div className="lg:sticky lg:top-32 lg:h-fit">
@@ -418,7 +602,18 @@ const Checkout = () => {
                   {taxAmount > 0 && <div className="flex justify-between text-xs"><span className="text-muted-foreground font-light">Tax ({settings?.tax_percentage}%)</span><span className="font-mono">{formatVal(taxAmount)}</span></div>}
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground font-light">Shipping Charge</span>
-                    <span className="font-mono font-medium text-foreground">{formatVal(shippingAmount)}</span>
+                    <span className="font-mono">
+                      {shippingAmount === 0 ? (
+                        "Free Shipping"
+                      ) : (
+                        <span>
+                          <span className="line-through text-muted-foreground/60 mr-1.5">
+                            {isIndia ? "₹100" : "A$10.00"}
+                          </span>
+                          <span className="font-medium text-foreground">{formatVal(shippingAmount)}</span>
+                        </span>
+                      )}
+                    </span>
                   </div>
                   <div className="border-t border-border pt-3 flex justify-between text-sm font-medium">
                     <span>Total Due</span>
@@ -431,6 +626,16 @@ const Checkout = () => {
                 {settings && <p className="text-[10px] text-muted-foreground text-center pt-2">Estimated Delivery Time: {settings.delivery_time}</p>}
 
                 <div className="pt-4">
+                  {isIndia ? (
+                    <Button 
+                      type="button" 
+                      onClick={(e) => handleShiprocketCheckout(e)} 
+                      disabled={placing} 
+                      className="w-full h-14 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase shadow-lg shadow-black/5"
+                    >
+                      {placing ? "Loading..." : "Continue to Secure Checkout"}
+                    </Button>
+                  ) : (
                     <Button 
                       type="submit" 
                       disabled={placing} 
@@ -438,6 +643,7 @@ const Checkout = () => {
                     >
                       {placing ? "Processing..." : `Continue to Payment — ${formatVal(grandTotal)}`}
                     </Button>
+                  )}
                   <div className="flex items-center justify-center gap-6 mt-6 text-[10px] uppercase tracking-[0.05em] text-muted-foreground">
                     <div className="flex items-center gap-1.5"><Lock className="w-3 h-3" /> Secure Checkout</div>
                     <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3" /> Safe Payments</div>

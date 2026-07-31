@@ -296,6 +296,119 @@ export async function findProductIdByVariantId(supabase: any, variantId: string)
   return null;
 }
 
+/**
+ * Sends order confirmation email to customer and notification to admin via Resend.
+ * Enhanced to include payment method, EDD, billing address, and GST.
+ * Silently skips if RESEND_API_KEY is not configured.
+ */
+export async function sendOrderEmails(supabase: any, order: any, orderItems: any[]) {
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  if (!resendApiKey) {
+    console.warn("RESEND_API_KEY is not configured. Skipping email notifications.");
+    return;
+  }
+
+  const senderEmail = Deno.env.get("SENDER_EMAIL") || "onboarding@resend.dev";
+  const adminEmail  = Deno.env.get("ADMIN_EMAIL")  || "admin@scalvea.com";
+  let emailToUse    = order.shipping_address?.email || order.customer_email;
+
+  if (!emailToUse && order.user_id) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", order.user_id)
+      .maybeSingle();
+    if (profile?.email) emailToUse = profile.email;
+  }
+
+  if (!emailToUse) {
+    console.warn("No customer email found for order:", order.order_number);
+    return;
+  }
+
+  const isIndia   = order.currency === "INR";
+  const formatAmt = (v: number) => isIndia
+    ? `&#8377;${Math.round(v || 0).toLocaleString("en-IN")}`
+    : `A$${Number(v || 0).toFixed(2)}`;
+
+  const addr    = order.shipping_address || {};
+  const billing = order.billing_address  || addr;
+
+  const addrLine = [addr.address || addr.address_line1, addr.city, addr.state, addr.postcode, addr.country].filter(Boolean).join(", ");
+  const billLine = [billing.address_line1 || billing.address, billing.city, billing.state, billing.postcode, billing.country].filter(Boolean).join(", ");
+  const payMethod = (order.payment_method || "").replace("shiprocket_", "").toUpperCase() || "N/A";
+
+  const formattedItems = orderItems
+    .map((item: any) => `<li style="padding:4px 0">${item.product_name || item.name || "Product"} &times; ${item.quantity} &mdash; ${formatAmt(Number(item.price) * Number(item.quantity))}</li>`)
+    .join("");
+
+  const couponLine   = order.coupon_code        ? `<p><strong>Coupon:</strong> ${order.coupon_code}</p>` : "";
+  const discountLine = Number(order.discount_amount) > 0 ? `<p><strong>Discount:</strong> -${formatAmt(Number(order.discount_amount))}</p>` : "";
+  const gstLine      = Number(order.gst_amount || order.tax_amount) > 0 ? `<p><strong>GST:</strong> ${formatAmt(Number(order.gst_amount || order.tax_amount))}</p>` : "";
+  const codLine      = Number(order.cod_charges) > 0 ? `<p><strong>COD Charges:</strong> ${formatAmt(Number(order.cod_charges))}</p>` : "";
+  const eddLine      = (order.edd_date || order.delivery_estimate) ? `<p><strong>Estimated Delivery:</strong> ${order.edd_date || order.delivery_estimate}</p>` : "";
+
+  const emailHtml = `<div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:40px 20px">
+    <h1 style="font-size:22px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px">SCALVEA</h1>
+    <p style="font-size:11px;color:#888;letter-spacing:2px;margin-top:0">CARE YOU DESERVE</p>
+    <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+    <p>Order <strong>${order.order_number}</strong> has been confirmed and is being processed.</p>
+    <h2 style="font-size:13px;text-transform:uppercase;letter-spacing:2px">Items Ordered</h2>
+    <ul style="padding:0;list-style:none">${formattedItems || "<li>See your order confirmation for details</li>"}</ul>
+    <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+    <p><strong>Subtotal:</strong> ${formatAmt(Number(order.subtotal))}</p>
+    ${gstLine}<p><strong>Shipping:</strong> ${formatAmt(Number(order.shipping_amount))}</p>
+    ${codLine}${discountLine}${couponLine}
+    <p><strong>Total Paid:</strong> <span style="font-size:16px;font-weight:600">${formatAmt(Number(order.total_amount_payable || order.total_amount))}</span></p>
+    <p><strong>Payment Method:</strong> ${payMethod}</p>
+    ${eddLine}
+    <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+    <p><strong>Shipping Address:</strong><br>${(addr.first_name || addr.firstName || "")} ${(addr.last_name || addr.lastName || "")}<br>${addrLine}</p>
+    <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+    <p style="font-size:11px;color:#888;text-align:center">SCALVEA GROUPS PTY LTD &middot; scalvea.com</p>
+  </div>`;
+
+  const adminHtml = `<div style="font-family:Inter,sans-serif;max-width:700px;margin:0 auto;padding:40px 20px">
+    <h1 style="font-size:16px;text-transform:uppercase;letter-spacing:2px">New Order &#8212; ${order.order_number}</h1>
+    <p><strong>Market:</strong> ${order.market || order.country} | <strong>Currency:</strong> ${order.currency}</p>
+    <p><strong>Customer:</strong> ${order.customer_name || ""} | <strong>Email:</strong> ${emailToUse} | <strong>Phone:</strong> ${order.customer_phone || addr.phone || "N/A"}</p>
+    <p><strong>Shiprocket Order ID:</strong> ${order.shiprocket_order_id || order.fastrr_order_id || "N/A"}</p>
+    <hr style="border:none;border-top:1px solid #eee;margin:16px 0">
+    <h2 style="font-size:13px;text-transform:uppercase;letter-spacing:2px">Items</h2>
+    <ul style="padding:0;list-style:none">${formattedItems || "<li>&#8212;</li>"}</ul>
+    <hr style="border:none;border-top:1px solid #eee;margin:16px 0">
+    <p><strong>Subtotal:</strong> ${formatAmt(Number(order.subtotal))}</p>
+    ${gstLine}<p><strong>Shipping:</strong> ${formatAmt(Number(order.shipping_amount))}</p>
+    ${codLine}${discountLine}${couponLine}
+    <p><strong>Total:</strong> ${formatAmt(Number(order.total_amount_payable || order.total_amount))}</p>
+    <p><strong>Payment:</strong> ${payMethod} | <strong>Status:</strong> ${order.payment_status || "N/A"}</p>
+    ${eddLine}
+    <hr style="border:none;border-top:1px solid #eee;margin:16px 0">
+    <p><strong>Shipping Address:</strong><br>${addrLine}</p>
+    <p><strong>Billing Address:</strong><br>${billLine}</p>
+  </div>`;
+
+  try {
+    const cr = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${resendApiKey}` },
+      body: JSON.stringify({ from: senderEmail, to: emailToUse, subject: `Order Confirmed &#8212; ${order.order_number}`, html: emailHtml }),
+    });
+    if (!cr.ok) console.error("Customer email send failed:", await cr.text());
+    else console.log("Customer email sent:", order.order_number);
+
+    const ar = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${resendApiKey}` },
+      body: JSON.stringify({ from: senderEmail, to: adminEmail, subject: `[New Order] ${order.order_number} &#8212; ${order.market || order.country}`, html: adminHtml }),
+    });
+    if (!ar.ok) console.error("Admin email send failed:", await ar.text());
+    else console.log("Admin email sent:", order.order_number);
+  } catch (error) {
+    console.error("Error sending order emails:", error);
+  }
+}
+
 // ─── Shared Webhook Delivery (used by shiprocket-catalog-resync) ──────────────
 // shiprocket-catalog-sync defines its own local variant with signature:
 //   (url, payloadString, apiKey, secretKey) → ...
@@ -454,79 +567,6 @@ export async function callOrderDetailsApi(
     console.error(msg);
     return { ok: false, data: null, error: msg };
   }
-}
-
-// ─── Session Synchronization Utility ────────────────────────────────────────
-
-/**
- * Extracts all relevant customer and financial data from a raw Shiprocket Order Details
- * response and formats it as an update payload for the `checkout_sessions` table.
- * This is used to hydrate the session BEFORE it is processed transactionally.
- */
-export function parseOrderDetailsToSessionUpdate(rawOrderDetails: any, webhookBody: any = null): any {
-  let orderDetails = rawOrderDetails || {};
-  if (orderDetails.data) {
-    orderDetails = Array.isArray(orderDetails.data) ? (orderDetails.data[0] || {}) : orderDetails.data;
-  } else if (orderDetails.order) {
-    orderDetails = orderDetails.order;
-  } else if (orderDetails.order_details) {
-    orderDetails = orderDetails.order_details;
-  } else if (Array.isArray(orderDetails) && orderDetails.length > 0) {
-    orderDetails = orderDetails[0];
-  }
-
-  const customer    = orderDetails.customer    || orderDetails.buyer || orderDetails.customer_details || {};
-  const shippingRaw = orderDetails.shipping    || orderDetails.shipping_address || webhookBody?.shipping_address || {};
-
-  const firstName = customer.first_name || customer.name?.split(" ")[0] || shippingRaw.first_name || (shippingRaw.name || "").split(" ")[0] || "";
-  const lastName  = customer.last_name  || customer.name?.split(" ").slice(1).join(" ") || shippingRaw.last_name  || (shippingRaw.name || "").split(" ").slice(1).join(" ") || "";
-  const email     = (customer.email || shippingRaw.email || orderDetails.customer_email || orderDetails.email || webhookBody?.email || "").trim() || null;
-  const phone     = (customer.phone || shippingRaw.phone || orderDetails.customer_phone || orderDetails.phone || webhookBody?.phone || "").trim().replace(/[^0-9+]/g, "").replace(/^\+91/, "") || null;
-
-  const shippingAddress = {
-    firstName, lastName,
-    address_line1: shippingRaw.line1 || shippingRaw.address_line1 || shippingRaw.address || shippingRaw.shipping_address || "",
-    address_line2: shippingRaw.line2 || shippingRaw.address_line2 || shippingRaw.shipping_address_2 || "",
-    landmark: shippingRaw.landmark || "",
-    city:    shippingRaw.city || shippingRaw.shipping_city || "", 
-    state:   shippingRaw.state || shippingRaw.shipping_state || "",
-    postcode: shippingRaw.pincode || shippingRaw.postcode || shippingRaw.postal_code || shippingRaw.shipping_pincode || "",
-    country: shippingRaw.country || shippingRaw.shipping_country || "India", 
-    phone, email,
-  };
-
-  const subtotalPrice      = Number(orderDetails.subtotal_price      || orderDetails.subtotal        || orderDetails.net_total || webhookBody?.subtotal_price  || 0);
-  const shippingCharges    = Number(orderDetails.shipping_charges    || orderDetails.shipping_amount || orderDetails.shipping || webhookBody?.shipping_charges || 0);
-  const couponDiscount     = Number(orderDetails.coupon_discount  || 0);
-  const prepaidDiscount    = Number(orderDetails.prepaid_discount || 0);
-  const totalDiscount      = Number(orderDetails.total_discount   || orderDetails.discount_amount || orderDetails.discount || webhookBody?.total_discount || (couponDiscount + prepaidDiscount));
-  const totalAmountPayable = Number(orderDetails.total_amount_payable || orderDetails.amount || orderDetails.total || webhookBody?.total_amount_payable || webhookBody?.amount || 0);
-  const gstAmount          = Number(orderDetails.gst_amount || orderDetails.gst || orderDetails.tax_amount || orderDetails.tax || webhookBody?.tax_amount || 0);
-
-  const couponCodesArr  = orderDetails.coupon_codes || (webhookBody?.coupon_codes || []);
-  const couponCodeStr = Array.isArray(couponCodesArr) && couponCodesArr.length > 0
-    ? (typeof couponCodesArr[0] === "string" ? couponCodesArr[0] : couponCodesArr[0]?.code || null)
-    : (orderDetails.coupon_code || webhookBody?.coupon_code || null);
-
-  return {
-    customer_email: email,
-    customer_phone: phone,
-    customer_name: `${firstName} ${lastName}`.trim() || null,
-    shipping_address: shippingAddress,
-    coupon_code: couponCodeStr,
-    subtotal: subtotalPrice,
-    shipping_amount: shippingCharges,
-    discount_amount: totalDiscount,
-    tax_amount: gstAmount,
-    total_amount: totalAmountPayable,
-    totals: {
-      subtotal: subtotalPrice,
-      shipping: shippingCharges,
-      discount: totalDiscount,
-      tax: gstAmount,
-      total: totalAmountPayable
-    }
-  };
 }
 
 // ─── Canonical Order Sync Function ───────────────────────────────────────────
@@ -857,6 +897,12 @@ export async function syncOrderFromDetails(
     console.warn(`syncOrderFromDetails: No cart items for Shiprocket order ${shiprocketOrderId}`);
   }
 
+  // ── M: Send emails (only on first creation) ───────────────────────────────
+  if (created && savedOrder) {
+    sendOrderEmails(supabase, savedOrder, itemsCreated).catch((err: any) =>
+      console.error("syncOrderFromDetails: email error:", err.message)
+    );
+  }
 
   console.log(`syncOrderFromDetails COMPLETE — orderId=${orderId} created=${created} items=${itemsCreated.length}`);
   return { orderId, created, itemsCreated };

@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useCart } from "@/contexts/CartContext";
@@ -6,10 +6,6 @@ import { useCountry } from "@/contexts/CountryContext";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, ShoppingBag } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
 
 const Cart = () => {
   useSEO({
@@ -20,9 +16,6 @@ const Cart = () => {
 
   const { items, removeItem, updateQuantity, total } = useCart();
   const { currencySymbol, currencyCode, settings, selectedCountry } = useCountry();
-  const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
 
   const isIndia = selectedCountry === "india";
   const formatVal = (val: number) => {
@@ -32,71 +25,8 @@ const Cart = () => {
     return `A$${val.toFixed(2)}`;
   };
 
-  const shipping = settings?.shipping_charge || (isIndia ? 50 : 9.50);
-
-  const [placing, setPlacing] = useState(false);
-
-  const handleShiprocketCheckout = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    const capturedNativeEvent: Event | null = (e?.nativeEvent as Event) || null;
-    e?.preventDefault();
-
-    setPlacing(true);
-
-    if (!user) {
-      toast({ title: "Please sign in", description: "You need an account to complete your purchase." });
-      navigate("/auth?returnTo=/cart?action=checkout");
-      setPlacing(false);
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke("create-shiprocket-checkout-token", {
-        body: {
-          market: "IN",
-          items: items.map(item => ({
-            productId: item.productId,
-            quantity: item.quantity
-          })),
-          totals: {
-            subtotal: total,
-            tax: 0,
-            shipping: shipping,
-            discount: 0,
-            total: total + shipping
-          }
-        }
-      });
-
-      if (error || !data || !data.token) {
-        throw new Error(error?.message || data?.error || "Failed to create checkout token");
-      }
-
-      const token = data.token;
-      const { launchShiprocketCheckout } = await import("@/lib/shiprocketCheckout");
-      const fallbackUrl = window.location.origin + "/cart"; // Return to cart if they cancel
-      
-      launchShiprocketCheckout(capturedNativeEvent, token, fallbackUrl);
-      
-    } catch (err: any) {
-      console.error("Shiprocket checkout error:", err);
-      toast({ title: "Checkout Error", description: err.message, variant: "destructive" });
-    } finally {
-      setPlacing(false);
-    }
-  };
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get("action") === "checkout" && user && !authLoading && items.length > 0 && !placing) {
-      // Remove query param to prevent loop
-      window.history.replaceState({}, document.title, location.pathname);
-      if (isIndia) {
-        handleShiprocketCheckout({ preventDefault: () => {} } as any);
-      } else {
-        navigate("/checkout");
-      }
-    }
-  }, [user, authLoading, location.search, items.length, placing, isIndia, navigate]);
+  const freeShippingThreshold = settings?.free_shipping_above || (isIndia ? 999 : 100);
+  const shipping = total >= freeShippingThreshold ? 0 : (isIndia ? (settings?.shipping_charge || 100) : 7.50);
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,8 +85,17 @@ const Cart = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-light">Shipping</span>
-                  <span className="font-mono font-medium text-foreground">
-                    {formatVal(shipping)}
+                  <span className="font-mono">
+                    {shipping === 0 ? (
+                      "Free"
+                    ) : (
+                      <span>
+                        <span className="line-through text-muted-foreground/60 mr-1.5">
+                          {isIndia ? "₹100" : "A$10.00"}
+                        </span>
+                        <span className="font-medium text-foreground">{formatVal(shipping)}</span>
+                      </span>
+                    )}
                   </span>
                 </div>
                 <div className="border-t border-border pt-3 flex justify-between font-normal">
@@ -167,19 +106,7 @@ const Cart = () => {
                   </div>
                 </div>
               </div>
-              {isIndia ? (
-                <Button 
-                  onClick={handleShiprocketCheckout} 
-                  disabled={placing}
-                  className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase"
-                >
-                  {placing ? "Loading..." : "Checkout"}
-                </Button>
-              ) : (
-                <Button asChild className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase">
-                  <Link to="/checkout">Checkout</Link>
-                </Button>
-              )}
+              <Button asChild className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase"><Link to="/checkout">Checkout</Link></Button>
               <Link to="/shop" className="block text-center text-xs tracking-[0.08em] uppercase text-muted-foreground hover:text-foreground transition-colors">Continue Shopping</Link>
             </div>
           </div>

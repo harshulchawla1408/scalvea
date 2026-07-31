@@ -39,79 +39,94 @@ const OrderSuccess = () => {
     // We only set this once to prevent multiple intervals on re-renders
     hasExecuted.current = true;
 
+    // ─── 1. Instant Load Path (Callback Succeeded) ─────────────────────────
+    // If we have an exact local UUID, the order is guaranteed to be fully synced
+    if (orderId || sessionId) {
+      const fetchExactOrder = async () => {
+        try {
+          let orderQuery = supabase.from("orders").select("*, order_items(*)");
+          
+          if (sessionId) {
+            orderQuery = orderQuery.eq("stripe_session_id", sessionId);
+          } else {
+            orderQuery = orderQuery.eq("id", orderId);
+          }
+          
+          const { data, error: dbError } = await orderQuery.maybeSingle();
+          if (dbError) throw dbError;
+          
+          if (data) {
+            setOrder(data);
+            clearCart();
+          } else {
+            setError("We couldn't locate your order details immediately. Please check your account page.");
+          }
+        } catch (err: any) {
+          console.error("Error fetching exact order:", err);
+          setError("An error occurred while retrieving order details.");
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchExactOrder();
+      return; // Exit early, no polling needed!
+    }
+
+    // ─── 2. Fallback Polling Path (Callback Failed) ────────────────────────
+    // This path is ONLY hit if the Callback verification timed out 3 times,
+    // and we are waiting for the Webhook to hopefully create the order.
     let retries = 0;
     const maxRetries = 10;
-    let pollTimeout: ReturnType<typeof setTimeout>;
     
-    const checkOrder = async () => {
+    const checkOrderFallback = async () => {
       try {
-        if (orderId) {
-          // Exact order lookup
-          const { data, error } = await supabase.from("orders").select("*, order_items(*)").eq("id", orderId).maybeSingle();
+        const { data: mapping } = await supabase
+          .from("shiprocket_orders")
+          .select("order_id")
+          .eq("shiprocket_order_id", shiprocketOrderId)
+          .maybeSingle();
+
+        if (mapping?.order_id) {
+          const { data, error: dbError } = await supabase
+            .from("orders")
+            .select("*, order_items(*)")
+            .eq("id", mapping.order_id)
+            .maybeSingle();
+
+          if (dbError) throw dbError;
+          
           if (data) {
             setOrder(data);
-            clearCart();
             setLoading(false);
-            return true;
-          }
-          return false;
-        } else if (sessionId) {
-          // Stripe Session lookup
-          const { data, error } = await supabase.from("orders").select("*, order_items(*)").eq("stripe_session_id", sessionId).maybeSingle();
-          if (data) {
-            setOrder(data);
             clearCart();
-            setLoading(false);
-            return true;
+            return true; // Success!
           }
-          return false;
-        } else if (shiprocketOrderId) {
-          // Shiprocket Order lookup
-          const { data: mapping } = await supabase.from("shiprocket_orders").select("order_id").eq("shiprocket_order_id", shiprocketOrderId).maybeSingle();
-          if (mapping?.order_id) {
-            const { data, error } = await supabase.from("orders").select("*, order_items(*)").eq("id", mapping.order_id).maybeSingle();
-            if (data) {
-              setOrder(data);
-              clearCart();
-              setLoading(false);
-              return true;
-            }
-          }
-          return false;
         }
-      } catch (err) {
-        console.error("Error fetching order:", err);
+        
+        return false; // Not found yet
+      } catch (err: any) {
+        console.error("Error in fallback poll:", err);
         return false;
       }
-      return false;
     };
 
     const poll = async () => {
-      const success = await checkOrder();
+      const success = await checkOrderFallback();
       if (success) return;
       
-      // Exact order ID means it should already exist. We don't poll for it.
-      if (orderId) {
-        setLoading(false);
-        setError("We couldn't locate your order details immediately. Please check your account page.");
-        return;
-      }
-
       retries++;
       if (retries >= maxRetries) {
         setLoading(false);
         setError("We received your payment, but the order registration is taking longer than expected. Please check your account page shortly.");
       } else {
-        pollTimeout = setTimeout(poll, 1500); // 1.5s delay
+        setTimeout(poll, 1500); // 1.5s delay
       }
     };
 
-    // Start polling
+    // Start fallback polling
     poll();
 
-    return () => {
-      if (pollTimeout) clearTimeout(pollTimeout);
-    };
   }, [sessionId, orderId, shiprocketOrderId, navigate, clearCart]);
 
   const formatVal = (val: number) => {
@@ -236,7 +251,16 @@ const OrderSuccess = () => {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-light">Shipping Cost</span>
                   <span className="font-mono font-light">
-                    {formatVal(Number(order.shipping_amount))}
+                    {Number(order.shipping_amount) === 0 ? (
+                      "Free Shipping"
+                    ) : (
+                      <span>
+                        <span className="line-through text-muted-foreground/60 mr-1.5">
+                          {order.currency === "INR" ? "₹100" : "A$10.00"}
+                        </span>
+                        <span>{formatVal(Number(order.shipping_amount))}</span>
+                      </span>
+                    )}
                   </span>
                 </div>
 

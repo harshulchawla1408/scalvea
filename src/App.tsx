@@ -8,7 +8,6 @@ import PageTransition from "./components/layout/PageTransition";
 import { CartProvider } from "./contexts/CartContext";
 import { WishlistProvider } from "./contexts/WishlistContext";
 import { CountryProvider } from "./contexts/CountryContext";
-import { AuthProvider } from "./contexts/AuthContext";
 
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
@@ -38,48 +37,46 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <CountryProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <ScrollToTop />
-                <PageTransition />
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/shop" element={<Shop />} />
-                  <Route path="/product/:productId" element={<ProductDetail />} />
-                  <Route path="/cart" element={<Cart />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/order-success" element={<OrderSuccess />} />
-                  <Route path="/shiprocket-callback" element={<ShiprocketCallback />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route path="/support" element={<Contact />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/account" element={<Account />} />
-                  <Route path="/wishlist" element={<Wishlist />} />
-                  <Route path="/admin" element={<Admin />} />
-                  <Route path="/payment-policy" element={<PaymentPolicy />} />
-                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                  <Route path="/terms-of-service" element={<TermsOfService />} />
-                  <Route path="/terms-conditions" element={<TermsOfService />} />
-                  <Route path="/shipping-policy" element={<ShippingPolicy />} />
-                  <Route path="/returns-policy" element={<ReturnsPolicy />} />
-                  <Route path="/return-refund-policy" element={<ReturnsPolicy />} />
-                  <Route path="/cancellation-policy" element={<CancellationPolicy />} />
-                  <Route path="/shipping-returns" element={<ShippingReturns />} />
-                  <Route path="/faq" element={<FAQ />} />
-                  <Route path="/faqs" element={<FAQ />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </WishlistProvider>
-          </CartProvider>
-        </CountryProvider>
-      </AuthProvider>
+      <CountryProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <ScrollToTop />
+              <PageTransition />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/shop" element={<Shop />} />
+                <Route path="/product/:productId" element={<ProductDetail />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/order-success" element={<OrderSuccess />} />
+                <Route path="/shiprocket-callback" element={<ShiprocketCallback />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/support" element={<Contact />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/account" element={<Account />} />
+                <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/payment-policy" element={<PaymentPolicy />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms-of-service" element={<TermsOfService />} />
+                <Route path="/terms-conditions" element={<TermsOfService />} />
+                <Route path="/shipping-policy" element={<ShippingPolicy />} />
+                <Route path="/returns-policy" element={<ReturnsPolicy />} />
+                <Route path="/return-refund-policy" element={<ReturnsPolicy />} />
+                <Route path="/cancellation-policy" element={<CancellationPolicy />} />
+                <Route path="/shipping-returns" element={<ShippingReturns />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/faqs" element={<FAQ />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </WishlistProvider>
+        </CartProvider>
+      </CountryProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

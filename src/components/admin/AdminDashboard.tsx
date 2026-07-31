@@ -52,13 +52,10 @@ const AdminDashboard = () => {
   useEffect(() => {
     if (loading) return;
 
-    // Only include PAID orders in analytics (exclude failed, cancelled, pending Stripe sessions)
-    const paidOrders = allOrders.filter(o => o.payment_status === "paid" || o.payment_status === "partially_paid");
-
     // Filter orders by country if not "All"
     const filteredOrders = selectedCountry === "All" 
-      ? paidOrders 
-      : paidOrders.filter(o => o.country === selectedCountry);
+      ? allOrders 
+      : allOrders.filter(o => o.country === selectedCountry);
 
     // Calculate low stock count
     const threshold = 10;
@@ -144,9 +141,6 @@ const AdminDashboard = () => {
     const productSales: Record<string, { name: string; qty: number; revenueText: string; rawQty: number }> = {};
     
     orderItems.forEach((item: any) => {
-      // Must only count items from paid orders
-      if (item.orders?.payment_status !== "paid" && item.orders?.payment_status !== "partially_paid") return;
-
       const orderCountry = item.orders?.country || "Australia";
       if (selectedCountry !== "All" && orderCountry !== selectedCountry) return;
 
