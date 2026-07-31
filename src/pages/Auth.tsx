@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Check, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { authManager } from "@/lib/auth/AuthManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useCountry } from "@/contexts/CountryContext";
 import { toast } from "@/hooks/use-toast";
@@ -256,7 +257,7 @@ const Auth = () => {
     try {
       const params = new URLSearchParams(location.search);
       const returnTo = params.get("returnTo") || "/account";
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error } = await authManager.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}${returnTo}`,
@@ -276,7 +277,7 @@ const Auth = () => {
 
     try {
       if (view === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await authManager.signInWithPassword({ email, password });
         if (error) throw error;
 
         // Save email if remember me is checked
@@ -297,7 +298,7 @@ const Auth = () => {
 
         const params = new URLSearchParams(location.search);
         const returnTo = params.get("returnTo") ? `?returnTo=${params.get("returnTo")}` : "";
-        const { error } = await supabase.auth.signUp({
+        const { error } = await authManager.signUp({
           email,
           password,
           options: {
@@ -310,7 +311,7 @@ const Auth = () => {
         setSuccessMessage("Your account has been created. Please check your email to verify and activate your account.");
         toast({ title: "Account created", description: "Verification link sent." });
       } else if (view === "forgot") {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        const { error } = await authManager.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/auth?type=recovery`,
         });
         if (error) throw error;
@@ -322,7 +323,7 @@ const Auth = () => {
           throw new Error("Passwords do not match");
         }
 
-        const { error } = await supabase.auth.updateUser({ password });
+        const { error } = await authManager.updateUser({ password });
         if (error) throw error;
 
         toast({ title: "Password updated successfully" });

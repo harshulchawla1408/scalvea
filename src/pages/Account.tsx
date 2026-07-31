@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { authManager } from "@/lib/auth/AuthManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useCountry } from "@/contexts/CountryContext";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
@@ -187,7 +188,7 @@ const Account = () => {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await authManager.signOut();
     toast({ title: "Signed out" });
     navigate("/");
   };
@@ -465,10 +466,19 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
                         {items.length > 0 && (
                           <div>
                             <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-2">Items</p>
-                            <div className="space-y-1">
+                            <div className="space-y-3">
                               {items.map((item: any) => (
-                                <div key={item.id} className="flex justify-between text-sm">
-                                  <span>{item.product_name} × {item.quantity}</span>
+                                <div key={item.id} className="flex justify-between items-center text-sm">
+                                  <div className="flex items-center gap-3">
+                                    {item.image_url ? (
+                                      <img src={item.image_url} alt={item.product_name} className="w-12 h-12 object-contain bg-[#fafafa] p-1 border border-border/50" />
+                                    ) : (
+                                      <div className="w-12 h-12 bg-secondary flex items-center justify-center border border-border/50">
+                                        <Package className="w-4 h-4 text-muted-foreground" />
+                                      </div>
+                                    )}
+                                    <span>{item.product_name} <span className="text-muted-foreground text-xs ml-1">× {item.quantity}</span></span>
+                                  </div>
                                   <span>{fmt(Number(item.price) * Number(item.quantity))}</span>
                                 </div>
                               ))}

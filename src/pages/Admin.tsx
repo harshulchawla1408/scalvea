@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { authManager } from "@/lib/auth/AuthManager";
 import { toast } from "@/hooks/use-toast";
-import { LayoutDashboard, Package, ShoppingCart, Users, Globe, Tag, BarChart3, LogOut, Menu, X, Star, LineChart, Settings } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, Globe, Tag, BarChart3, LogOut, Menu, X, Star, LineChart, Settings, Terminal } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 
 import AdminDashboard from "@/components/admin/AdminDashboard";
@@ -15,6 +16,7 @@ import AdminCoupons from "@/components/admin/AdminCoupons";
 import AdminInventory from "@/components/admin/AdminInventory";
 import AdminReviews from "@/components/admin/AdminReviews";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
+import AdminLogs from "@/components/admin/AdminLogs";
 import AdminSettings from "@/components/admin/AdminSettings";
 
 const adminPages = [
@@ -27,6 +29,7 @@ const adminPages = [
   { key: "coupons", label: "Coupons", icon: Tag },
   { key: "reviews", label: "Reviews", icon: Star },
   { key: "analytics", label: "Analytics", icon: LineChart },
+  { key: "system_logs", label: "System Logs", icon: Terminal },
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -53,7 +56,7 @@ const Admin = () => {
   if (!user || !isAdmin) return null;
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await authManager.signOut();
     navigate("/");
   };
 
@@ -68,6 +71,7 @@ const Admin = () => {
       case "coupons": return <AdminCoupons />;
       case "reviews": return <AdminReviews />;
       case "analytics": return <AdminAnalytics />;
+      case "system_logs": return <AdminLogs />;
       case "settings": return <AdminSettings />;
       default: return <AdminDashboard />;
     }

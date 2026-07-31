@@ -4,13 +4,12 @@
 // 2. Extracts metadata.order_id to locate the pending order.
 // 3. Handles idempotency: ignores if already paid.
 // 4. On payment success: Updates order to paid, inserts order_items, 
-//    deducts inventory, and sends emails.
+//    deducts inventory.
 // 5. On payment failure: Marks order as cancelled.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import Stripe from "npm:stripe@^22";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { sendOrderEmails } from "../_shared/shiprocket-mapper.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!);
 const cryptoProvider = Stripe.createSubtleCryptoProvider();
@@ -101,159 +100,103 @@ async function handlePaymentSuccess(event: Stripe.Event, supabase: any) {
     return;
   }
 
-  const orderId = session.metadata?.order_id;
+  const checkoutSessionId = session.metadata?.checkout_session_id;
   const stripeSessionId = session.id;
 
-  // 1. Locate pending order
-  let orderQuery = supabase.from("orders").select("*");
-  if (orderId) {
-    orderQuery = orderQuery.eq("id", orderId);
+  // 1. Locate pending checkout session
+  let sessionQuery = supabase.from("checkout_sessions").select("*");
+  if (checkoutSessionId) {
+    sessionQuery = sessionQuery.eq("id", checkoutSessionId);
   } else {
-    orderQuery = orderQuery.eq("stripe_session_id", stripeSessionId);
+    sessionQuery = sessionQuery.eq("stripe_session_id", stripeSessionId);
   }
 
-  const { data: order, error: orderError } = await orderQuery.maybeSingle();
+  const { data: checkoutSession, error: sessionError } = await sessionQuery.maybeSingle();
 
-  if (orderError || !order) {
-    console.error(`Could not locate pending order. Order ID: ${orderId}, Session: ${stripeSessionId}`);
+  if (sessionError || !checkoutSession) {
+    console.error(`Could not locate pending checkout session. Checkout Session ID: ${checkoutSessionId}, Stripe Session: ${stripeSessionId}`);
     return;
   }
 
-  // 2. Idempotency Check
-  if (order.payment_status === "paid") {
-    console.log(`Order ${order.order_number} is already paid. Skipping duplicate processing.`);
-    return;
-  }
-
-  console.log(`Finalizing payment for order: ${order.order_number}`);
-
-  // 3. Build authoritative shipping address
-  const stripeShipping = session.shipping_details;
-  const customerDetails = session.customer_details;
-  
-  const shippingAddress = stripeShipping?.address ? {
-    firstName: (stripeShipping.name || "").split(" ")[0] || order.shipping_address?.firstName || "",
-    lastName: (stripeShipping.name || "").split(" ").slice(1).join(" ") || order.shipping_address?.lastName || "",
-    first_name: (stripeShipping.name || "").split(" ")[0] || order.shipping_address?.first_name || "",
-    last_name: (stripeShipping.name || "").split(" ").slice(1).join(" ") || order.shipping_address?.last_name || "",
-    address: stripeShipping.address.line1 + (stripeShipping.address.line2 ? `, ${stripeShipping.address.line2}` : ""),
-    address_line1: stripeShipping.address.line1 || "",
-    address_line2: stripeShipping.address.line2 || "",
-    city: stripeShipping.address.city || "",
-    state: stripeShipping.address.state || "",
-    postcode: stripeShipping.address.postal_code || "",
-    country: stripeShipping.address.country || "AU",
-    phone: customerDetails?.phone || order.shipping_address?.phone || "",
-    email: customerDetails?.email || order.shipping_address?.email || "",
-  } : order.shipping_address;
-
+  // 2. Atomic Idempotency Check & Update & Transaction via Postgres RPC
   const stripePaymentIntentId = typeof session.payment_intent === "string" 
     ? session.payment_intent 
     : session.payment_intent?.id || null;
 
-  // 4. Update order to paid
-  const { data: updatedOrder, error: updateError } = await supabase
-    .from("orders")
-    .update({
-      payment_status: "paid",
-      order_status: "processing",
-      stripe_session_id: stripeSessionId,
-      stripe_payment_intent_id: stripePaymentIntentId,
-      transaction_id: stripePaymentIntentId,
-      paid_at: new Date().toISOString(),
-      shipping_address: shippingAddress,
-      customer_name: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim(),
-    })
-    .eq("id", order.id)
-    .select()
-    .single();
+  const paymentDetails = {
+    payment_method: "stripe",
+    payment_intent_id: stripePaymentIntentId,
+    transaction_id: stripePaymentIntentId,
+  };
 
-  if (updateError) {
-    throw new Error(`Failed to update order payment status: ${updateError.message}`);
+  const { data: rpcResult, error: rpcError } = await supabase.rpc("process_checkout_transaction", {
+    p_session_id: checkoutSession.id,
+    p_payment_details: paymentDetails,
+    p_order_source: "Stripe"
+  });
+
+  if (rpcError) {
+    console.error(`RPC transaction failed for session ${checkoutSession.id}:`, rpcError.message || rpcError);
+    await supabase.from("system_logs").insert({
+      level: "ERROR",
+      source: "stripe-webhook",
+      message: `Transaction failed for session ${checkoutSession.id}`,
+      metadata: { error: rpcError.message || rpcError, session_id: checkoutSession.id }
+    } as any);
+    return;
   }
 
-  // 5. Fetch pre-existing order_items & deduct inventory
-  const { data: createdItems } = await supabase.from("order_items").select("*").eq("order_id", order.id);
-
-  if (createdItems && createdItems.length > 0) {
-    for (const item of createdItems) {
-      if (!item.product_id) continue;
-
-      const { data: prod } = await supabase.from("products").select("id, name, inventory_quantity_australia").eq("id", item.product_id).maybeSingle();
-      if (!prod) continue;
-
-      // Deduct Inventory EXACTLY ONCE
-      const prevQty = prod.inventory_quantity_australia ?? 0;
-      const newQty = Math.max(0, prevQty - item.quantity);
-
-      await supabase
-        .from("products")
-        .update({ inventory_quantity_australia: newQty })
-        .eq("id", prod.id);
-
-      await supabase.from("inventory_logs").insert({
-        product_id: prod.id,
-        change_amount: -item.quantity,
-        previous_quantity: prevQty,
-        new_quantity: newQty,
-        reason: `Stripe Order ${updatedOrder.order_number}`,
+  if (!rpcResult || !rpcResult.success) {
+    console.log(`Checkout Session ${checkoutSession.id} transaction returned false (already processed or failed).`, rpcResult);
+    if (rpcResult?.error) {
+      await supabase.from("system_logs").insert({
+        level: "ERROR",
+        source: "stripe-webhook",
+        message: `Transaction error for session ${checkoutSession.id}: ${rpcResult.error}`,
+        metadata: { error: rpcResult.error, session_id: checkoutSession.id }
       } as any);
     }
+    return;
   }
 
-  // 6. Increment coupon usage
-  const couponCode = session.metadata?.coupon_code;
-  if (couponCode) {
-    const { data: coupon } = await supabase.from("coupons").select("usage_count").eq("code", couponCode).maybeSingle();
-    if (coupon) {
-      await supabase.from("coupons").update({ usage_count: (coupon.usage_count || 0) + 1 } as any).eq("code", couponCode);
-    }
-  }
+  console.log(`✅ Transaction successful for checkout session: ${checkoutSession.id}. Order ID: ${rpcResult.order_id}`);
 
-  // 7. Send Emails
-  try {
-    await sendOrderEmails(supabase, updatedOrder, createdItems);
-    console.log("✅ Order emails sent successfully.");
-  } catch (emailErr: any) {
-    console.error("Email sending failed (non-fatal):", emailErr.message);
-  }
+  // 3. (Emails removed globally from Scalvea as per requirements)
 }
 
 async function handlePaymentFailure(event: Stripe.Event, supabase: any) {
   let session: any;
-  let orderId: string | null = null;
+  let checkoutSessionId: string | null = null;
   let stripeSessionId: string | null = null;
-  let stripePaymentIntentId: string | null = null;
 
   if (event.type === "payment_intent.payment_failed") {
-    const paymentIntent = event.data.object as Stripe.PaymentIntent;
-    stripePaymentIntentId = paymentIntent.id;
+    // Cannot easily map payment_intent_id to checkout_session, so ignore
+    // as the checkout session will expire anyway.
+    return;
   } else {
     session = event.data.object as Stripe.Checkout.Session;
     if (session.metadata?.market !== "AU") return;
-    orderId = session.metadata?.order_id;
+    checkoutSessionId = session.metadata?.checkout_session_id;
     stripeSessionId = session.id;
   }
 
-  let orderQuery = supabase.from("orders").select("id, order_number, payment_status");
-  if (orderId) {
-    orderQuery = orderQuery.eq("id", orderId);
+  let sessionQuery = supabase.from("checkout_sessions").select("id, status");
+  if (checkoutSessionId) {
+    sessionQuery = sessionQuery.eq("id", checkoutSessionId);
   } else if (stripeSessionId) {
-    orderQuery = orderQuery.eq("stripe_session_id", stripeSessionId);
-  } else if (stripePaymentIntentId) {
-    orderQuery = orderQuery.eq("stripe_payment_intent_id", stripePaymentIntentId);
+    sessionQuery = sessionQuery.eq("stripe_session_id", stripeSessionId);
   } else {
     return;
   }
 
-  const { data: existingOrder } = await orderQuery.maybeSingle();
+  const { data: existingSession } = await sessionQuery.maybeSingle();
 
-  if (existingOrder && existingOrder.payment_status === "pending") {
+  if (existingSession && existingSession.status === "PENDING") {
     await supabase
-      .from("orders")
-      .update({ payment_status: "failed", order_status: "Cancelled" })
-      .eq("id", existingOrder.id);
-    console.log(`Marked pending order ${existingOrder.order_number} as cancelled.`);
+      .from("checkout_sessions")
+      .update({ status: event.type === "checkout.session.expired" ? "EXPIRED" : "FAILED" })
+      .eq("id", existingSession.id);
+    console.log(`Marked checkout session ${existingSession.id} as failed/expired.`);
   }
 }
 

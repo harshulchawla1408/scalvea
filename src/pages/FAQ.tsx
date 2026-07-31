@@ -21,7 +21,7 @@ const faqs = [
       },
       {
         q: "Do you offer free shipping?",
-        a: "Yes. Free shipping is available once your order reaches the minimum purchase amount for your selected country. The current threshold is displayed throughout the website."
+        a: "We charge standard flat-rate shipping for all orders. For Australia, standard shipping is A$9.50. For India, standard shipping is ₹50."
       },
       {
         q: "Can I change or cancel my order after placing it?",

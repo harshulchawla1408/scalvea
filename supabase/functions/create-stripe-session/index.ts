@@ -76,6 +76,7 @@ Deno.serve(async (req) => {
       city,
       state,
       postcode,
+      market,
     } = body;
 
     console.log("Step 3: Body keys:", Object.keys(body).join(", "));
@@ -89,6 +90,12 @@ Deno.serve(async (req) => {
     if (!email || !firstName || !lastName) {
       return new Response(
         JSON.stringify({ error: "Missing contact details" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (market !== "AU") {
+      return new Response(
+        JSON.stringify({ error: "Stripe checkout is only available for the Australia market (AUD)." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -194,7 +201,7 @@ Deno.serve(async (req) => {
     // ── Step 7: Calculate Shipping ───────────────────────────────────────
     console.log("Step 7: Calculating shipping...");
     const gstCents = 0;
-    let shippingCents = 750; // Standard: A$7.50
+    let shippingCents = 950; // Standard: A$9.50
     let shippingDisplayName = "Standard Shipping";
     let deliveryMinDays = 5;
     let deliveryMaxDays = 7;
@@ -204,11 +211,6 @@ Deno.serve(async (req) => {
       shippingDisplayName = "Express Shipping";
       deliveryMinDays = 2;
       deliveryMaxDays = 4;
-    } else {
-      if (subtotalAfterDiscountCents >= 10000) {
-        shippingCents = 0;
-        shippingDisplayName = "Free Standard Shipping";
-      }
     }
     console.log(`Step 7: shippingCents=${shippingCents} (${shippingDisplayName})`);
 
@@ -245,87 +247,115 @@ Deno.serve(async (req) => {
     };
     console.log(`Step 9: Address — city="${shippingAddress.city}" state="${shippingAddress.state}" postcode="${shippingAddress.postcode}"`);
 
-    // ── Step 10: Create Pending Order ────────────────────────────────────
-    console.log("Step 10: Inserting pending order into database...");
-    const { data: newOrder, error: orderError } = await supabase
-      .from("orders")
-      .insert({
-        user_id: userId,
-        country: "Australia",
-        currency: "AUD",
-        subtotal: subtotalVal,
-        tax_amount: gstAmount,
-        shipping_amount: shippingAmount,
-        discount_amount: discountAmount,
-        coupon_code: validCouponCode || null,
-        total_amount: totalAmount,
-        order_status: "pending",
-        payment_status: "pending",
-        payment_method: "stripe",
-        payment_provider: "stripe",
-        market: "AU",
-        gst: gstAmount,
-        shipping_cost: shippingAmount,
-        total: totalAmount,
-        delivery_estimate: shipping_type === "express" ? "2-4 business days" : "5-7 business days",
-        shipping_address: shippingAddress,
-        customer_email: email,
-        customer_phone: phone || null,
-        customer_name: `${firstName} ${lastName}`.trim(),
-        is_guest: false,
-        source: "Stripe",
-        platform: "Web",
-      } as any)
-      .select()
-      .single();
-
-    if (orderError) {
-      console.error("Step 10: ORDER INSERT FAILED. Message:", orderError.message, "| Code:", orderError.code, "| Details:", orderError.details, "| Hint:", orderError.hint);
-      throw new Error(`Failed to create pending order: ${orderError.message}`);
-    }
-    if (!newOrder) {
-      throw new Error("Failed to create pending order: insert returned no data");
-    }
-    console.log(`Step 10: ✅ Pending order created: ${newOrder.order_number} (ID: ${newOrder.id})`);
-
-    // ── Step 10.5: Insert Order Items ────────────────────────────────────
-    console.log("Step 10.5: Inserting order items into database...");
-    const orderItemsToInsert = items.map((item: any) => {
+    // ── Step 10: Create Checkout Session Record ──────────────────────────────
+    console.log("Step 10: Inserting checkout_session into database...");
+    
+    // Structure line items for storage
+    const lineItemsToStore = items.map((item: any) => {
       const prod = dbProducts.find((p: any) => p.id === item.productId);
       if (!prod) return null;
       const prices = Array.isArray(prod.product_prices) ? prod.product_prices[0] : prod.product_prices || {};
       const priceAud = Number(prices?.price_aud) || 0;
       
       return {
-        order_id: newOrder.id,
         product_id: prod.id,
         product_name: prod.name,
         quantity: item.quantity,
         price: priceAud,
         currency: "AUD",
+        image_url: prod.images && prod.images.length > 0 ? prod.images[0] : null,
+        sku: prod.sku || item.sku || null,
+        variant: prod.variant || item.variant || null,
       };
     }).filter(Boolean);
 
-    if (orderItemsToInsert.length > 0) {
-      const { error: itemsError } = await supabase.from("order_items").insert(orderItemsToInsert);
-      if (itemsError) {
-        console.error("Step 10.5: ORDER ITEMS INSERT FAILED:", itemsError.message);
-        throw new Error(`Failed to insert order items: ${itemsError.message}`);
-      }
-      console.log(`Step 10.5: ✅ ${orderItemsToInsert.length} order items inserted successfully.`);
+    const { data: newSession, error: sessionError } = await supabase
+      .from("checkout_sessions")
+      .insert({
+        user_id: userId,
+        status: "PENDING",
+        total_amount: totalAmount,
+        subtotal: subtotalVal,
+        shipping_amount: shippingAmount,
+        tax_amount: gstAmount,
+        discount_amount: discountAmount,
+        coupon_code: validCouponCode || null,
+        customer_email: email,
+        customer_phone: phone || null,
+        customer_name: `${firstName} ${lastName}`.trim(),
+        shipping_address: shippingAddress,
+        line_items: lineItemsToStore,
+        market: "AU",
+        currency: "AUD",
+        delivery_estimate: shipping_type === "express" ? "2-4 business days" : "5-7 business days",
+      } as any)
+      .select()
+      .single();
+
+    if (sessionError) {
+      console.error("Step 10: CHECKOUT SESSION INSERT FAILED. Message:", sessionError.message);
+      throw new Error(`Failed to create checkout session: ${sessionError.message}`);
     }
+    if (!newSession) {
+      throw new Error("Failed to create checkout session: insert returned no data");
+    }
+    console.log(`Step 10: ✅ Checkout session created: ${newSession.id}`);
 
     // ── Mock mode (local development) ─────────────────────────────────────
     if (isMock) {
       const mockSessionId = "cs_test_" + Math.random().toString(36).substring(7);
+      
+      // Complete checkout session
       await supabase
-        .from("orders")
+        .from("checkout_sessions")
         .update({
           stripe_session_id: mockSessionId,
-          payment_status: "paid",
-          order_status: "processing"
+          status: "COMPLETED"
         })
-        .eq("id", newOrder.id);
+        .eq("id", newSession.id);
+
+      // Create order
+      const { data: mockOrder } = await supabase
+        .from("orders")
+        .insert({
+          user_id: newSession.user_id,
+          country: "Australia",
+          currency: "AUD",
+          subtotal: newSession.subtotal,
+          tax_amount: newSession.tax_amount,
+          shipping_amount: newSession.shipping_amount,
+          discount_amount: newSession.discount_amount,
+          coupon_code: newSession.coupon_code,
+          total_amount: newSession.total_amount,
+          order_status: "processing",
+          payment_status: "paid",
+          payment_method: "stripe",
+          payment_provider: "stripe",
+          market: "AU",
+          gst: newSession.tax_amount,
+          shipping_cost: newSession.shipping_amount,
+          total: newSession.total_amount,
+          delivery_estimate: shipping_type === "express" ? "2-4 business days" : "5-7 business days",
+          shipping_address: newSession.shipping_address,
+          customer_email: newSession.customer_email,
+          customer_phone: newSession.customer_phone,
+          customer_name: newSession.customer_name,
+          is_guest: false,
+          source: "Stripe",
+          platform: "Web",
+          stripe_session_id: mockSessionId,
+        } as any)
+        .select()
+        .single();
+        
+      // Create order items
+      if (mockOrder) {
+        const orderItemsToInsert = lineItemsToStore.map((item: any) => ({
+          ...item,
+          order_id: mockOrder.id
+        }));
+        await supabase.from("order_items").insert(orderItemsToInsert);
+      }
 
       for (const item of items) {
         const prod = dbProducts.find((p: any) => p.id === item.productId);
@@ -338,7 +368,7 @@ Deno.serve(async (req) => {
             change_amount: -item.quantity,
             previous_quantity: prevQty,
             new_quantity: newQty,
-            reason: `Mock Stripe Order ${newOrder.order_number}`,
+            reason: `Mock Stripe Order ${mockOrder?.order_number || mockOrder?.id}`,
           } as any);
         }
       }
@@ -390,7 +420,7 @@ Deno.serve(async (req) => {
         success_url: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${origin}/checkout`,
         metadata: {
-          order_id: newOrder.id,
+          checkout_session_id: newSession.id,
           user_id: userId,
           market: "AU",
           coupon_code: validCouponCode,
@@ -407,17 +437,17 @@ Deno.serve(async (req) => {
 
     console.log(`Step 11: ✅ Stripe Session created: ${session.id}`);
 
-    // ── Step 12: Update Pending Order with Session ID ─────────────────────
-    console.log("Step 12: Updating order with stripe_session_id...");
+    // ── Step 12: Update Checkout Session with Session ID ─────────────────────
+    console.log("Step 12: Updating checkout session with stripe_session_id...");
     const { error: updateError } = await supabase
-      .from("orders")
+      .from("checkout_sessions")
       .update({ stripe_session_id: session.id })
-      .eq("id", newOrder.id);
+      .eq("id", newSession.id);
 
     if (updateError) {
-      console.warn(`Step 12: WARNING — could not update order ${newOrder.id} with stripe_session_id: ${updateError.message}. Webhook fallback active.`);
+      console.warn(`Step 12: WARNING — could not update checkout session ${newSession.id} with stripe_session_id: ${updateError.message}. Webhook fallback active.`);
     } else {
-      console.log("Step 12: ✅ Order updated with stripe_session_id.");
+      console.log("Step 12: ✅ Checkout session updated with stripe_session_id.");
     }
 
     return new Response(

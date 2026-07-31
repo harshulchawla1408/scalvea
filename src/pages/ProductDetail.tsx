@@ -514,7 +514,12 @@ const ProductDetail = () => {
   };
   const handleBuyNow = () => {
     addItem({ productId: product.id, name: product.name, image: product.images[0], price_aud: product.price_aud, price_inr: product.price_inr, price_usd: product.price_usd }, quantity);
-    navigate("/checkout");
+    if (!user) {
+      toast({ title: "Please sign in", description: "You need an account to complete your purchase." });
+      navigate(`/auth?returnTo=${selectedCountry === "india" ? "/cart?action=checkout" : "/checkout"}`);
+      return;
+    }
+    navigate(selectedCountry === "india" ? "/cart?action=checkout" : "/checkout");
   };
 
   const inStock = product.inventory_quantity > 0;

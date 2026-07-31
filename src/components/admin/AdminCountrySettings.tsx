@@ -63,10 +63,7 @@ const AdminCountrySettings = () => {
                     <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block mb-1">Shipping</label>
                     <input type="number" step="0.01" value={form.shipping_charge} onChange={(e) => setForm({ ...form, shipping_charge: parseFloat(e.target.value) || 0 })} className="w-full h-9 px-3 text-sm border border-border bg-transparent outline-none" />
                   </div>
-                  <div>
-                    <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block mb-1">Free Above</label>
-                    <input type="number" step="0.01" value={form.free_shipping_above} onChange={(e) => setForm({ ...form, free_shipping_above: parseFloat(e.target.value) || 0 })} className="w-full h-9 px-3 text-sm border border-border bg-transparent outline-none" />
-                  </div>
+
                   <div>
                     <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block mb-1">Delivery Time</label>
                     <input value={form.delivery_time} onChange={(e) => setForm({ ...form, delivery_time: e.target.value })} className="w-full h-9 px-3 text-sm border border-border bg-transparent outline-none" />
@@ -80,7 +77,7 @@ const AdminCountrySettings = () => {
               </div>
             ) : (
               <div className="text-xs text-muted-foreground">
-                Tax: {Number(c.tax_percentage)}% · Shipping: {c.currency_symbol}{Number(c.shipping_charge).toFixed(2)} · Free above: {c.currency_symbol}{Number(c.free_shipping_above).toFixed(2)} · Delivery: {c.delivery_time}
+                Tax: {Number(c.tax_percentage)}% · Shipping: {c.currency_symbol}{Number(c.shipping_charge).toFixed(2)} · Delivery: {c.delivery_time}
               </div>
             )}
           </div>
