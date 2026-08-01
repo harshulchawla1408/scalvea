@@ -29,7 +29,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { items, couponCode, discountAmount, catalogData } = await req.json();
+    const bodyData = await req.json();
+    const { items, couponCode, discountAmount, catalogData, email, phone, firstName, lastName, address, city, state, postcode, subtotal, shippingAmount, taxAmount } = bodyData;
+    
     if (!items || !Array.isArray(items) || items.length === 0) {
       return new Response(
         JSON.stringify({ error: "Missing or invalid items in cart" }),
@@ -37,11 +39,11 @@ serve(async (req) => {
       );
     }
 
-    // Map frontend productIds to their shiprocket_variant_ids
+    // Map frontend productIds to their shiprocket_variant_ids and get actual prices
     const productIds = items.map((item: any) => item.productId);
     const { data: products, error: prodError } = await supabase
       .from("products")
-      .select("id, name, shiprocket_variant_id")
+      .select("*, product_prices(*)")
       .in("id", productIds);
 
     if (prodError) throw prodError;
@@ -53,9 +55,71 @@ serve(async (req) => {
       }
       return {
         variant_id: String(prod.shiprocket_variant_id).trim(),
-        quantity: Number(item.quantity)
+        quantity: Number(item.quantity),
+        prodDetails: prod
       };
     });
+
+    // Resolve user account
+    let userId: string | null = null;
+    if (email) {
+      const { data: pEmail } = await supabase.from("profiles").select("id").ilike("email", email).maybeSingle();
+      if (pEmail) userId = pEmail.id;
+    }
+    if (!userId && phone) {
+      const cleanPhone = phone.replace(/[^0-9+]/g, "").replace(/^\+91/, "");
+      const { data: pPhone } = await supabase.from("profiles").select("id").or(`phone.eq.${cleanPhone},phone.eq.+91${cleanPhone}`).maybeSingle();
+      if (pPhone) userId = pPhone.id;
+    }
+
+    // CREATE DRAFT ORDER in database first!
+    const shippingAddress = {
+      first_name: firstName, last_name: lastName, firstName, lastName,
+      address: address, city: city, state: state, postcode: postcode,
+      country: "India", country_code: "IN", phone: phone, email: email
+    };
+
+    const orderPayload: any = {
+      user_id: userId,
+      country: "India", currency: "INR",
+      subtotal: subtotal || 0, tax_amount: taxAmount || 0,
+      shipping_amount: shippingAmount || 0, discount_amount: discountAmount || 0,
+      coupon_code: couponCode || null, total_amount: (subtotal || 0) + (taxAmount || 0) + (shippingAmount || 0) - (discountAmount || 0),
+      order_status: "draft", payment_status: "unpaid", payment_method: "shiprocket",
+      delivery_estimate: "3-5 business days",
+      billing_address: shippingAddress, shipping_address: shippingAddress,
+      customer_email: email || null, customer_phone: phone || null,
+      customer_name: `${firstName || ""} ${lastName || ""}`.trim() || null,
+      is_guest: !userId, source: "Shiprocket", platform: "Web",
+      market: "IN"
+    };
+
+    const { data: draftOrder, error: draftErr } = await supabase
+      .from("orders").insert(orderPayload).select().single();
+      
+    if (draftErr) {
+      console.error("Failed to create draft order:", draftErr);
+      throw draftErr;
+    }
+
+    // Insert order items
+    const orderItemsPayload = mappedItems.map((item: any) => {
+      const p = item.prodDetails;
+      const prices = Array.isArray(p.product_prices) ? p.product_prices[0] : p.product_prices;
+      const priceInr = parseFloat(Number(prices?.price_inr || prices?.india_price || 0).toFixed(2));
+      return {
+        order_id: draftOrder.id,
+        product_id: p.id,
+        product_name: p.name,
+        quantity: item.quantity,
+        price: priceInr,
+        image_url: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null
+      };
+    });
+
+    if (orderItemsPayload.length > 0) {
+      await supabase.from("order_items").insert(orderItemsPayload);
+    }
 
     const origin = req.headers.get("origin") || "https://scalvea.com";
     const callbackRedirectUrl = origin.includes("localhost")
@@ -66,28 +130,31 @@ serve(async (req) => {
 
     if (isMock) {
       const mockToken = "mock_token_" + Math.random().toString(36).substring(7);
+      const mockOrderId = "mock_order_123";
+      
+      await supabase.from("shiprocket_orders").insert({
+        order_id: draftOrder.id, shiprocket_order_id: mockOrderId
+      });
+
       return new Response(
         JSON.stringify({
           token: mockToken,
           expires_at: new Date(Date.now() + 3600 * 1000).toISOString(),
-          order_id: "mock_order_123",
-          redirect_url: `${callbackRedirectUrl}?token=${mockToken}&oid=mock_order_123&ost=SUCCESS`
+          order_id: mockOrderId,
+          redirect_url: `${callbackRedirectUrl}?token=${mockToken}&oid=${mockOrderId}&ost=SUCCESS`
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Build payload — only include cart_discount when coupon or fixed discount is
-    // actually present. Do not send unnecessary catalog overrides.
     const payload: any = {
       cart_data: {
-        items: mappedItems
+        items: mappedItems.map(m => ({ variant_id: m.variant_id, quantity: m.quantity }))
       },
       redirect_url: callbackRedirectUrl,
       timestamp: new Date().toISOString()
     };
 
-    // Custom Price Checkout: cart_discount (coupon / fixed amount)
     if (couponCode || (discountAmount && Number(discountAmount) > 0)) {
       payload.cart_discount = {
         ...(couponCode ? { coupon_code: String(couponCode).trim() } : {}),
@@ -95,8 +162,6 @@ serve(async (req) => {
       };
     }
 
-    // Custom Price Checkout: catalog_data (per-item price/name/image overrides)
-    // Only included when the caller explicitly supplies override data
     if (catalogData && Array.isArray(catalogData) && catalogData.length > 0) {
       payload.catalog_data = catalogData;
     }
@@ -104,9 +169,6 @@ serve(async (req) => {
     const payloadString = JSON.stringify(payload);
     const signature = await generateHmacSha256(cleanSecret, payloadString);
 
-    console.log("Shiprocket checkout request — cart items:", mappedItems.length, "| has_discount:", !!payload.cart_discount);
-
-    // 15-second timeout to prevent hung edge functions
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15_000);
 
@@ -134,7 +196,6 @@ serve(async (req) => {
       throw err;
     }
 
-    console.log("Shiprocket access-token/checkout status:", response.status);
     const responseBody = await response.text();
 
     if (response.ok) {
@@ -150,16 +211,19 @@ serve(async (req) => {
         );
       }
 
-      // Return ONLY the token, expires_at, and order_id to the browser.
-      //
-      // IMPORTANT: Do NOT construct or return any Shiprocket/Fastrr redirect URLs here.
-      // The frontend always uses HeadlessCheckout.addToCart(event, token, { fallbackUrl })
-      // via the official SDK. The redirect_url inside the Shiprocket API response is the
-      // URL where Shiprocket sends the customer AFTER checkout (our /shiprocket-callback),
-      // NOT a URL to launch checkout with.
-      //
-      // Leaking the token into a redirect URL would bypass the SDK and expose the token
-      // in the browser's address bar.
+      // Map local draft order to Shiprocket order_id
+      if (orderId) {
+        await supabase.from("shiprocket_orders").insert({
+          order_id: draftOrder.id,
+          shiprocket_order_id: String(orderId)
+        });
+        
+        await supabase.from("orders").update({
+          shiprocket_order_id: String(orderId),
+          fastrr_order_id: String(orderId)
+        }).eq("id", draftOrder.id);
+      }
+
       return new Response(
         JSON.stringify({
           token,

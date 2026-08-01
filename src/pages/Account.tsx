@@ -101,6 +101,7 @@ const Account = () => {
       const { data } = await supabase
         .from("orders")
         .select("*, shiprocket_orders(*), order_items(*)")
+        .neq("order_status", "draft")
         .or(orQuery)
         .order("created_at", { ascending: false });
       return data || [];

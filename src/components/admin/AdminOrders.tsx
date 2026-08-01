@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import AdminManualOrder from "./AdminManualOrder";
 
 /* ─── Types ─── */
-type OrderSource = "All" | "Online" | "Manual";
+type OrderSource = "All" | "Online" | "Manual" | "Drafts";
 
 const STATUS_OPTIONS = [
   "pending", "processing", "packed", "shipped", "out_for_delivery",
@@ -363,9 +363,11 @@ const AdminOrders = () => {
   /* ── Filters + Search (item 7) ── */
   const filtered = orders
     .filter(o => o.country === "India" || o.country === "Australia")
-    .filter(o => o.order_status !== "draft")
     .filter(o => countryFilter === "All" || o.country === countryFilter)
     .filter(o => {
+      if (sourceFilter === "Drafts") return o.order_status === "draft";
+      if (o.order_status === "draft") return false; // Hide drafts from other tabs
+      
       if (sourceFilter === "All") return true;
       if (sourceFilter === "Manual") return o.order_source === "MANUAL";
       return !o.order_source || o.order_source === "ONLINE";
@@ -454,7 +456,7 @@ const AdminOrders = () => {
 
           {/* Source filter */}
           <div className="flex border border-border h-9">
-            {(["All", "Online", "Manual"] as OrderSource[]).map(s => (
+            {(["All", "Online", "Manual", "Drafts"] as OrderSource[]).map(s => (
               <button
                 key={s}
                 onClick={() => setSourceFilter(s)}

@@ -58,61 +58,19 @@ const ShiprocketCallback = () => {
       return;
     }
 
-    // Exponential backoff logic (max 3 retries)
-    // 1st call: instant
-    // 2nd call: wait 1.5s
-    // 3rd call: wait 3s
-    const delays = [0, 1500, 3000];
+    // FIRE AND FORGET sync to update the draft order in the background ASAP
+    supabase.functions.invoke("fetch-shiprocket-order", {
+      body: { orderId: orderIdParam }
+    }).catch(err => console.warn("Background sync failed:", err));
 
-    const syncOrder = async (attempt: number) => {
-      try {
-        setStatus("syncing");
-        setMessage(attempt === 0 ? "Verifying payment details with Shiprocket..." : `Retrying verification (Attempt ${attempt + 1}/3)...`);
-        
-        if (delays[attempt] > 0) {
-          await new Promise(res => setTimeout(res, delays[attempt]));
-        }
-
-        console.log(`[Callback] Calling fetch-shiprocket-order for ${orderIdParam}`);
-        const { data, error } = await supabase.functions.invoke("fetch-shiprocket-order", {
-          body: { orderId: orderIdParam }
-        });
-
-        if (error) {
-          throw new Error(error.message || "Function invocation failed");
-        }
-        
-        if (!data || !data.success || !data.order?.id) {
-          throw new Error(data?.error || "Order verification returned invalid response");
-        }
-
-        console.log(`[Callback] Order Verified. Local UUID: ${data.order.id}`);
-        setStatus("success");
-        setMessage("Payment verified! Redirecting to success page...");
-        
-        // Immediate redirect using the newly created local UUID
-        setTimeout(() => {
-          navigate(`/order-success?id=${data.order.id}`);
-        }, 800);
-
-      } catch (err: any) {
-        console.warn(`[Callback] Sync attempt ${attempt + 1} failed:`, err.message);
-        
-        if (attempt < delays.length - 1) {
-          syncOrder(attempt + 1);
-        } else {
-          console.error("[Callback] Exhausted all retries syncing order.");
-          setStatus("failed");
-          setMessage("We couldn't sync your order details immediately. Redirecting to your success page where syncing will continue...");
-          // Fallback to order-success with shiprocket_order_id in case webhook creates it later
-          setTimeout(() => {
-            navigate(`/order-success?shiprocket_order_id=${orderIdParam}`);
-          }, 3500);
-        }
-      }
-    };
-
-    syncOrder(0);
+    // IMMEDIATELY REDIRECT
+    setStatus("success");
+    setMessage("Payment successful! Loading your order details...");
+    
+    // We already have a draft order mapped to this shiprocket_order_id!
+    setTimeout(() => {
+      navigate(`/order-success?shiprocket_order_id=${orderIdParam}`);
+    }, 500);
 
   }, [orderIdParam, searchParams, navigate]);
 

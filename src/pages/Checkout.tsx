@@ -165,7 +165,19 @@ const Checkout = () => {
           })),
           // Pass coupon and discount so Shiprocket can apply cart_discount
           couponCode: appliedCoupon?.code || null,
-          discountAmount: discountAmount > 0 ? discountAmount : null
+          discountAmount: discountAmount > 0 ? discountAmount : null,
+          // Pass user details for draft order creation
+          email: form.email,
+          phone: form.phone,
+          firstName: form.firstName,
+          lastName: form.lastName,
+          address: form.address,
+          city: form.city,
+          state: form.state,
+          postcode: form.postcode,
+          subtotal: subtotalAfterDiscount,
+          shippingAmount: shippingAmount,
+          taxAmount: taxAmount
         }
       });
 

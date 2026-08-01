@@ -22,7 +22,7 @@ const AdminAnalytics = () => {
   const fetchData = async () => {
     setLoading(true);
     const [ordersRes, profilesRes] = await Promise.all([
-      supabase.from("orders").select("*"),
+      supabase.from("orders").select("*").neq("order_status", "draft"),
       supabase.from("profiles").select("id"),
     ]);
 
