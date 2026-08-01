@@ -126,7 +126,7 @@ const Footer = () => {
             <div className={`mt-4 lg:mt-0 ${activeAccordion === "company" ? "block" : "hidden lg:block"}`}>
               <ul className="space-y-3.5 text-sm text-neutral-400 font-light">
                 <FooterLink to="/about">About Us</FooterLink>
-                <FooterLink to="/#">Blog</FooterLink>
+                <FooterLink to="/about">Blog</FooterLink>
                 <FooterLink to="/faqs">FAQs</FooterLink>
                 <FooterLink to="/terms-conditions">Terms & Conditions</FooterLink>
               </ul>

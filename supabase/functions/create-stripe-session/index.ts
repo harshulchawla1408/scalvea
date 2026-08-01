@@ -155,20 +155,18 @@ Deno.serve(async (req) => {
     console.log("Step 5: subtotalCents =", subtotalCents, "| line items =", stripeLineItems.length);
 
     // ── Step 6: Process Coupon Discount ──────────────────────────────────
-    // IMPORTANT: Stripe does NOT allow negative unit_amount in line items.
-    // Discount is stored in the DB order record only and displayed to customer
-    // via allow_promotion_codes on the Stripe Checkout session.
     console.log("Step 6: Processing coupon discount...");
     let discountCents = 0;
     let validCouponCode = "";
+    let discountPct = 0;
 
     if (coupon_code) {
+      const codeUpper = coupon_code.toUpperCase();
       const { data: dbCoupon } = await supabase
         .from("coupons")
         .select("*")
-        .eq("code", coupon_code.toUpperCase())
+        .eq("code", codeUpper)
         .eq("is_active", true)
-        .eq("country", "Australia")
         .maybeSingle();
 
       if (dbCoupon) {
@@ -176,14 +174,20 @@ Deno.serve(async (req) => {
         const isUnderLimit = !dbCoupon.max_usage || (dbCoupon.usage_count || 0) < dbCoupon.max_usage;
         if (isNotExpired && isUnderLimit) {
           validCouponCode = dbCoupon.code;
-          const discountPct = Number(dbCoupon.discount_percentage) || 0;
-          discountCents = Math.round(subtotalCents * (discountPct / 100));
-          console.log(`Step 6: Coupon "${validCouponCode}" applied. discountCents=${discountCents}`);
+          discountPct = Number(dbCoupon.discount_percentage) || 0;
         } else {
           console.log("Step 6: Coupon found but expired/exceeded limit.");
         }
+      } else if (codeUpper === "GET20" || codeUpper === "FIRST100") {
+        validCouponCode = "GET20";
+        discountPct = 20;
       } else {
         console.log("Step 6: Coupon not found or inactive.");
+      }
+
+      if (discountPct > 0) {
+        discountCents = Math.round(subtotalCents * (discountPct / 100));
+        console.log(`Step 6: Coupon "${validCouponCode}" applied (${discountPct}% off). discountCents=${discountCents}`);
       }
     } else {
       console.log("Step 6: No coupon provided.");
@@ -194,7 +198,7 @@ Deno.serve(async (req) => {
     // ── Step 7: Calculate Shipping ───────────────────────────────────────
     console.log("Step 7: Calculating shipping...");
     const gstCents = 0;
-    let shippingCents = 750; // Standard: A$7.50
+    let shippingCents = 950; // Standard: A$9.50
     let shippingDisplayName = "Standard Shipping";
     let deliveryMinDays = 5;
     let deliveryMaxDays = 7;
@@ -259,7 +263,7 @@ Deno.serve(async (req) => {
         discount_amount: discountAmount,
         coupon_code: validCouponCode || null,
         total_amount: totalAmount,
-        order_status: "pending",
+        order_status: "draft",
         payment_status: "pending",
         payment_method: "stripe",
         payment_provider: "stripe",
@@ -362,9 +366,24 @@ Deno.serve(async (req) => {
     console.log("Step 11: Calling stripe.checkout.sessions.create...");
     const stripe = new Stripe(stripeKey);
 
+    let stripeCouponId: string | null = null;
+    if (discountPct > 0 && validCouponCode) {
+      try {
+        const coupon = await stripe.coupons.create({
+          percent_off: discountPct,
+          duration: "once",
+          name: `${validCouponCode} (${discountPct}% OFF)`,
+        });
+        stripeCouponId = coupon.id;
+        console.log(`Step 11: Created dynamic Stripe coupon: ${stripeCouponId}`);
+      } catch (err: any) {
+        console.warn("Step 11: Failed to create dynamic Stripe coupon:", err.message);
+      }
+    }
+
     let session: Stripe.Checkout.Session;
     try {
-      session = await stripe.checkout.sessions.create({
+      const sessionCreateParams: Stripe.Checkout.SessionCreateParams = {
         payment_method_types: ["card"],
         line_items: stripeLineItems,
         mode: "payment",
@@ -385,8 +404,6 @@ Deno.serve(async (req) => {
             },
           },
         ],
-        // Allow promotion codes so customers can apply discounts at checkout
-        allow_promotion_codes: true,
         success_url: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${origin}/checkout`,
         metadata: {
@@ -399,7 +416,15 @@ Deno.serve(async (req) => {
           customer_first_name: firstName || "",
           customer_last_name: lastName || "",
         },
-      });
+      };
+
+      if (stripeCouponId) {
+        sessionCreateParams.discounts = [{ coupon: stripeCouponId }];
+      } else {
+        sessionCreateParams.allow_promotion_codes = true;
+      }
+
+      session = await stripe.checkout.sessions.create(sessionCreateParams);
     } catch (stripeError: any) {
       console.error("Step 11: STRIPE API ERROR:", stripeError.message, "| type:", stripeError.type, "| code:", stripeError.code, "| param:", stripeError.param);
       throw new Error(`Stripe API error: ${stripeError.message}`);

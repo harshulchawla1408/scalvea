@@ -53,7 +53,7 @@ const Checkout = () => {
   const taxAmount = subtotalAfterDiscount * taxRate;
   
   const freeShippingThreshold = settings?.free_shipping_above || (isIndia ? 999 : 100);
-  const shippingAmount = subtotalAfterDiscount >= freeShippingThreshold ? 0 : (isIndia ? (settings?.shipping_charge || 100) : 7.50);
+  const shippingAmount = subtotalAfterDiscount >= freeShippingThreshold ? 0 : (isIndia ? (settings?.shipping_charge || 100) : 9.50);
   const grandTotal = subtotalAfterDiscount + taxAmount + shippingAmount;
 
   const [form, setForm] = useState({
@@ -117,16 +117,16 @@ const Checkout = () => {
 
         setAppliedCoupon({ code: data.code, discount_percentage: Number(data.discount_percentage) });
         toast({ title: `Coupon ${data.code} applied! ${Number(data.discount_percentage)}% off` });
-      } else if (code === "FIRST100") {
-        setAppliedCoupon({ code: "FIRST100", discount_percentage: 20 });
-        toast({ title: "Coupon FIRST100 applied! 20% off" });
+      } else if (code === "GET20" || code === "FIRST100") {
+        setAppliedCoupon({ code: "GET20", discount_percentage: 20 });
+        toast({ title: "Coupon GET20 applied! 20% off" });
       } else {
         toast({ title: "Invalid coupon", description: `This coupon code is not valid.`, variant: "destructive" });
       }
     } catch {
-      if (code === "FIRST100") {
-        setAppliedCoupon({ code: "FIRST100", discount_percentage: 20 });
-        toast({ title: "Coupon FIRST100 applied! 20% off" });
+      if (code === "GET20" || code === "FIRST100") {
+        setAppliedCoupon({ code: "GET20", discount_percentage: 20 });
+        toast({ title: "Coupon GET20 applied! 20% off" });
       } else {
         toast({ title: "Error applying coupon", variant: "destructive" });
       }
@@ -567,10 +567,10 @@ const Checkout = () => {
                     {!appliedCoupon && (
                       <button
                         type="button"
-                        onClick={() => applyCoupon("FIRST100")}
+                        onClick={() => applyCoupon("GET20")}
                         className="text-[9px] tracking-wide text-amber-500 hover:text-amber-600 font-bold uppercase underline transition-colors cursor-pointer"
                       >
-                        ⚡ Apply FIRST100 (20% OFF)
+                        ⚡ Apply GET20 (20% OFF)
                       </button>
                     )}
                   </div>
@@ -584,7 +584,7 @@ const Checkout = () => {
                       <input
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                        placeholder="FIRST100"
+                        placeholder="GET20"
                         className="flex-1 h-10 px-3 text-xs bg-transparent border border-border outline-none focus:border-foreground uppercase tracking-wider font-mono"
                       />
                       <Button type="button" onClick={() => applyCoupon()} disabled={applyingCoupon} variant="outline" className="h-10 text-xs tracking-[0.1em] uppercase">

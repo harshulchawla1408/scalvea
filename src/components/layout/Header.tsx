@@ -107,7 +107,7 @@ const Header = () => {
   const [couponCopied, setCouponCopied] = useState(false);
 
   const handleCopyCoupon = () => {
-    navigator.clipboard.writeText("FIRST100");
+    navigator.clipboard.writeText("GET20");
     setCouponCopied(true);
     setTimeout(() => setCouponCopied(false), 2000);
   };
@@ -151,7 +151,7 @@ const Header = () => {
             {[
               { label: "Shop", path: "/shop" },
               { label: "About Us", path: "/about" },
-              { label: "Blog", path: "/#" },
+              { label: "Blog", path: "/about" },
               { label: "Contact", path: "/contact" }
             ].map((item) => {
               const isActive = location.pathname === item.path;
@@ -212,18 +212,18 @@ const Header = () => {
               )}
             </motion.div>
 
-            {/* Search (Desktop Only) */}
+            {/* Search */}
             <motion.button 
               variants={iconItemVariants}
               onClick={() => setIsSearchOpen(!isSearchOpen)} 
-              className="hidden md:flex hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-1 items-center justify-center" 
+              className="flex hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-1 items-center justify-center" 
               aria-label="Search"
             >
               <Search className="size-[22px]" />
             </motion.button>
 
-            {/* Account */}
-            <motion.div variants={iconItemVariants}>
+            {/* Account (Desktop/Laptop Only) */}
+            <motion.div variants={iconItemVariants} className="hidden lg:block">
               <Link 
                 to="/account" 
                 className="hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-1 flex items-center justify-center" 
@@ -233,8 +233,8 @@ const Header = () => {
               </Link>
             </motion.div>
 
-            {/* Wishlist (Desktop Only) */}
-            <motion.div variants={iconItemVariants} className="hidden md:block">
+            {/* Wishlist (Desktop/Laptop Only) */}
+            <motion.div variants={iconItemVariants} className="hidden lg:block">
               <Link 
                 to="/wishlist" 
                 className="hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-1 flex items-center justify-center relative" 
@@ -249,11 +249,11 @@ const Header = () => {
               </Link>
             </motion.div>
 
-            {/* Cart */}
+            {/* Cart (Desktop/Laptop Only) */}
             <motion.button 
               variants={iconItemVariants}
               onClick={() => setIsCartOpen(true)} 
-              className="hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] relative p-1 flex items-center justify-center" 
+              className="hidden lg:flex hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] relative p-1 items-center justify-center" 
               aria-label="Cart"
             >
               <ShoppingBag className="size-[22px]" />
@@ -289,7 +289,7 @@ const Header = () => {
               title="Click to copy coupon code"
               type="button"
             >
-              <span>FIRST100</span>
+              <span>GET20</span>
               {couponCopied ? (
                 <Check className="h-3 w-3 text-emerald-400 group-hover:text-emerald-600" />
               ) : (
@@ -363,7 +363,7 @@ const Header = () => {
                   {[
                     { label: "Shop", path: "/shop" },
                     { label: "About Us", path: "/about" },
-                    { label: "Blog", path: "/#" },
+                    { label: "Blog", path: "/about" },
                     { label: "Contact", path: "/contact" }
                   ].map((item) => (
                     <Link

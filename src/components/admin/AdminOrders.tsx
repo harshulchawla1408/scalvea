@@ -363,6 +363,7 @@ const AdminOrders = () => {
   /* ── Filters + Search (item 7) ── */
   const filtered = orders
     .filter(o => o.country === "India" || o.country === "Australia")
+    .filter(o => o.order_status !== "draft")
     .filter(o => countryFilter === "All" || o.country === countryFilter)
     .filter(o => {
       if (sourceFilter === "All") return true;

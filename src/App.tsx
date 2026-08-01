@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import PageTransition from "./components/layout/PageTransition";
+import BottomNav from "./components/layout/BottomNav";
 import { CartProvider } from "./contexts/CartContext";
 import { WishlistProvider } from "./contexts/WishlistContext";
 import { CountryProvider } from "./contexts/CountryContext";
@@ -54,6 +55,8 @@ const App = () => (
                 <Route path="/order-success" element={<OrderSuccess />} />
                 <Route path="/shiprocket-callback" element={<ShiprocketCallback />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/blog" element={<About />} />
+                <Route path="/blogs" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/support" element={<Contact />} />
                 <Route path="/auth" element={<Auth />} />
@@ -73,6 +76,7 @@ const App = () => (
                 <Route path="/faqs" element={<FAQ />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <BottomNav />
             </BrowserRouter>
           </WishlistProvider>
         </CartProvider>
