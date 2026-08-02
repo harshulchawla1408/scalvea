@@ -58,19 +58,41 @@ const ShiprocketCallback = () => {
       return;
     }
 
-    // FIRE AND FORGET sync to update the draft order in the background ASAP
-    supabase.functions.invoke("fetch-shiprocket-order", {
-      body: { orderId: orderIdParam }
-    }).catch(err => console.warn("Background sync failed:", err));
+    const checkShiprocketOrder = async (retries = 0) => {
+      setStatus("syncing");
+      setMessage(`Verifying payment and syncing order (Attempt ${retries + 1}/6)...`);
+      try {
+        const { data, error } = await supabase.functions.invoke("fetch-shiprocket-order", {
+          body: { orderId: orderIdParam }
+        });
 
-    // IMMEDIATELY REDIRECT
-    setStatus("success");
-    setMessage("Payment successful! Loading your order details...");
-    
-    // We already have a draft order mapped to this shiprocket_order_id!
-    setTimeout(() => {
-      navigate(`/order-success?shiprocket_order_id=${orderIdParam}`);
-    }, 500);
+        if (error || !data?.success) {
+          throw new Error(error?.message || "Sync failed");
+        }
+
+        // Success!
+        setStatus("success");
+        setMessage("Payment successful! Loading your order details...");
+        setTimeout(() => {
+          navigate(`/order-success?shiprocket_order_id=${orderIdParam}`);
+        }, 500);
+      } catch (err: any) {
+        console.warn("[Callback] Sync attempt failed:", err);
+        if (retries < 5) {
+          // Wait 2.5 seconds and retry (Shiprocket API takes a few seconds to populate)
+          setTimeout(() => checkShiprocketOrder(retries + 1), 2500);
+        } else {
+          // Max retries reached, just send to success page and let fallback/webhook handle it
+          setStatus("success");
+          setMessage("Payment recorded. Finalizing order details...");
+          setTimeout(() => {
+            navigate(`/order-success?shiprocket_order_id=${orderIdParam}`);
+          }, 1000);
+        }
+      }
+    };
+
+    checkShiprocketOrder();
 
   }, [orderIdParam, searchParams, navigate]);
 

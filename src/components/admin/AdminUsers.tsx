@@ -11,7 +11,7 @@ const AdminUsers = () => {
     if (profiles) {
       const enriched = await Promise.all(profiles.map(async (p: any) => {
         const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", p.id);
-        const { data: orders } = await supabase.from("orders").select("id").eq("user_id", p.id);
+        const { data: orders } = await supabase.from("orders").select("id").eq("user_id", p.id).neq("order_status", "draft");
         return { ...p, roles: roles?.map((r: any) => r.role) || [], orderCount: orders?.length || 0 };
       }));
       setUsers(enriched);

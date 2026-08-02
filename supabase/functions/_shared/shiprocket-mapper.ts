@@ -749,6 +749,20 @@ export async function syncOrderFromDetails(
       Object.entries(orderPayload).filter(([_, v]) => v !== undefined && v !== null && v !== "")
     );
     
+    // PRESERVE LOCAL FINANCIAL FIELDS: If the order was originated by our frontend (e.g. Fastrr checkout),
+    // it already has perfectly calculated totals. Shiprocket Fastrr payloads often mangle these 
+    // (e.g. returning the already-discounted amount as the subtotal), leading to double-discounts.
+    const { data: existingOrder } = await supabase.from("orders").select("subtotal").eq("id", existingOrderId).maybeSingle();
+    if (existingOrder && existingOrder.subtotal > 0) {
+      delete cleanPayload.subtotal;
+      delete cleanPayload.discount_amount;
+      delete cleanPayload.total_amount;
+      delete cleanPayload.tax_amount;
+      delete cleanPayload.shipping_amount;
+      delete cleanPayload.total_amount_payable;
+      delete cleanPayload.coupon_code;
+    }
+    
     const { data: updated, error: updateErr } = await supabase
       .from("orders").update(cleanPayload).eq("id", existingOrderId).select().single();
     if (updateErr) { console.error("[Sync] UPDATE failed:", updateErr.message); throw updateErr; }
