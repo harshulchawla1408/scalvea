@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
       deliveryMinDays = 2;
       deliveryMaxDays = 4;
     } else {
-      if (subtotalAfterDiscountCents >= 10000) {
+      if (subtotalAfterDiscountCents >= 6000) { // Free shipping above AUD $60
         shippingCents = 0;
         shippingDisplayName = "Free Standard Shipping";
       }

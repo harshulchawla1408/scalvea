@@ -86,22 +86,34 @@ const TRUST_ITEMS = [
 
 const Index = () => {
   useSEO({
-    title: "Premium Hair Growth Solutions | Care You Deserve",
-    description: "Discover premium hair growth products formulated with clinically inspired ingredients including Anagain, Redensyl, Baicapil and Procapil. Designed to support healthier, fuller-looking hair for men and women.",
-    keywords: "hair growth serum, hair growth spray, scalp treatment, hair regrowth, Scalvea, Redensyl, Baicapil, Procapil, AnaGain",
+    title: "Care You Deserve | Science-Backed Hair Care",
+    description: "Scalvea creates science-backed hair care powered by clinically researched ingredients for healthier scalp and stronger hair. Discover transparent formulations designed for everyday results. Care You Deserve.",
+    keywords: "Scalvea, Hair Care, Hair Growth Serum, Anti Dandruff Serum, Scalp Care, Clinically Researched Hair Care, Transparent Ingredients, Healthy Hair, Hair Wellness, Hair Fall Solution, Hair Growth, Scalp Health, Follicle 8, Scalp-5, Hair Serum, Premium Hair Care, Care You Deserve",
+    image: "https://scalvea.com/scalvea-logo.png",
     schema: {
       "@context": "https://schema.org",
       "@graph": [
         {
           "@type": "Organization",
+          "@id": "https://scalvea.com/#organization",
           "name": "Scalvea",
+          "alternateName": "Scalvea Hair Care",
           "slogan": "Care You Deserve",
+          "description": "Science-backed hair care powered by clinically researched ingredients for healthier scalp and stronger hair.",
           "url": "https://scalvea.com",
-          "logo": "https://scalvea.com/logo.png",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://scalvea.com/scalvea-logo.png",
+            "width": 512,
+            "height": 512
+          },
+          "image": "https://scalvea.com/scalvea-logo.png",
+          "email": "info@scalvea.com",
           "contactPoint": {
             "@type": "ContactPoint",
-            "email": "support@scalvea.com",
-            "contactType": "customer support"
+            "email": "info@scalvea.com",
+            "contactType": "customer support",
+            "availableLanguage": ["English"]
           },
           "brand": {
             "@type": "Brand",
@@ -109,18 +121,24 @@ const Index = () => {
             "slogan": "Care You Deserve"
           },
           "sameAs": [
-            "https://www.instagram.com/scalvea",
-            "https://instagram.com/scalvea_",
-            "https://www.facebook.com/scalvea"
+            "https://www.instagram.com/scalvea_/",
+            "https://www.tiktok.com/@scalvea/",
+            "https://www.linkedin.com/company/scalvea/"
           ]
         },
         {
           "@type": "WebSite",
+          "@id": "https://scalvea.com/#website",
           "name": "Scalvea",
           "url": "https://scalvea.com",
+          "publisher": { "@id": "https://scalvea.com/#organization" },
+          "inLanguage": "en",
           "potentialAction": {
             "@type": "SearchAction",
-            "target": "https://scalvea.com/shop?search={search_term_string}",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://scalvea.com/shop?search={search_term_string}"
+            },
             "query-input": "required name=search_term_string"
           }
         }

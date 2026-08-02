@@ -7,18 +7,18 @@ const SUPABASE_KEY = 'sb_publishable_DAFWNN0PB8JNNBIP3c8CBw_gyVRijeE';
 
 // Define static routes with their SEO priorities and change frequencies
 const staticRoutes = [
-  { path: '/', priority: '1.0', changefreq: 'daily' },
-  { path: '/shop', priority: '0.9', changefreq: 'daily' },
-  { path: '/about', priority: '0.8', changefreq: 'weekly' },
-  { path: '/contact', priority: '0.8', changefreq: 'weekly' },
-  { path: '/support', priority: '0.8', changefreq: 'weekly' },
-  { path: '/faq', priority: '0.8', changefreq: 'weekly' },
-  { path: '/faqs', priority: '0.8', changefreq: 'weekly' },
-  { path: '/shipping-returns', priority: '0.6', changefreq: 'monthly' },
-  { path: '/privacy-policy', priority: '0.5', changefreq: 'monthly' },
-  { path: '/terms-of-service', priority: '0.5', changefreq: 'monthly' },
-  { path: '/shipping-policy', priority: '0.5', changefreq: 'monthly' },
-  { path: '/returns-policy', priority: '0.5', changefreq: 'monthly' }
+  { path: '/',                    priority: '1.0', changefreq: 'daily' },
+  { path: '/shop',                priority: '0.9', changefreq: 'daily' },
+  { path: '/about',               priority: '0.8', changefreq: 'weekly' },
+  { path: '/contact',             priority: '0.8', changefreq: 'weekly' },
+  { path: '/blogs',               priority: '0.8', changefreq: 'weekly' },
+  { path: '/faqs',                priority: '0.7', changefreq: 'weekly' },
+  { path: '/faq',                 priority: '0.7', changefreq: 'weekly' },
+  { path: '/privacy-policy',      priority: '0.5', changefreq: 'monthly' },
+  { path: '/terms-conditions',    priority: '0.5', changefreq: 'monthly' },
+  { path: '/return-refund-policy',priority: '0.5', changefreq: 'monthly' },
+  { path: '/shipping-policy',     priority: '0.5', changefreq: 'monthly' },
+  { path: '/payment-policy',      priority: '0.4', changefreq: 'monthly' },
 ];
 
 const staticProducts = [
@@ -29,26 +29,47 @@ const staticProducts = [
 
 const staticCategories = ['Serums', 'Sprays'];
 
+// Read blog slugs from MDX frontmatter
+function getBlogRoutes() {
+  const routes = [];
+  try {
+    const blogsDir = path.resolve(__dirname, '../src/content/blogs');
+    if (fs.existsSync(blogsDir)) {
+      const files = fs.readdirSync(blogsDir).filter(f => f.endsWith('.md') || f.endsWith('.mdx'));
+      for (const file of files) {
+        const content = fs.readFileSync(path.join(blogsDir, file), 'utf-8');
+        const slugMatch = content.match(/^slug:\s*["']?([^"'\n]+)["']?/m);
+        const slug = slugMatch ? slugMatch[1].trim() : file.replace(/\.mdx?$/, '');
+        routes.push({
+          path: `/blogs/${slug}`,
+          priority: '0.7',
+          changefreq: 'monthly'
+        });
+      }
+    }
+  } catch (error) {
+    console.warn('Could not read blog files for sitemap:', error);
+  }
+  return routes;
+}
+
 async function getDynamicRoutes() {
   const routes = [];
 
-  // Pre-seed static products and categories to guarantee their presence in the sitemap
+  // Static products
   staticProducts.forEach(slug => {
-    routes.push({
-      path: `/product/${slug}`,
-      priority: '0.8',
-      changefreq: 'weekly'
-    });
+    routes.push({ path: `/product/${slug}`, priority: '0.8', changefreq: 'weekly' });
   });
 
+  // Static categories
   staticCategories.forEach(cat => {
-    routes.push({
-      path: `/shop?category=${encodeURIComponent(cat)}`,
-      priority: '0.7',
-      changefreq: 'weekly'
-    });
+    routes.push({ path: `/shop?category=${encodeURIComponent(cat)}`, priority: '0.7', changefreq: 'weekly' });
   });
 
+  // Blog routes from MDX files
+  routes.push(...getBlogRoutes());
+
+  // Live products from Supabase
   try {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=slug,category,is_active_australia,is_active_india`, {
       headers: {
@@ -60,28 +81,17 @@ async function getDynamicRoutes() {
     if (response.ok) {
       const products = await response.json();
       if (Array.isArray(products) && products.length > 0) {
-        // Filter active products
         const activeProducts = products.filter(p => (p.is_active_australia ?? true) || (p.is_active_india ?? true));
 
-        // Add dynamic Product routes
         activeProducts.forEach(p => {
           if (p.slug) {
-            routes.push({
-              path: `/product/${p.slug}`,
-              priority: '0.8',
-              changefreq: 'weekly'
-            });
+            routes.push({ path: `/product/${p.slug}`, priority: '0.8', changefreq: 'weekly' });
           }
         });
 
-        // Add dynamic Category routes
         const categories = [...new Set(activeProducts.map(p => p.category).filter(Boolean))];
         categories.forEach(cat => {
-          routes.push({
-            path: `/shop?category=${encodeURIComponent(cat)}`,
-            priority: '0.7',
-            changefreq: 'weekly'
-          });
+          routes.push({ path: `/shop?category=${encodeURIComponent(cat)}`, priority: '0.7', changefreq: 'weekly' });
         });
       }
     }
@@ -92,9 +102,7 @@ async function getDynamicRoutes() {
   // Deduplicate routes by path
   const seenPaths = new Set();
   return routes.filter(r => {
-    if (seenPaths.has(r.path)) {
-      return false;
-    }
+    if (seenPaths.has(r.path)) return false;
     seenPaths.add(r.path);
     return true;
   });
@@ -113,7 +121,6 @@ async function buildSitemap() {
   xml += '        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">\n';
 
   allRoutes.forEach(r => {
-    // Escape query parameters for XML validity
     const escapedPath = r.path.replace(/&/g, '&amp;');
     xml += '  <url>\n';
     xml += `    <loc>${HOSTNAME}${escapedPath}</loc>\n`;
@@ -133,13 +140,14 @@ async function buildSitemap() {
   const sitemapPath = path.join(distDir, 'sitemap.xml');
   fs.writeFileSync(sitemapPath, xml, 'utf8');
   console.log(`Sitemap generated successfully at: ${sitemapPath}`);
+  console.log(`  ✓ ${allRoutes.length} URLs indexed (incl. ${getBlogRoutes().length} blogs)`);
 
-  // Copy robots.txt from public to dist to prevent plugins from overwriting it
+  // Copy robots.txt from public to dist
   const robotsSrc = path.resolve(__dirname, '../public/robots.txt');
   const robotsDist = path.join(distDir, 'robots.txt');
   if (fs.existsSync(robotsSrc)) {
     fs.copyFileSync(robotsSrc, robotsDist);
-    console.log(`Robots.txt copied successfully from public/ to dist/`);
+    console.log('Robots.txt copied successfully from public/ to dist/');
   }
 }
 
