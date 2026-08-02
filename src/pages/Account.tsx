@@ -104,7 +104,7 @@ const Account = () => {
         .neq("order_status", "draft")
         .or(orQuery)
         .order("created_at", { ascending: false });
-      return data || [];
+      return (data || []).filter(o => o.order_status !== "draft");
     },
     enabled: !!user,
   });

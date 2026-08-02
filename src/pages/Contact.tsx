@@ -3,7 +3,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { Mail, Instagram, ArrowRight, Send } from "lucide-react";
+import { Mail, Instagram, ArrowRight, Send, Linkedin } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 
 // Asset imports
@@ -236,6 +236,24 @@ const Contact = () => {
                       <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-0.5">TikTok</p>
                       <p className="text-sm font-body font-medium text-neutral-900">@scalvea</p>
                       <p className="text-[10px] text-neutral-400 font-body font-light">Follow for updates & tips</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-neutral-300 group-hover:text-neutral-600 group-hover:translate-x-1 transition-all duration-300 shrink-0" />
+                  </a>
+
+                  {/* LinkedIn */}
+                  <a
+                    href="https://www.linkedin.com/company/scalvea/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center gap-5 p-5 border border-neutral-100 rounded-2xl bg-[#F9F9F7] hover:border-neutral-300 hover:bg-white hover:shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition-all duration-300"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-white border border-neutral-100 flex items-center justify-center shadow-sm shrink-0 group-hover:bg-black group-hover:border-black transition-all duration-300">
+                      <Linkedin className="h-4.5 w-4.5 text-neutral-700 group-hover:text-white transition-colors duration-300" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-0.5">LinkedIn</p>
+                      <p className="text-sm font-body font-medium text-neutral-900">Scalvea</p>
+                      <p className="text-[10px] text-neutral-400 font-body font-light">Follow for business & updates</p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-neutral-300 group-hover:text-neutral-600 group-hover:translate-x-1 transition-all duration-300 shrink-0" />
                   </a>

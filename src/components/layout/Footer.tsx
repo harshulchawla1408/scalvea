@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Instagram, Mail, ChevronDown, ChevronUp } from "lucide-react";
+import { Instagram, Mail, ChevronDown, ChevronUp, Linkedin } from "lucide-react";
 
 const TiktokIcon = ({ className }: { className?: string }) => (
   <svg
@@ -85,6 +85,15 @@ const Footer = () => {
               >
                 <Mail className="size-[18px]" />
               </a>
+              <a
+                href="https://www.linkedin.com/company/scalvea/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-neutral-400 hover:text-white transition-colors duration-200 p-1"
+                aria-label="LinkedIn"
+              >
+                <Linkedin className="size-[18px]" />
+              </a>
             </div>
           </div>
 
@@ -126,7 +135,7 @@ const Footer = () => {
             <div className={`mt-4 lg:mt-0 ${activeAccordion === "company" ? "block" : "hidden lg:block"}`}>
               <ul className="space-y-3.5 text-sm text-neutral-400 font-light">
                 <FooterLink to="/about">About Us</FooterLink>
-                <FooterLink to="/about">Blog</FooterLink>
+                <FooterLink to="/blogs">Blog</FooterLink>
                 <FooterLink to="/faqs">FAQs</FooterLink>
                 <FooterLink to="/terms-conditions">Terms & Conditions</FooterLink>
               </ul>

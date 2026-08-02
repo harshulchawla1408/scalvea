@@ -34,7 +34,7 @@ const AdminDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     const [ordersRes, productsRes, orderItemsRes] = await Promise.all([
-      supabase.from("orders").select("*"),
+      supabase.from("orders").select("*").neq("order_status", "draft"),
       supabase.from("products").select("id, name, inventory_quantity, inventory_quantity_australia, low_stock_threshold"),
       supabase.from("order_items").select("*, orders(country)"),
     ]);

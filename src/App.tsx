@@ -18,6 +18,8 @@ import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import ShiprocketCallback from "./pages/ShiprocketCallback";
 import About from "./pages/About";
+import BlogList from "./pages/BlogList";
+import BlogDetail from "./pages/BlogDetail";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
 import Account from "./pages/Account";
@@ -55,8 +57,10 @@ const App = () => (
                 <Route path="/order-success" element={<OrderSuccess />} />
                 <Route path="/shiprocket-callback" element={<ShiprocketCallback />} />
                 <Route path="/about" element={<About />} />
-                <Route path="/blog" element={<About />} />
-                <Route path="/blogs" element={<About />} />
+                <Route path="/blog" element={<BlogList />} />
+                <Route path="/blogs" element={<BlogList />} />
+                <Route path="/blog/:slug" element={<BlogDetail />} />
+                <Route path="/blogs/:slug" element={<BlogDetail />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/support" element={<Contact />} />
                 <Route path="/auth" element={<Auth />} />

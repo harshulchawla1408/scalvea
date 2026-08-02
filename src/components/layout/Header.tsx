@@ -151,7 +151,7 @@ const Header = () => {
             {[
               { label: "Shop", path: "/shop" },
               { label: "About Us", path: "/about" },
-              { label: "Blog", path: "/about" },
+              { label: "Blog", path: "/blogs" },
               { label: "Contact", path: "/contact" }
             ].map((item) => {
               const isActive = location.pathname === item.path;
@@ -363,7 +363,7 @@ const Header = () => {
                   {[
                     { label: "Shop", path: "/shop" },
                     { label: "About Us", path: "/about" },
-                    { label: "Blog", path: "/about" },
+                    { label: "Blog", path: "/blogs" },
                     { label: "Contact", path: "/contact" }
                   ].map((item) => (
                     <Link

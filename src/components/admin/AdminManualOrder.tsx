@@ -156,8 +156,8 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
 
   /* Country settings (dynamic free-shipping thresholds) */
   const [countrySettings, setCountrySettings] = useState<Record<string, { free_shipping_above: number; shipping_charge: number }>>({
-    Australia: { free_shipping_above: 100, shipping_charge: 7.5 },
-    India:     { free_shipping_above: 999, shipping_charge: 50 },
+    Australia: { free_shipping_above: 60, shipping_charge: 7.5 },
+    India:     { free_shipping_above: 1999, shipping_charge: 50 },
   });
 
   /* Product search */
@@ -205,7 +205,7 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
         const map: Record<string, { free_shipping_above: number; shipping_charge: number }> = {};
         data.forEach((row: any) => {
           map[row.country] = {
-            free_shipping_above: Number(row.free_shipping_above) || (row.country === "India" ? 2999 : 100),
+            free_shipping_above: Number(row.free_shipping_above) || (row.country === "India" ? 1999 : 60),
             shipping_charge: Number(row.shipping_charge) || (row.country === "India" ? 50 : 7.5),
           };
         });

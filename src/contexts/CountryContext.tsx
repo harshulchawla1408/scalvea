@@ -42,7 +42,7 @@ const COUNTRY_FALLBACKS: Record<CountryType, CountrySettings> = {
     currency_symbol: "₹",
     tax_percentage: 0,
     shipping_charge: 50.00,
-    free_shipping_above: 999.00,
+    free_shipping_above: 1999.00,
     delivery_time: "3-5 business days",
     is_enabled: true
   },
@@ -52,7 +52,7 @@ const COUNTRY_FALLBACKS: Record<CountryType, CountrySettings> = {
     currency_symbol: "A$",
     tax_percentage: 0,
     shipping_charge: 7.50,
-    free_shipping_above: 100.00,
+    free_shipping_above: 60.00,
     delivery_time: "5-7 business days",
     is_enabled: true
   }

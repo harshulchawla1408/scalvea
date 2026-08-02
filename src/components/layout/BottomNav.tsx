@@ -72,16 +72,16 @@ const BottomNav = () => {
 
           {/* 4. Blogs */}
           <Link
-            to="/about"
+            to="/blogs"
             className={`flex-1 flex flex-col items-center justify-center py-1 text-center transition-all duration-200 active:scale-95 ${
-              location.pathname.startsWith("/about") ? "text-black font-semibold" : "text-neutral-500 hover:text-neutral-800"
+              location.pathname.startsWith("/blog") ? "text-black font-semibold" : "text-neutral-500 hover:text-neutral-800"
             }`}
           >
             <div className="relative flex items-center justify-center">
-              <BookOpen className={`h-[20px] w-[20px] transition-transform duration-200 ${location.pathname.startsWith("/about") ? "scale-110 text-black stroke-[2.2]" : "stroke-[1.6]"}`} />
-              {location.pathname.startsWith("/about") && <span className="absolute -bottom-1.5 w-1.5 h-1.5 bg-black rounded-full" />}
+              <BookOpen className={`h-[20px] w-[20px] transition-transform duration-200 ${location.pathname.startsWith("/blog") ? "scale-110 text-black stroke-[2.2]" : "stroke-[1.6]"}`} />
+              {location.pathname.startsWith("/blog") && <span className="absolute -bottom-1.5 w-1.5 h-1.5 bg-black rounded-full" />}
             </div>
-            <span className={`text-[10px] tracking-tight mt-1 font-body ${location.pathname.startsWith("/about") ? "text-black font-medium" : "text-neutral-500 font-normal"}`}>
+            <span className={`text-[10px] tracking-tight mt-1 font-body ${location.pathname.startsWith("/blog") ? "text-black font-medium" : "text-neutral-500 font-normal"}`}>
               Blogs
             </span>
           </Link>

@@ -26,7 +26,7 @@ const AdminAnalytics = () => {
       supabase.from("profiles").select("id"),
     ]);
 
-    setAllOrders(ordersRes.data || []);
+    setAllOrders((ordersRes.data || []).filter(o => o.order_status !== "draft"));
     setTotalCustomers(profilesRes.data?.length || 0);
     setLoading(false);
   };
