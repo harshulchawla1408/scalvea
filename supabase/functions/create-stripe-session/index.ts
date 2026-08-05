@@ -198,7 +198,7 @@ Deno.serve(async (req) => {
     // ── Step 7: Calculate Shipping ───────────────────────────────────────
     console.log("Step 7: Calculating shipping...");
     const gstCents = 0;
-    let shippingCents = 950; // Standard: A$9.50
+    let shippingCents = 799; // Standard: A$7.99
     let shippingDisplayName = "Standard Shipping";
     let deliveryMinDays = 5;
     let deliveryMaxDays = 7;

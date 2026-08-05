@@ -28,6 +28,19 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
         <SheetHeader className="border-b border-border pb-4">
           <SheetTitle className="text-sm tracking-[0.15em] uppercase font-normal">Your Bag ({itemCount})</SheetTitle>
         </SheetHeader>
+        
+        {/* HIGHLIGHTED SHIPPING BANNER */}
+        <div className="bg-black text-white py-2 px-2 text-center select-none shadow-sm -mx-6 mb-2">
+          <div className="flex items-center justify-center gap-2 text-[10px] font-medium tracking-wide flex-wrap">
+            <span className="text-neutral-200 flex items-center flex-wrap justify-center gap-1.5">
+              <span className="font-semibold text-white">Free Delivery</span> anywhere in India 
+              <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-3.5 h-auto ml-0.5 rounded-sm shadow-sm" /> 
+              <span className="mx-1 text-neutral-600">|</span> 
+              <img src="https://flagcdn.com/w20/au.png" alt="Australia" className="w-3.5 h-auto mr-0.5 rounded-sm shadow-sm" /> 
+              <span className="font-semibold text-white">Free Shipping</span> on orders over A$60
+            </span>
+          </div>
+        </div>
         {items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <ShoppingBag className="h-12 w-12 text-muted-foreground" />

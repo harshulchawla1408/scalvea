@@ -37,7 +37,7 @@ const Checkout = () => {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth?returnTo=/checkout");
+      navigate("/auth?returnTo=/cart");
     }
   }, [authLoading, user, navigate]);
 
@@ -52,8 +52,8 @@ const Checkout = () => {
   const taxRate = isIndia ? (settings?.tax_percentage || 0) / 100 : 0; // Prices are tax-inclusive for AU
   const taxAmount = subtotalAfterDiscount * taxRate;
   
-  const freeShippingThreshold = settings?.free_shipping_above || (isIndia ? 999 : 100);
-  const shippingAmount = subtotalAfterDiscount >= freeShippingThreshold ? 0 : (isIndia ? (settings?.shipping_charge || 100) : 9.50);
+  const freeShippingThreshold = isIndia ? 0 : 60;
+  const shippingAmount = subtotalAfterDiscount >= freeShippingThreshold ? 0 : (isIndia ? 0 : 7.99);
   const grandTotal = subtotalAfterDiscount + taxAmount + shippingAmount;
 
   const [form, setForm] = useState({
@@ -117,19 +117,11 @@ const Checkout = () => {
 
         setAppliedCoupon({ code: data.code, discount_percentage: Number(data.discount_percentage) });
         toast({ title: `Coupon ${data.code} applied! ${Number(data.discount_percentage)}% off` });
-      } else if (code === "GET20" || code === "FIRST100") {
-        setAppliedCoupon({ code: "GET20", discount_percentage: 20 });
-        toast({ title: "Coupon GET20 applied! 20% off" });
       } else {
         toast({ title: "Invalid coupon", description: `This coupon code is not valid.`, variant: "destructive" });
       }
     } catch {
-      if (code === "GET20" || code === "FIRST100") {
-        setAppliedCoupon({ code: "GET20", discount_percentage: 20 });
-        toast({ title: "Coupon GET20 applied! 20% off" });
-      } else {
-        toast({ title: "Error applying coupon", variant: "destructive" });
-      }
+      toast({ title: "Error applying coupon", variant: "destructive" });
     }
     setApplyingCoupon(false);
   };
@@ -149,7 +141,7 @@ const Checkout = () => {
 
     if (!user) {
       toast({ title: "Please sign in", description: "You need an account to complete checkout.", variant: "destructive" });
-      navigate("/auth?returnTo=/checkout");
+      navigate("/auth?returnTo=/cart");
       return;
     }
 
@@ -295,7 +287,7 @@ const Checkout = () => {
     e.preventDefault();
     if (!user) {
       toast({ title: "Please sign in", description: "You need an account to place an order.", variant: "destructive" });
-      navigate("/auth?returnTo=/checkout");
+      navigate("/auth?returnTo=/cart");
       return;
     }
 
@@ -576,15 +568,7 @@ const Checkout = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Promo / Discount Code</p>
-                    {!appliedCoupon && (
-                      <button
-                        type="button"
-                        onClick={() => applyCoupon("GET20")}
-                        className="text-[9px] tracking-wide text-amber-500 hover:text-amber-600 font-bold uppercase underline transition-colors cursor-pointer"
-                      >
-                        ⚡ Apply GET20 (20% OFF)
-                      </button>
-                    )}
+
                   </div>
                   {appliedCoupon ? (
                     <div className="flex items-center justify-between bg-background border border-border px-4 py-2 animate-fade-in">
@@ -596,7 +580,7 @@ const Checkout = () => {
                       <input
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                        placeholder="GET20"
+                        placeholder="Enter code"
                         className="flex-1 h-10 px-3 text-xs bg-transparent border border-border outline-none focus:border-foreground uppercase tracking-wider font-mono"
                       />
                       <Button type="button" onClick={() => applyCoupon()} disabled={applyingCoupon} variant="outline" className="h-10 text-xs tracking-[0.1em] uppercase">
@@ -620,7 +604,7 @@ const Checkout = () => {
                       ) : (
                         <span>
                           <span className="line-through text-muted-foreground/60 mr-1.5">
-                            {isIndia ? "₹100" : "A$10.00"}
+                            {isIndia ? "₹100" : "A$7.99"}
                           </span>
                           <span className="font-medium text-foreground">{formatVal(shippingAmount)}</span>
                         </span>

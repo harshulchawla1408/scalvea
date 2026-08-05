@@ -104,13 +104,7 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const [couponCopied, setCouponCopied] = useState(false);
 
-  const handleCopyCoupon = () => {
-    navigator.clipboard.writeText("GET20");
-    setCouponCopied(true);
-    setTimeout(() => setCouponCopied(false), 2000);
-  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,7 +177,10 @@ const Header = () => {
                 className="hover:opacity-60 transition-all flex items-center gap-1 sm:gap-1.5 border border-neutral-250 px-1.5 sm:px-2.5 py-1 text-[9px] sm:text-[10px] tracking-[0.08em] uppercase font-light text-[#111111] bg-white"
                 aria-label="Choose country"
               >
-                <span>{country === "India" ? "🇮🇳 INR" : "🇦🇺 AUD"}</span>
+                <span className="flex items-center gap-1.5">
+                  <img src={country === "India" ? "https://flagcdn.com/w20/in.png" : "https://flagcdn.com/w20/au.png"} alt={country} className="w-3.5 h-auto rounded-[1px] shadow-[0_0_2px_rgba(0,0,0,0.1)]" />
+                  <span>{country === "India" ? "INR" : "AUD"}</span>
+                </span>
                 <span className="text-[7px] sm:text-[8px] opacity-60">▼</span>
               </button>
               {isCountryOpen && (
@@ -193,7 +190,7 @@ const Header = () => {
                     className={`w-full flex items-center justify-between px-5 py-3.5 text-[10px] tracking-[0.08em] uppercase hover:bg-neutral-50 transition-colors duration-200 whitespace-nowrap ${country === "India" ? "bg-neutral-50 font-semibold text-black" : "text-neutral-600 font-light"}`}
                   >
                     <span className="flex items-center gap-2.5">
-                      <span>🇮🇳</span>
+                      <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-4 h-auto rounded-sm shadow-sm" />
                       <span className="text-neutral-800 font-medium">India</span>
                     </span>
                     <span className="text-muted-foreground font-mono text-[9px]">₹ INR</span>
@@ -203,7 +200,7 @@ const Header = () => {
                     className={`w-full flex items-center justify-between px-5 py-3.5 text-[10px] tracking-[0.08em] uppercase hover:bg-neutral-50 transition-colors duration-200 whitespace-nowrap ${country === "Australia" ? "bg-neutral-50 font-semibold text-black" : "text-neutral-600 font-light"}`}
                   >
                     <span className="flex items-center gap-2.5">
-                      <span>🇦🇺</span>
+                      <img src="https://flagcdn.com/w20/au.png" alt="Australia" className="w-4 h-auto rounded-sm shadow-sm" />
                       <span className="text-neutral-800 font-medium">Australia</span>
                     </span>
                     <span className="text-muted-foreground font-mono text-[9px]">A$ AUD</span>
@@ -276,33 +273,15 @@ const Header = () => {
           </motion.div>
         </nav>
 
-        {/* HIGHLIGHTED COUPON DISCOUNT BANNER */}
-        <div className="bg-black text-white border-t border-neutral-800/80 py-1 sm:py-1.5 px-3 text-center select-none relative lg:absolute lg:top-full lg:left-0 lg:right-0 z-30 shadow-sm lg:bg-black/90 lg:backdrop-blur-md">
-          <div className="max-w-7xl mx-auto flex items-center justify-center gap-1.5 sm:gap-2.5 text-[11px] sm:text-xs font-medium tracking-wide flex-wrap">
-            <span className="inline-flex items-center gap-1 text-amber-400 font-bold uppercase tracking-wider">
-              <span>⚡</span> SPECIAL OFFER:
-            </span>
-            <span className="text-neutral-200">Use coupon code</span>
-            <button
-              onClick={handleCopyCoupon}
-              className="group relative inline-flex items-center gap-1.5 bg-white/15 hover:bg-white text-white hover:text-black border border-white/30 px-2.5 py-0.5 rounded font-mono font-bold text-[11px] sm:text-xs tracking-wider transition-all duration-200 active:scale-95 cursor-pointer shadow-sm"
-              title="Click to copy coupon code"
-              type="button"
-            >
-              <span>GET20</span>
-              {couponCopied ? (
-                <Check className="h-3 w-3 text-emerald-400 group-hover:text-emerald-600" />
-              ) : (
-                <Copy className="h-3 w-3 opacity-75 group-hover:opacity-100" />
-              )}
-              {couponCopied && (
-                <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[9px] px-2 py-0.5 rounded font-sans font-bold shadow-lg whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
-                  Copied!
-                </span>
-              )}
-            </button>
-            <span className="text-neutral-200">
-              to get <span className="text-amber-400 font-bold tracking-wider">20% DISCOUNT</span> on your order!
+        {/* HIGHLIGHTED SHIPPING BANNER */}
+        <div className="bg-black text-white border-t border-neutral-800/80 py-1.5 px-3 text-center select-none relative lg:absolute lg:top-full lg:left-0 lg:right-0 z-30 shadow-sm lg:bg-black/90 lg:backdrop-blur-md">
+          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 sm:gap-3 text-[11px] sm:text-xs font-medium tracking-wide flex-wrap">
+            <span className="text-neutral-200 flex items-center flex-wrap justify-center gap-1.5">
+              <span className="font-semibold text-white">Free Delivery</span> anywhere in India 
+              <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-4 h-auto ml-0.5 rounded-sm shadow-sm" /> 
+              <span className="mx-1.5 text-neutral-600">|</span> 
+              <img src="https://flagcdn.com/w20/au.png" alt="Australia" className="w-4 h-auto mr-0.5 rounded-sm shadow-sm" /> 
+              <span className="font-semibold text-white">Free Shipping</span> on orders over A$60
             </span>
           </div>
         </div>

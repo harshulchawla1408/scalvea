@@ -25,14 +25,27 @@ const Cart = () => {
     return `A$${val.toFixed(2)}`;
   };
 
-  const freeShippingThreshold = settings?.free_shipping_above || (isIndia ? 999 : 100);
-  const shipping = total >= freeShippingThreshold ? 0 : (isIndia ? (settings?.shipping_charge || 100) : 7.50);
+  const freeShippingThreshold = isIndia ? 0 : 60;
+  const shipping = total >= freeShippingThreshold ? 0 : (isIndia ? 0 : 7.99);
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="px-6 lg:px-12 py-12 lg:py-16">
         <h1 className="text-3xl font-light tracking-[0.04em] mb-12">Your Bag</h1>
+        
+        {/* HIGHLIGHTED SHIPPING BANNER */}
+        <div className="bg-black text-white border border-neutral-800/80 py-2 px-3 text-center select-none shadow-sm mb-8">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 text-[11px] sm:text-xs font-medium tracking-wide flex-wrap">
+            <span className="text-neutral-200 flex items-center flex-wrap justify-center gap-1.5">
+              <span className="font-semibold text-white">Free Delivery</span> anywhere in India 
+              <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-4 h-auto ml-0.5 rounded-sm shadow-sm" /> 
+              <span className="mx-1.5 text-neutral-600">|</span> 
+              <img src="https://flagcdn.com/w20/au.png" alt="Australia" className="w-4 h-auto mr-0.5 rounded-sm shadow-sm" /> 
+              <span className="font-semibold text-white">Free Shipping</span> on orders over A$60
+            </span>
+          </div>
+        </div>
         {items.length === 0 ? (
           <div className="text-center py-20 space-y-6">
             <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground" />
@@ -91,7 +104,7 @@ const Cart = () => {
                     ) : (
                       <span>
                         <span className="line-through text-muted-foreground/60 mr-1.5">
-                          {isIndia ? "₹100" : "A$10.00"}
+                          {isIndia ? "₹100" : "A$7.99"}
                         </span>
                         <span className="font-medium text-foreground">{formatVal(shipping)}</span>
                       </span>
