@@ -30,14 +30,14 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
         </SheetHeader>
         
         {/* HIGHLIGHTED SHIPPING BANNER */}
-        <div className="bg-black text-white py-2 px-2 text-center select-none shadow-sm -mx-6 mb-2">
-          <div className="flex items-center justify-center gap-2 text-[10px] font-medium tracking-wide flex-wrap">
-            <span className="text-neutral-200 flex items-center flex-wrap justify-center gap-1.5">
-              <span className="font-semibold text-white">Free Delivery</span> anywhere in India 
-              <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-3.5 h-auto ml-0.5 rounded-sm shadow-sm" /> 
-              <span className="mx-1 text-neutral-600">|</span> 
-              <img src="https://flagcdn.com/w20/au.png" alt="Australia" className="w-3.5 h-auto mr-0.5 rounded-sm shadow-sm" /> 
-              <span className="font-semibold text-white">Free Shipping</span> on orders over A$60
+        <div className="bg-black text-white py-2 px-2 text-center select-none shadow-sm -mx-6 mb-2 overflow-hidden">
+          <div className="flex items-center justify-center text-[9.5px] sm:text-[11px] md:text-xs font-medium tracking-wide whitespace-nowrap">
+            <span className="text-neutral-200 flex items-center justify-center gap-1 sm:gap-1.5">
+              <span className="font-semibold text-white">Free Delivery</span> in India 
+              <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-3.5 sm:w-4 h-auto ml-0.5 rounded-sm shadow-sm" /> 
+              <span className="mx-0.5 sm:mx-1.5 text-neutral-600">|</span> 
+              <img src="https://flagcdn.com/w20/au.png" alt="Australia" className="w-3.5 sm:w-4 h-auto mr-0.5 rounded-sm shadow-sm" /> 
+              <span className="font-semibold text-white">Free Shipping</span> A$60+
             </span>
           </div>
         </div>

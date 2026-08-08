@@ -8,7 +8,7 @@ export type Json =
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>
   __InternalSupabase: {
     PostgrestVersion: "14.4"
   }
@@ -62,45 +62,6 @@ export type Database = {
           postcode?: string | null
           state?: string | null
           user_id?: string
-        }
-        Relationships: []
-      }
-      country_settings: {
-        Row: {
-          country: string
-          created_at: string | null
-          currency: string
-          currency_symbol: string
-          delivery_time: string | null
-          free_shipping_above: number | null
-          id: string
-          is_enabled: boolean | null
-          shipping_charge: number | null
-          tax_percentage: number | null
-        }
-        Insert: {
-          country: string
-          created_at?: string | null
-          currency: string
-          currency_symbol?: string
-          delivery_time?: string | null
-          free_shipping_above?: number | null
-          id?: string
-          is_enabled?: boolean | null
-          shipping_charge?: number | null
-          tax_percentage?: number | null
-        }
-        Update: {
-          country?: string
-          created_at?: string | null
-          currency?: string
-          currency_symbol?: string
-          delivery_time?: string | null
-          free_shipping_above?: number | null
-          id?: string
-          is_enabled?: boolean | null
-          shipping_charge?: number | null
-          tax_percentage?: number | null
         }
         Relationships: []
       }
@@ -182,29 +143,38 @@ export type Database = {
         Row: {
           currency: string
           id: string
+          image_url: string | null
           order_id: string
           price: number
           product_id: string | null
           product_name: string
           quantity: number
+          sku: string | null
+          variant: string | null
         }
         Insert: {
           currency?: string
           id?: string
+          image_url?: string | null
           order_id: string
           price: number
           product_id?: string | null
           product_name: string
           quantity?: number
+          sku?: string | null
+          variant?: string | null
         }
         Update: {
           currency?: string
           id?: string
+          image_url?: string | null
           order_id?: string
           price?: number
           product_id?: string | null
           product_name?: string
           quantity?: number
+          sku?: string | null
+          variant?: string | null
         }
         Relationships: [
           {
@@ -225,106 +195,200 @@ export type Database = {
       }
       orders: {
         Row: {
-          admin_created_at: string | null
-          country: string
-          coupon_code: string | null
-          created_at: string | null
-          created_by_admin: string | null
-          courier_name: string | null
-          currency: string
-          delivery_estimate: string | null
-          delivery_method: string | null
-          discount_amount: number | null
-          gst: number | null
+          // Core fields
           id: string
-          manual_payment_method: string | null
-          market: string | null
           order_number: string | null
-          order_source: string
-          sales_channel: string
-          order_status: string | null
-          payment_method: string | null
-          payment_provider: string | null
-          payment_status: string | null
-          shipping_address: Json | null
-          shipping_amount: number
-          shipping_cost: number | null
-          stripe_payment_intent_id: string | null
-          stripe_session_id: string | null
+          created_at: string | null
+          updated_at: string | null
+          // Customer
+          user_id: string | null
+          customer_name: string | null
+          customer_email: string | null
+          customer_phone: string | null
+          is_guest: boolean | null
+          // Geography
+          country: string
+          currency: string
+          market: string | null
+          // Financials
           subtotal: number
           tax_amount: number
-          total: number | null
+          shipping_amount: number
+          discount_amount: number | null
           total_amount: number
-          updated_at: string | null
-          user_id: string | null
+          gst: number | null
+          shipping_cost: number | null
+          total: number | null
+          coupon_code: string | null
+          // Status
+          order_status: string | null
+          payment_status: string | null
+          fulfillment_status: string | null
+          // Payment
+          payment_method: string | null
+          payment_provider: string | null
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          transaction_id: string | null
+          // Addresses
+          shipping_address: Json | null
+          billing_address: Json | null
+          // Delivery
+          delivery_estimate: string | null
+          delivery_method: string | null
+          courier_name: string | null
+          courier: string | null
+          tracking_number: string | null
+          awb: string | null
+          shipment_id: string | null
+          shipping_label_url: string | null
+          manifest_url: string | null
+          pickup_status: string | null
+          dispatch_date: string | null
+          delivery_date: string | null
+          // Order source
+          order_source: string | null
+          source: string | null
+          platform: string | null
+          sales_channel: string | null
+          // Shiprocket
+          shiprocket_order_id: string | null
+          fastrr_order_id: string | null
+          // Admin / Manual Order fields
+          created_by_admin: string | null
+          admin_created_at: string | null
+          admin_notes: string | null
+          notes: string | null
+          manual_payment_method: string | null
+          // Invoice
+          invoice_number: string | null
+          invoice_url: string | null
+          tax_invoice: boolean | null
+          // Misc
+          gateway_response: Json | null
+          total_amount_payable: number | null
         }
         Insert: {
-          admin_created_at?: string | null
-          country?: string
-          coupon_code?: string | null
-          created_at?: string | null
-          created_by_admin?: string | null
-          courier_name?: string | null
-          currency?: string
-          delivery_estimate?: string | null
-          delivery_method?: string | null
-          discount_amount?: number | null
-          gst?: number | null
           id?: string
-          manual_payment_method?: string | null
-          market?: string | null
           order_number?: string | null
-          order_source?: string
-          sales_channel?: string
-          order_status?: string | null
-          payment_method?: string | null
-          payment_provider?: string | null
-          payment_status?: string | null
-          shipping_address?: Json | null
-          shipping_amount?: number
-          shipping_cost?: number | null
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
-          subtotal?: number
-          tax_amount?: number
-          total?: number | null
-          total_amount?: number
+          created_at?: string | null
           updated_at?: string | null
           user_id?: string | null
+          customer_name?: string | null
+          customer_email?: string | null
+          customer_phone?: string | null
+          is_guest?: boolean | null
+          country?: string
+          currency?: string
+          market?: string | null
+          subtotal?: number
+          tax_amount?: number
+          shipping_amount?: number
+          discount_amount?: number | null
+          total_amount?: number
+          gst?: number | null
+          shipping_cost?: number | null
+          total?: number | null
+          coupon_code?: string | null
+          order_status?: string | null
+          payment_status?: string | null
+          fulfillment_status?: string | null
+          payment_method?: string | null
+          payment_provider?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          transaction_id?: string | null
+          shipping_address?: Json | null
+          billing_address?: Json | null
+          delivery_estimate?: string | null
+          delivery_method?: string | null
+          courier_name?: string | null
+          courier?: string | null
+          tracking_number?: string | null
+          awb?: string | null
+          shipment_id?: string | null
+          shipping_label_url?: string | null
+          manifest_url?: string | null
+          pickup_status?: string | null
+          dispatch_date?: string | null
+          delivery_date?: string | null
+          order_source?: string | null
+          source?: string | null
+          platform?: string | null
+          sales_channel?: string | null
+          shiprocket_order_id?: string | null
+          fastrr_order_id?: string | null
+          created_by_admin?: string | null
+          admin_created_at?: string | null
+          admin_notes?: string | null
+          notes?: string | null
+          manual_payment_method?: string | null
+          invoice_number?: string | null
+          invoice_url?: string | null
+          tax_invoice?: boolean | null
+          gateway_response?: Json | null
+          total_amount_payable?: number | null
         }
         Update: {
-          admin_created_at?: string | null
-          country?: string
-          coupon_code?: string | null
-          created_at?: string | null
-          created_by_admin?: string | null
-          courier_name?: string | null
-          currency?: string
-          delivery_estimate?: string | null
-          delivery_method?: string | null
-          discount_amount?: number | null
-          gst?: number | null
           id?: string
-          manual_payment_method?: string | null
-          market?: string | null
           order_number?: string | null
-          order_source?: string
-          sales_channel?: string
-          order_status?: string | null
-          payment_method?: string | null
-          payment_provider?: string | null
-          payment_status?: string | null
-          shipping_address?: Json | null
-          shipping_amount?: number
-          shipping_cost?: number | null
-          stripe_payment_intent_id?: string | null
-          stripe_session_id?: string | null
-          subtotal?: number
-          tax_amount?: number
-          total?: number | null
-          total_amount?: number
+          created_at?: string | null
           updated_at?: string | null
           user_id?: string | null
+          customer_name?: string | null
+          customer_email?: string | null
+          customer_phone?: string | null
+          is_guest?: boolean | null
+          country?: string
+          currency?: string
+          market?: string | null
+          subtotal?: number
+          tax_amount?: number
+          shipping_amount?: number
+          discount_amount?: number | null
+          total_amount?: number
+          gst?: number | null
+          shipping_cost?: number | null
+          total?: number | null
+          coupon_code?: string | null
+          order_status?: string | null
+          payment_status?: string | null
+          fulfillment_status?: string | null
+          payment_method?: string | null
+          payment_provider?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          transaction_id?: string | null
+          shipping_address?: Json | null
+          billing_address?: Json | null
+          delivery_estimate?: string | null
+          delivery_method?: string | null
+          courier_name?: string | null
+          courier?: string | null
+          tracking_number?: string | null
+          awb?: string | null
+          shipment_id?: string | null
+          shipping_label_url?: string | null
+          manifest_url?: string | null
+          pickup_status?: string | null
+          dispatch_date?: string | null
+          delivery_date?: string | null
+          order_source?: string | null
+          source?: string | null
+          platform?: string | null
+          sales_channel?: string | null
+          shiprocket_order_id?: string | null
+          fastrr_order_id?: string | null
+          created_by_admin?: string | null
+          admin_created_at?: string | null
+          admin_notes?: string | null
+          notes?: string | null
+          manual_payment_method?: string | null
+          invoice_number?: string | null
+          invoice_url?: string | null
+          tax_invoice?: boolean | null
+          gateway_response?: Json | null
+          total_amount_payable?: number | null
         }
         Relationships: []
       }
@@ -393,10 +457,14 @@ export type Database = {
           low_stock_threshold: number | null
           name: string
           size: string | null
-          slug: string
+          sku: string | null
           sku_india: string | null
           sku_australia: string | null
+          slug: string
           updated_at: string | null
+          weight: number | null
+          shiprocket_product_id: number | null
+          shiprocket_variant_id: number | null
         }
         Insert: {
           badge?: string | null
@@ -418,10 +486,14 @@ export type Database = {
           low_stock_threshold?: number | null
           name: string
           size?: string | null
-          slug: string
+          sku?: string | null
           sku_india?: string | null
           sku_australia?: string | null
+          slug: string
           updated_at?: string | null
+          weight?: number | null
+          shiprocket_product_id?: number | null
+          shiprocket_variant_id?: number | null
         }
         Update: {
           badge?: string | null
@@ -443,10 +515,14 @@ export type Database = {
           low_stock_threshold?: number | null
           name?: string
           size?: string | null
-          slug?: string
+          sku?: string | null
           sku_india?: string | null
           sku_australia?: string | null
+          slug?: string
           updated_at?: string | null
+          weight?: number | null
+          shiprocket_product_id?: number | null
+          shiprocket_variant_id?: number | null
         }
         Relationships: []
       }

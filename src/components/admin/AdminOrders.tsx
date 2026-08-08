@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import AdminManualOrder from "./AdminManualOrder";
 
 /* ─── Types ─── */
-type OrderSource = "All" | "Online" | "Manual" | "Drafts";
+type OrderSource = "All" | "Online" | "Manual";
 
 const STATUS_OPTIONS = [
   "pending", "processing", "packed", "shipped", "out_for_delivery",
@@ -42,7 +42,6 @@ const EditManualOrderPanel = ({ order, onSave, onClose }: EditPanelProps) => {
 
   const save = async () => {
     setSaving(true);
-    const prevStatus = order.order_status;
 
     await supabase.from("orders").update({
       order_status:          form.order_status,
@@ -54,15 +53,6 @@ const EditManualOrderPanel = ({ order, onSave, onClose }: EditPanelProps) => {
       admin_notes:           form.admin_notes || null,
       manual_payment_method: form.manual_payment_method || null,
     } as any).eq("id", order.id);
-
-    if (form.order_status !== prevStatus) {
-      await supabase.from("order_status_history").insert({
-        order_id: order.id,
-        previous_status: prevStatus,
-        new_status: form.order_status,
-        changed_by: "Admin (Edit)",
-      } as any);
-    }
 
     toast({ title: "Order updated" });
     setSaving(false);
@@ -249,7 +239,7 @@ const AdminOrders = () => {
   const fetchOrders = async () => {
     const { data } = await supabase
       .from("orders")
-      .select("*, shiprocket_orders(*)")
+      .select("*, order_items(*)")
       .order("created_at", { ascending: false });
     setOrders(data || []);
     setLoading(false);
@@ -294,9 +284,6 @@ const AdminOrders = () => {
   const updateStatus = async (id: string, status: string, prevStatus: string) => {
     if (status === prevStatus) return;
     await supabase.from("orders").update({ order_status: status } as any).eq("id", id);
-    await supabase.from("order_status_history").insert({
-      order_id: id, previous_status: prevStatus, new_status: status, changed_by: "Admin"
-    } as any);
     toast({ title: `Status → ${status}` });
     fetchOrders();
   };
@@ -343,12 +330,6 @@ const AdminOrders = () => {
 
       /* Update order status */
       await supabase.from("orders").update({ order_status: "cancelled" } as any).eq("id", order.id);
-      await supabase.from("order_status_history").insert({
-        order_id: order.id,
-        previous_status: order.order_status,
-        new_status: "cancelled",
-        changed_by: "Admin (Cancellation)",
-      } as any);
 
       toast({ title: `Order ${order.order_number} cancelled`, description: "Inventory restored successfully." });
       setCancelOrder(null);
@@ -360,14 +341,13 @@ const AdminOrders = () => {
     }
   }, [orderItems]);
 
-  /* ── Filters + Search (item 7) ── */
+  /* ── Filters + Search ── */
   const filtered = orders
     .filter(o => o.country === "India" || o.country === "Australia")
     .filter(o => countryFilter === "All" || o.country === countryFilter)
     .filter(o => {
-      if (sourceFilter === "Drafts") return o.order_status === "draft";
-      if (o.order_status === "draft") return false; // Hide drafts from other tabs
-      
+      // No draft orders exist in the new flow — all orders are real confirmed orders.
+      // Just filter by source (All, Online, Manual).
       if (sourceFilter === "All") return true;
       if (sourceFilter === "Manual") return o.order_source === "MANUAL";
       return !o.order_source || o.order_source === "ONLINE";
@@ -456,7 +436,7 @@ const AdminOrders = () => {
 
           {/* Source filter */}
           <div className="flex border border-border h-9">
-            {(["All", "Online", "Manual", "Drafts"] as OrderSource[]).map(s => (
+            {(["All", "Online", "Manual"] as OrderSource[]).map(s => (
               <button
                 key={s}
                 onClick={() => setSourceFilter(s)}
@@ -486,8 +466,6 @@ const AdminOrders = () => {
               const fmt      = (v: number) => isIndia
                 ? `₹${Math.round(v || 0).toLocaleString("en-IN")}`
                 : `A$${Number(v || 0).toFixed(2)}`;
-              const srMapping  = order.shiprocket_orders as any;
-              const srPayments: any[] = order.shiprocket_payments || [];
               /* Admin name display (item 1) */
               const adminDisplay = order.created_by_admin
                 ? (adminNames[order.created_by_admin] || adminNameCache.current[order.created_by_admin] || order.created_by_admin.slice(0, 8) + "…")

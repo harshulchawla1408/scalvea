@@ -35,14 +35,14 @@ const Cart = () => {
         <h1 className="text-3xl font-light tracking-[0.04em] mb-12">Your Bag</h1>
         
         {/* HIGHLIGHTED SHIPPING BANNER */}
-        <div className="bg-black text-white border border-neutral-800/80 py-2 px-3 text-center select-none shadow-sm mb-8">
-          <div className="flex items-center justify-center gap-2 sm:gap-3 text-[11px] sm:text-xs font-medium tracking-wide flex-wrap">
-            <span className="text-neutral-200 flex items-center flex-wrap justify-center gap-1.5">
-              <span className="font-semibold text-white">Free Delivery</span> anywhere in India 
-              <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-4 h-auto ml-0.5 rounded-sm shadow-sm" /> 
-              <span className="mx-1.5 text-neutral-600">|</span> 
-              <img src="https://flagcdn.com/w20/au.png" alt="Australia" className="w-4 h-auto mr-0.5 rounded-sm shadow-sm" /> 
-              <span className="font-semibold text-white">Free Shipping</span> on orders over A$60
+        <div className="bg-black text-white border border-neutral-800/80 py-2 px-2 text-center select-none shadow-sm mb-8 overflow-hidden">
+          <div className="flex items-center justify-center text-[9.5px] sm:text-[11px] md:text-xs font-medium tracking-wide whitespace-nowrap">
+            <span className="text-neutral-200 flex items-center justify-center gap-1 sm:gap-1.5">
+              <span className="font-semibold text-white">Free Delivery</span> in India 
+              <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-3.5 sm:w-4 h-auto ml-0.5 rounded-sm shadow-sm" /> 
+              <span className="mx-0.5 sm:mx-1.5 text-neutral-600">|</span> 
+              <img src="https://flagcdn.com/w20/au.png" alt="Australia" className="w-3.5 sm:w-4 h-auto mr-0.5 rounded-sm shadow-sm" /> 
+              <span className="font-semibold text-white">Free Shipping</span> A$60+
             </span>
           </div>
         </div>

@@ -72,54 +72,15 @@ serve(async (req) => {
       if (pPhone) userId = pPhone.id;
     }
 
-    // CREATE DRAFT ORDER in database first!
+    // Build shipping address (stored in session, not DB yet)
     const shippingAddress = {
       first_name: firstName, last_name: lastName, firstName, lastName,
       address: address, city: city, state: state, postcode: postcode,
       country: "India", country_code: "IN", phone: phone, email: email
     };
 
-    const orderPayload: any = {
-      user_id: userId,
-      country: "India", currency: "INR",
-      subtotal: subtotal || 0, tax_amount: taxAmount || 0,
-      shipping_amount: shippingAmount || 0, discount_amount: discountAmount || 0,
-      coupon_code: couponCode || null, total_amount: (subtotal || 0) + (taxAmount || 0) + (shippingAmount || 0) - (discountAmount || 0),
-      order_status: "draft", payment_status: "unpaid", payment_method: "shiprocket",
-      delivery_estimate: "3-5 business days",
-      billing_address: shippingAddress, shipping_address: shippingAddress,
-      customer_email: email || null, customer_phone: phone || null,
-      customer_name: `${firstName || ""} ${lastName || ""}`.trim() || null,
-      is_guest: !userId, source: "Shiprocket", platform: "Web",
-      market: "IN"
-    };
-
-    const { data: draftOrder, error: draftErr } = await supabase
-      .from("orders").insert(orderPayload).select().single();
-      
-    if (draftErr) {
-      console.error("Failed to create draft order:", draftErr);
-      throw draftErr;
-    }
-
-    // Insert order items
-    const orderItemsPayload = mappedItems.map((item: any) => {
-      const p = item.prodDetails;
-      const prices = Array.isArray(p.product_prices) ? p.product_prices[0] : p.product_prices;
-      const priceInr = parseFloat(Number(prices?.price_inr || prices?.india_price || 0).toFixed(2));
-      return {
-        order_id: draftOrder.id,
-        product_id: p.id,
-        product_name: p.name,
-        quantity: item.quantity,
-        price: priceInr,
-        image_url: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null
-      };
-    });
-
-    if (orderItemsPayload.length > 0) {
-      await supabase.from("order_items").insert(orderItemsPayload);
-    }
+    // Calculate total
+    const totalAmount = (subtotal || 0) + (taxAmount || 0) + (shippingAmount || 0) - (discountAmount || 0);
 
     const origin = req.headers.get("origin") || "https://scalvea.com";
     const callbackRedirectUrl = origin.includes("localhost")
@@ -131,10 +92,6 @@ serve(async (req) => {
     if (isMock) {
       const mockToken = "mock_token_" + Math.random().toString(36).substring(7);
       const mockOrderId = "mock_order_123";
-      
-      await supabase.from("shiprocket_orders").insert({
-        order_id: draftOrder.id, shiprocket_order_id: mockOrderId
-      });
 
       return new Response(
         JSON.stringify({
@@ -211,17 +168,11 @@ serve(async (req) => {
         );
       }
 
-      // Map local draft order to Shiprocket order_id
+      // Store shiprocket order ID on the orders table (no shiprocket_orders table)
       if (orderId) {
-        await supabase.from("shiprocket_orders").insert({
-          order_id: draftOrder.id,
-          shiprocket_order_id: String(orderId)
-        });
-        
-        await supabase.from("orders").update({
-          shiprocket_order_id: String(orderId),
-          fastrr_order_id: String(orderId)
-        }).eq("id", draftOrder.id);
+        // The order doesn't exist in DB yet — it will be created by the shiprocket webhook.
+        // We pass the shiprocket orderId back to the frontend so it can be tracked.
+        console.log("Shiprocket order_id:", orderId, "— DB order will be created on payment confirmation.");
       }
 
       return new Response(

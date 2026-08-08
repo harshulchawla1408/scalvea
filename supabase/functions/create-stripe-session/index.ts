@@ -1,10 +1,15 @@
 // ─── Create Stripe Checkout Session ──────────────────────────────────────────
 // Australia-only payment flow.
-// 1. Verifies cart prices server-side.
-// 2. Creates a PENDING order in the database (with full address from form).
-// 3. Creates a Stripe Checkout Session.
-// 4. Updates the pending order with the stripe_session_id.
-// 5. Returns the Stripe Checkout URL to the frontend.
+//
+// NEW FLOW (no pre-created order):
+// 1. Verifies cart prices server-side against the database.
+// 2. Calculates shipping / coupon discounts.
+// 3. Creates a Stripe Checkout Session with full cart metadata.
+// 4. Returns the Stripe Checkout URL to the frontend.
+//
+// The order is ONLY created in the database AFTER Stripe confirms
+// the payment via the stripe-webhook function. This prevents orphaned
+// "draft" orders from polluting the dashboard.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import Stripe from "npm:stripe@^22";
@@ -25,17 +30,14 @@ Deno.serve(async (req) => {
     // ── Step 1: Verify environment variables ─────────────────────────────
     console.log("Step 1: Checking environment variables...");
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) {
-      throw new Error("MISSING ENV: STRIPE_SECRET_KEY is not configured");
-    }
+    if (!stripeKey) throw new Error("MISSING ENV: STRIPE_SECRET_KEY is not configured");
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    if (!supabaseUrl) {
-      throw new Error("MISSING ENV: SUPABASE_URL is not configured");
-    }
+    if (!supabaseUrl) throw new Error("MISSING ENV: SUPABASE_URL is not configured");
+
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseServiceKey) {
-      throw new Error("MISSING ENV: SUPABASE_SERVICE_ROLE_KEY is not configured");
-    }
+    if (!supabaseServiceKey) throw new Error("MISSING ENV: SUPABASE_SERVICE_ROLE_KEY is not configured");
+
     console.log("Step 1: All env vars present. Key prefix:", stripeKey.substring(0, 7));
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -70,15 +72,12 @@ Deno.serve(async (req) => {
       lastName,
       coupon_code,
       shipping_type,
-      // Address fields from checkout form
       address,
       address_line2,
       city,
       state,
       postcode,
     } = body;
-
-    console.log("Step 3: Body keys:", Object.keys(body).join(", "));
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return new Response(
@@ -102,42 +101,30 @@ Deno.serve(async (req) => {
       .select("*, product_prices(*)")
       .in("id", productIds);
 
-    if (prodError) {
-      console.error("Step 4: DB error fetching products:", prodError.message);
-      throw new Error(`Could not load products: ${prodError.message}`);
-    }
-    if (!dbProducts || dbProducts.length === 0) {
-      throw new Error("Could not load products from database for verification");
-    }
+    if (prodError) throw new Error(`Could not load products: ${prodError.message}`);
+    if (!dbProducts || dbProducts.length === 0) throw new Error("Could not load products from database");
     console.log("Step 4: Products fetched:", dbProducts.length);
 
     // ── Step 5: Build line items and calculate subtotal ──────────────────
     console.log("Step 5: Building Stripe line items...");
     let subtotalCents = 0;
     const stripeLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+    // Store product info for metadata (name + price for webhook reconstruction)
+    const cartDetails: Array<{ productId: string; name: string; priceAud: number; quantity: number }> = [];
 
     for (const item of items) {
       const prod = dbProducts.find((p: any) => p.id === item.productId);
-      if (!prod) {
-        throw new Error(`Product not found: ${item.productId}`);
-      }
-      if (prod.is_active_australia === false) {
-        throw new Error(`Product ${prod.name} is not available for purchase in Australia.`);
-      }
+      if (!prod) throw new Error(`Product not found: ${item.productId}`);
+      if (prod.is_active_australia === false) throw new Error(`Product ${prod.name} is not available in Australia.`);
+
       const stock = prod.inventory_quantity_australia ?? 0;
-      if (item.quantity > stock) {
-        throw new Error(`Insufficient stock for product ${prod.name}. Available: ${stock}`);
-      }
+      if (item.quantity > stock) throw new Error(`Insufficient stock for ${prod.name}. Available: ${stock}`);
 
       const prices = Array.isArray(prod.product_prices) ? prod.product_prices[0] : prod.product_prices || {};
       const priceAud = Number(prices?.price_aud) || 0;
       const priceCents = Math.round(priceAud * 100);
 
-      console.log(`Step 5: "${prod.name}" price_aud=${priceAud} priceCents=${priceCents} qty=${item.quantity}`);
-
-      if (priceCents <= 0) {
-        throw new Error(`Product ${prod.name} has an invalid price (${priceAud} AUD). Cannot create Stripe session.`);
-      }
+      if (priceCents <= 0) throw new Error(`Product ${prod.name} has invalid price (${priceAud} AUD).`);
 
       subtotalCents += priceCents * item.quantity;
       stripeLineItems.push({
@@ -151,11 +138,17 @@ Deno.serve(async (req) => {
         },
         quantity: item.quantity,
       });
+
+      cartDetails.push({
+        productId: prod.id,
+        name: prod.name,
+        priceAud,
+        quantity: item.quantity,
+      });
     }
     console.log("Step 5: subtotalCents =", subtotalCents, "| line items =", stripeLineItems.length);
 
     // ── Step 6: Process Coupon Discount ──────────────────────────────────
-    console.log("Step 6: Processing coupon discount...");
     let discountCents = 0;
     let validCouponCode = "";
     let discountPct = 0;
@@ -175,175 +168,102 @@ Deno.serve(async (req) => {
         if (isNotExpired && isUnderLimit) {
           validCouponCode = dbCoupon.code;
           discountPct = Number(dbCoupon.discount_percentage) || 0;
-        } else {
-          console.log("Step 6: Coupon found but expired/exceeded limit.");
         }
-      } else if (codeUpper === "GET20" || codeUpper === "FIRST100") {
-        validCouponCode = "GET20";
-        discountPct = 20;
-      } else {
-        console.log("Step 6: Coupon not found or inactive.");
       }
 
       if (discountPct > 0) {
         discountCents = Math.round(subtotalCents * (discountPct / 100));
-        console.log(`Step 6: Coupon "${validCouponCode}" applied (${discountPct}% off). discountCents=${discountCents}`);
+        console.log(`Step 6: Coupon "${validCouponCode}" applied (${discountPct}% off).`);
       }
-    } else {
-      console.log("Step 6: No coupon provided.");
     }
 
     const subtotalAfterDiscountCents = subtotalCents - discountCents;
 
     // ── Step 7: Calculate Shipping ───────────────────────────────────────
-    console.log("Step 7: Calculating shipping...");
-    const gstCents = 0;
     let shippingCents = 799; // Standard: A$7.99
     let shippingDisplayName = "Standard Shipping";
     let deliveryMinDays = 5;
     let deliveryMaxDays = 7;
 
     if (shipping_type === "express") {
-      shippingCents = 1495; // Express: A$14.95
+      shippingCents = 1495;
       shippingDisplayName = "Express Shipping";
       deliveryMinDays = 2;
       deliveryMaxDays = 4;
     } else {
-      if (subtotalAfterDiscountCents >= 6000) { // Free shipping above AUD $60
+      if (subtotalAfterDiscountCents >= 6000) {
         shippingCents = 0;
         shippingDisplayName = "Free Standard Shipping";
       }
     }
-    console.log(`Step 7: shippingCents=${shippingCents} (${shippingDisplayName})`);
 
     // ── Step 8: Calculate final totals ───────────────────────────────────
-    const discountAmount = discountCents / 100;
-    const gstAmount = gstCents / 100;
-    const shippingAmount = shippingCents / 100;
-    const totalAmount = (subtotalAfterDiscountCents + gstCents + shippingCents) / 100;
-    const subtotalVal = subtotalCents / 100;
+    const discountAmount   = discountCents / 100;
+    const shippingAmount   = shippingCents / 100;
+    const totalAmount      = (subtotalAfterDiscountCents + shippingCents) / 100;
+    const subtotalVal      = subtotalCents / 100;
+    const deliveryEstimate = shipping_type === "express" ? "2-4 business days" : "5-7 business days";
 
     console.log(`Step 8: subtotal=${subtotalVal} discount=${discountAmount} shipping=${shippingAmount} total=${totalAmount}`);
 
     const origin = req.headers.get("origin") || "http://localhost:5173";
     const isMock = stripeKey === "mock_key" || stripeKey === "mock_secret";
 
-    // ── Step 9: Build shipping address from form fields ──────────────────
-    // Address collected at checkout; Stripe will confirm the final address
-    // at payment time, which overwrites this via the webhook.
-    console.log("Step 9: Building shipping address object...");
-    const shippingAddress = {
-      firstName: firstName || "",
-      lastName: lastName || "",
-      first_name: firstName || "",
-      last_name: lastName || "",
-      address: address || "",
-      address_line1: address || "",
-      address_line2: address_line2 || "",
-      city: city || "",
-      state: state || "",
-      postcode: postcode || "",
-      country: "AU",
-      phone: phone || "",
-      email: email,
-    };
-    console.log(`Step 9: Address — city="${shippingAddress.city}" state="${shippingAddress.state}" postcode="${shippingAddress.postcode}"`);
-
-    // ── Step 10: Create Pending Order ────────────────────────────────────
-    console.log("Step 10: Inserting pending order into database...");
-    const { data: newOrder, error: orderError } = await supabase
-      .from("orders")
-      .insert({
-        user_id: userId,
-        country: "Australia",
-        currency: "AUD",
-        subtotal: subtotalVal,
-        tax_amount: gstAmount,
-        shipping_amount: shippingAmount,
-        discount_amount: discountAmount,
-        coupon_code: validCouponCode || null,
-        total_amount: totalAmount,
-        order_status: "draft",
-        payment_status: "pending",
-        payment_method: "stripe",
-        payment_provider: "stripe",
-        market: "AU",
-        gst: gstAmount,
-        shipping_cost: shippingAmount,
-        total: totalAmount,
-        delivery_estimate: shipping_type === "express" ? "2-4 business days" : "5-7 business days",
-        shipping_address: shippingAddress,
-        customer_email: email,
-        customer_phone: phone || null,
-        customer_name: `${firstName} ${lastName}`.trim(),
-        is_guest: false,
-        source: "Stripe",
-        platform: "Web",
-      } as any)
-      .select()
-      .single();
-
-    if (orderError) {
-      console.error("Step 10: ORDER INSERT FAILED. Message:", orderError.message, "| Code:", orderError.code, "| Details:", orderError.details, "| Hint:", orderError.hint);
-      throw new Error(`Failed to create pending order: ${orderError.message}`);
-    }
-    if (!newOrder) {
-      throw new Error("Failed to create pending order: insert returned no data");
-    }
-    console.log(`Step 10: ✅ Pending order created: ${newOrder.order_number} (ID: ${newOrder.id})`);
-
-    // ── Step 10.5: Insert Order Items ────────────────────────────────────
-    console.log("Step 10.5: Inserting order items into database...");
-    const orderItemsToInsert = items.map((item: any) => {
-      const prod = dbProducts.find((p: any) => p.id === item.productId);
-      if (!prod) return null;
-      const prices = Array.isArray(prod.product_prices) ? prod.product_prices[0] : prod.product_prices || {};
-      const priceAud = Number(prices?.price_aud) || 0;
-      
-      return {
-        order_id: newOrder.id,
-        product_id: prod.id,
-        product_name: prod.name,
-        quantity: item.quantity,
-        price: priceAud,
-        currency: "AUD",
-      };
-    }).filter(Boolean);
-
-    if (orderItemsToInsert.length > 0) {
-      const { error: itemsError } = await supabase.from("order_items").insert(orderItemsToInsert);
-      if (itemsError) {
-        console.error("Step 10.5: ORDER ITEMS INSERT FAILED:", itemsError.message);
-        throw new Error(`Failed to insert order items: ${itemsError.message}`);
-      }
-      console.log(`Step 10.5: ✅ ${orderItemsToInsert.length} order items inserted successfully.`);
-    }
-
     // ── Mock mode (local development) ─────────────────────────────────────
     if (isMock) {
+      // In mock mode, create the order directly since no real Stripe webhook fires
       const mockSessionId = "cs_test_" + Math.random().toString(36).substring(7);
-      await supabase
-        .from("orders")
-        .update({
-          stripe_session_id: mockSessionId,
-          payment_status: "paid",
-          order_status: "processing"
-        })
-        .eq("id", newOrder.id);
 
-      for (const item of items) {
-        const prod = dbProducts.find((p: any) => p.id === item.productId);
-        if (prod) {
-          const prevQty = prod.inventory_quantity_australia ?? 0;
-          const newQty = Math.max(0, prevQty - item.quantity);
-          await supabase.from("products").update({ inventory_quantity_australia: newQty }).eq("id", prod.id);
-          await supabase.from("inventory_logs").insert({
-            product_id: prod.id,
-            change_amount: -item.quantity,
-            previous_quantity: prevQty,
-            new_quantity: newQty,
-            reason: `Mock Stripe Order ${newOrder.order_number}`,
-          } as any);
+      const { data: mockOrder } = await supabase
+        .from("orders")
+        .insert({
+          user_id: userId,
+          country: "Australia", currency: "AUD",
+          subtotal: subtotalVal, tax_amount: 0,
+          shipping_amount: shippingAmount, discount_amount: discountAmount,
+          total_amount: totalAmount, coupon_code: validCouponCode || null,
+          order_status: "processing", payment_status: "paid",
+          payment_method: "stripe", payment_provider: "stripe",
+          market: "AU", gst: 0, shipping_cost: shippingAmount, total: totalAmount,
+          delivery_estimate: deliveryEstimate,
+          shipping_address: {
+            firstName, lastName, first_name: firstName, last_name: lastName,
+            address: address || "", address_line1: address || "",
+            address_line2: address_line2 || "", city: city || "",
+            state: state || "", postcode: postcode || "", country: "AU",
+            phone: phone || "", email,
+          },
+          customer_email: email, customer_phone: phone || null,
+          customer_name: `${firstName} ${lastName}`.trim(),
+          is_guest: false, source: "Stripe", platform: "Web",
+          stripe_session_id: mockSessionId,
+          order_source: "ONLINE",
+        } as any)
+        .select()
+        .single();
+
+      if (mockOrder) {
+        // Insert order items
+        const mockItems = cartDetails.map(cd => ({
+          order_id: mockOrder.id, product_id: cd.productId,
+          product_name: cd.name, quantity: cd.quantity,
+          price: cd.priceAud, currency: "AUD",
+        }));
+        await supabase.from("order_items").insert(mockItems);
+
+        // Deduct inventory
+        for (const cd of cartDetails) {
+          const prod = dbProducts.find((p: any) => p.id === cd.productId);
+          if (prod) {
+            const prevQty = prod.inventory_quantity_australia ?? 0;
+            const newQty = Math.max(0, prevQty - cd.quantity);
+            await supabase.from("products").update({ inventory_quantity_australia: newQty }).eq("id", prod.id);
+            await supabase.from("inventory_logs").insert({
+              product_id: prod.id, change_amount: -cd.quantity,
+              previous_quantity: prevQty, new_quantity: newQty,
+              reason: `Mock Stripe Order ${mockOrder.order_number}`,
+            } as any);
+          }
         }
       }
 
@@ -356,14 +276,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ── Step 11: Create Stripe Checkout Session ───────────────────────────
-    // KEY RULES:
-    //   1. shipping_options and shipping_address_collection are MUTUALLY EXCLUSIVE
-    //      in Stripe Checkout. When shipping_options is provided, Stripe automatically
-    //      collects the shipping address — do NOT also set shipping_address_collection.
-    //   2. Negative unit_amount in line items is NOT supported by Stripe. Discounts
-    //      must be applied via Stripe Coupons/Promotion Codes or tracked in DB only.
-    console.log("Step 11: Calling stripe.checkout.sessions.create...");
+    // ── Step 9: Create Stripe Checkout Session ────────────────────────────
+    // No DB order is created here. All order data is stored in Stripe metadata.
+    // The stripe-webhook will create the real order on payment confirmation.
+    console.log("Step 9: Creating Stripe Checkout Session (no DB order pre-created)...");
     const stripe = new Stripe(stripeKey);
 
     let stripeCouponId: string | null = null;
@@ -375,11 +291,14 @@ Deno.serve(async (req) => {
           name: `${validCouponCode} (${discountPct}% OFF)`,
         });
         stripeCouponId = coupon.id;
-        console.log(`Step 11: Created dynamic Stripe coupon: ${stripeCouponId}`);
+        console.log("Step 9: Created Stripe coupon:", stripeCouponId);
       } catch (err: any) {
-        console.warn("Step 11: Failed to create dynamic Stripe coupon:", err.message);
+        console.warn("Step 9: Failed to create Stripe coupon:", err.message);
       }
     }
+
+    // Build cart_items string for metadata: "productId:qty,productId:qty,..."
+    const cartItemsMeta = items.map((i: any) => `${i.productId}:${i.quantity}`).join(",");
 
     let session: Stripe.Checkout.Session;
     try {
@@ -389,8 +308,6 @@ Deno.serve(async (req) => {
         mode: "payment",
         customer_email: email,
         phone_number_collection: { enabled: true },
-        // shipping_options causes Stripe to collect address; do NOT add
-        // shipping_address_collection alongside it.
         shipping_options: [
           {
             shipping_rate_data: {
@@ -407,14 +324,21 @@ Deno.serve(async (req) => {
         success_url: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${origin}/checkout`,
         metadata: {
-          order_id: newOrder.id,
-          user_id: userId,
-          market: "AU",
-          coupon_code: validCouponCode,
-          cart_items: items.map((i: any) => `${i.productId}:${i.quantity}`).join(","),
-          customer_phone: phone || "",
-          customer_first_name: firstName || "",
-          customer_last_name: lastName || "",
+          // All data needed by stripe-webhook to create the order
+          user_id:              userId,
+          market:               "AU",
+          coupon_code:          validCouponCode || "",
+          cart_items:           cartItemsMeta,
+          customer_phone:       phone || "",
+          customer_first_name:  firstName || "",
+          customer_last_name:   lastName || "",
+          customer_email:       email,
+          shipping_type:        shipping_type || "standard",
+          delivery_estimate:    deliveryEstimate,
+          // Amounts for reference (Stripe session amounts are authoritative)
+          subtotal:             subtotalVal.toString(),
+          shipping_amount:      shippingAmount.toString(),
+          discount_amount:      discountAmount.toString(),
         },
       };
 
@@ -426,24 +350,11 @@ Deno.serve(async (req) => {
 
       session = await stripe.checkout.sessions.create(sessionCreateParams);
     } catch (stripeError: any) {
-      console.error("Step 11: STRIPE API ERROR:", stripeError.message, "| type:", stripeError.type, "| code:", stripeError.code, "| param:", stripeError.param);
+      console.error("Step 9: STRIPE API ERROR:", stripeError.message);
       throw new Error(`Stripe API error: ${stripeError.message}`);
     }
 
-    console.log(`Step 11: ✅ Stripe Session created: ${session.id}`);
-
-    // ── Step 12: Update Pending Order with Session ID ─────────────────────
-    console.log("Step 12: Updating order with stripe_session_id...");
-    const { error: updateError } = await supabase
-      .from("orders")
-      .update({ stripe_session_id: session.id })
-      .eq("id", newOrder.id);
-
-    if (updateError) {
-      console.warn(`Step 12: WARNING — could not update order ${newOrder.id} with stripe_session_id: ${updateError.message}. Webhook fallback active.`);
-    } else {
-      console.log("Step 12: ✅ Order updated with stripe_session_id.");
-    }
+    console.log("Step 9: ✅ Stripe Session created:", session.id, "— order will be created in DB on payment confirmation.");
 
     return new Response(
       JSON.stringify({

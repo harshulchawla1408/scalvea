@@ -132,7 +132,7 @@ const Header = () => {
               <img 
                 src={logo1} 
                 alt="Scalvea" 
-                className="h-[46px] lg:h-[58px] w-auto object-contain transition-all duration-300" 
+                className="h-[36px] lg:h-[46px] w-auto object-contain transition-all duration-300" 
               />
             </Link>
           </motion.div>
@@ -274,14 +274,14 @@ const Header = () => {
         </nav>
 
         {/* HIGHLIGHTED SHIPPING BANNER */}
-        <div className="bg-black text-white border-t border-neutral-800/80 py-1.5 px-3 text-center select-none relative lg:absolute lg:top-full lg:left-0 lg:right-0 z-30 shadow-sm lg:bg-black/90 lg:backdrop-blur-md">
-          <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 sm:gap-3 text-[11px] sm:text-xs font-medium tracking-wide flex-wrap">
-            <span className="text-neutral-200 flex items-center flex-wrap justify-center gap-1.5">
-              <span className="font-semibold text-white">Free Delivery</span> anywhere in India 
-              <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-4 h-auto ml-0.5 rounded-sm shadow-sm" /> 
-              <span className="mx-1.5 text-neutral-600">|</span> 
-              <img src="https://flagcdn.com/w20/au.png" alt="Australia" className="w-4 h-auto mr-0.5 rounded-sm shadow-sm" /> 
-              <span className="font-semibold text-white">Free Shipping</span> on orders over A$60
+        <div className="bg-black text-white border-t border-neutral-800/80 py-1.5 px-2 text-center select-none relative lg:absolute lg:top-full lg:left-0 lg:right-0 z-30 shadow-sm lg:bg-black/90 lg:backdrop-blur-md overflow-hidden">
+          <div className="max-w-7xl mx-auto flex items-center justify-center text-[9.5px] sm:text-[11px] md:text-xs font-medium tracking-wide whitespace-nowrap">
+            <span className="text-neutral-200 flex items-center justify-center gap-1 sm:gap-1.5">
+              <span className="font-semibold text-white">Free Delivery</span> in India 
+              <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-3.5 sm:w-4 h-auto ml-0.5 rounded-sm shadow-sm" /> 
+              <span className="mx-0.5 sm:mx-1.5 text-neutral-600">|</span> 
+              <img src="https://flagcdn.com/w20/au.png" alt="Australia" className="w-3.5 sm:w-4 h-auto mr-0.5 rounded-sm shadow-sm" /> 
+              <span className="font-semibold text-white">Free Shipping</span> A$60+
             </span>
           </div>
         </div>

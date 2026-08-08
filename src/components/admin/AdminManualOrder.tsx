@@ -154,8 +154,8 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
   const [foundUser, setFoundUser] = useState<FoundUser | null>(null);
   const [userNotFound, setUserNotFound] = useState(false);
 
-  /* Country settings (dynamic free-shipping thresholds) */
-  const [countrySettings, setCountrySettings] = useState<Record<string, { free_shipping_above: number; shipping_charge: number }>>({
+  /* Country settings (hardcoded thresholds) */
+  const [countrySettings] = useState<Record<string, { free_shipping_above: number; shipping_charge: number }>>({
     Australia: { free_shipping_above: 60, shipping_charge: 7.5 },
     India:     { free_shipping_above: 1999, shipping_charge: 50 },
   });
@@ -193,25 +193,6 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
 
   /* UI state */
   const [submitting, setSubmitting] = useState(false);
-
-  /* ── Fetch country settings (item 10: dynamic free-shipping) ── */
-  useEffect(() => {
-    supabase
-      .from("country_settings")
-      .select("country, free_shipping_above, shipping_charge")
-      .in("country", ["Australia", "India"])
-      .then(({ data }) => {
-        if (!data) return;
-        const map: Record<string, { free_shipping_above: number; shipping_charge: number }> = {};
-        data.forEach((row: any) => {
-          map[row.country] = {
-            free_shipping_above: Number(row.free_shipping_above) || (row.country === "India" ? 1999 : 60),
-            shipping_charge: Number(row.shipping_charge) || (row.country === "India" ? 50 : 7.5),
-          };
-        });
-        if (Object.keys(map).length > 0) setCountrySettings(prev => ({ ...prev, ...map }));
-      });
-  }, []);
 
   /* ── Fetch all products ── */
   useEffect(() => {
@@ -528,14 +509,6 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
           reason: `Manual Order ${orderNumber} (${country})`,
         } as any);
       }
-
-      /* 4. Status history */
-      await supabase.from("order_status_history").insert({
-        order_id: orderId,
-        previous_status: null,
-        new_status: "pending",
-        changed_by: `Admin (${salesChannel})`,
-      } as any);
 
       toast({ title: `Order ${orderNumber} created!`, description: `${fmt(grandTotal)} · ${foundUser ? foundUser.email : "Guest"}` });
 
