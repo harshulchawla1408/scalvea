@@ -26,7 +26,7 @@ const Cart = () => {
   };
 
   const freeShippingThreshold = isIndia ? 0 : 60;
-  const shipping = total >= freeShippingThreshold ? 0 : (isIndia ? 0 : 7.99);
+  const shipping = total >= freeShippingThreshold ? 0 : (isIndia ? 0 : 7.50);
 
   return (
     <div className="min-h-screen bg-background">
@@ -99,16 +99,11 @@ const Cart = () => {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-light">Shipping</span>
                   <span className="font-mono">
-                    {shipping === 0 ? (
-                      "Free"
-                    ) : (
-                      <span>
-                        <span className="line-through text-muted-foreground/60 mr-1.5">
-                          {isIndia ? "₹100" : "A$7.99"}
-                        </span>
+                      {shipping === 0 ? (
+                        "Free Shipping"
+                      ) : (
                         <span className="font-medium text-foreground">{formatVal(shipping)}</span>
-                      </span>
-                    )}
+                      )}
                   </span>
                 </div>
                 <div className="border-t border-border pt-3 flex justify-between font-normal">

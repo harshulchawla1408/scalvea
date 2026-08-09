@@ -271,7 +271,7 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
   /* ── Calculations — using live country_settings thresholds ── */
   const currentSettings = countrySettings[country] || (isIndia
     ? { free_shipping_above: 0, shipping_charge: 0 }
-    : { free_shipping_above: 60, shipping_charge: 7.99 });
+    : { free_shipping_above: 60, shipping_charge: 7.50 });
 
   const subtotal = lineItems.reduce((sum, li) => sum + getItemPrice(li.product) * li.quantity, 0);
 

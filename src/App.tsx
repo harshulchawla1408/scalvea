@@ -16,6 +16,7 @@ import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
+import OrderFailed from "./pages/OrderFailed";
 import ShiprocketCallback from "./pages/ShiprocketCallback";
 import About from "./pages/About";
 import BlogList from "./pages/BlogList";
@@ -55,6 +56,7 @@ const App = () => (
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-success" element={<OrderSuccess />} />
+                <Route path="/order-failed" element={<OrderFailed />} />
                 <Route path="/shiprocket-callback" element={<ShiprocketCallback />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/blog" element={<BlogList />} />

@@ -4,263 +4,254 @@ import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Loader2, AlertCircle, ShoppingBag, MapPin, CreditCard } from "lucide-react";
+import {
+  CheckCircle2, Loader2,
+  ShoppingBag, MapPin, CreditCard, Printer, User,
+} from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { useCart } from "@/contexts/CartContext";
 
+// ─── OrderSuccess Page ────────────────────────────────────────────────────────
+// Handles three entry points:
+//   1. ?session_id=<stripe_session_id>   → AU Stripe payment
+//   2. ?id=<local_order_uuid>            → Direct UUID (Shiprocket callback after fast confirm)
+//   3. ?shiprocket_order_id=<sr_id>      → Shiprocket fallback (polls DB until webhook fires)
+// ─────────────────────────────────────────────────────────────────────────────
+
 const OrderSuccess = () => {
   useSEO({
-    title: "Order Success",
+    title: "Order Confirmed - Scalvea",
     description: "Your payment was processed successfully.",
     noindex: true
   });
 
   const [searchParams] = useSearchParams();
-  const sessionId = searchParams.get("session_id");
-  const orderId = searchParams.get("id") || searchParams.get("order_id");
-  const shiprocketOrderId = searchParams.get("shiprocket_order_id") || searchParams.get("oid");
-  const navigate = useNavigate();
+  const sessionId          = searchParams.get("session_id");
+  const orderId            = searchParams.get("id") || searchParams.get("order_id");
+  const shiprocketOrderId  = searchParams.get("shiprocket_order_id") || searchParams.get("oid");
+  const navigate           = useNavigate();
 
-  const [loading, setLoading] = useState(true);
-  const [order, setOrder] = useState<any | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const { clearCart } = useCart();
-  
-  // Ref to prevent double execution in Strict Mode
-  const hasExecuted = useRef(false);
+  const [loading, setLoading]   = useState(true);
+  const [order,   setOrder]     = useState<any | null>(null);
+  const [error,   setError]     = useState<string | null>(null);
+  const { clearCart }           = useCart();
+  const hasExecuted             = useRef(false);
 
   useEffect(() => {
     if (hasExecuted.current) return;
-    if (!sessionId && !orderId && !shiprocketOrderId) {
-      navigate("/shop");
-      return;
-    }
-    
-    // We only set this once to prevent multiple intervals on re-renders
+    if (!sessionId && !orderId && !shiprocketOrderId) { navigate("/shop"); return; }
     hasExecuted.current = true;
 
-    // ─── 1. Instant Load Path (Callback Succeeded) ─────────────────────────
-    // If we have an exact local UUID, the order is guaranteed to be fully synced
-    if (orderId || sessionId) {
-      const fetchExactOrder = async () => {
+    // ── 1. Direct load: Stripe session_id or local UUID ───────────────────
+    if (sessionId || orderId) {
+      const fetchOrder = async () => {
         try {
-          let orderQuery = supabase.from("orders").select("*, order_items(*)");
-          
-          if (sessionId) {
-            orderQuery = orderQuery.eq("stripe_session_id", sessionId);
-          } else {
-            orderQuery = orderQuery.eq("id", orderId);
-          }
-          
-          const { data, error: dbError } = await orderQuery.maybeSingle();
-          if (dbError) throw dbError;
-          
+          let q = supabase.from("orders").select("*, order_items(*)");
+          if (sessionId) q = q.eq("stripe_session_id", sessionId);
+          else            q = q.eq("id", orderId);
+
+          const { data, error: dbErr } = await q.maybeSingle();
+          if (dbErr) throw dbErr;
+
           if (data) {
             setOrder(data);
             clearCart();
           } else {
-            setError("We couldn't locate your order details immediately. Please check your account page.");
+            // Order not found — redirect to failed page
+            navigate("/order-failed?reason=failed");
           }
         } catch (err: any) {
-          console.error("Error fetching exact order:", err);
-          setError("An error occurred while retrieving order details.");
+          navigate("/order-failed?reason=failed");
         } finally {
           setLoading(false);
         }
       };
-      
-      fetchExactOrder();
-      return; // Exit early, no polling needed!
+      fetchOrder();
+      return;
     }
 
-    // ─── 2. Fallback Polling Path (Callback Failed) ────────────────────────
-    // This path is ONLY hit if the Callback verification timed out 3 times,
-    // and we are waiting for the Webhook to hopefully create the order.
+    // ── 2. Shiprocket fallback: poll orders by shiprocket_order_id column ─
+    // The webhook or a delayed API call will write the order; we poll for it.
     let retries = 0;
-    const maxRetries = 10;
-    
-    const checkOrderFallback = async () => {
-      try {
-        const { data: mapping } = await supabase
-          .from("shiprocket_orders")
-          .select("order_id")
-          .eq("shiprocket_order_id", shiprocketOrderId)
-          .maybeSingle();
-
-        if (mapping?.order_id) {
-          const { data, error: dbError } = await supabase
-            .from("orders")
-            .select("*, order_items(*)")
-            .eq("id", mapping.order_id)
-            .maybeSingle();
-
-          if (dbError) throw dbError;
-          
-          if (data) {
-            setOrder(data);
-            setLoading(false);
-            clearCart();
-            return true; // Success!
-          }
-        }
-        
-        return false; // Not found yet
-      } catch (err: any) {
-        console.error("Error in fallback poll:", err);
-        return false;
-      }
-    };
+    const maxRetries = 15; // 15 × 2s = 30 seconds max wait
 
     const poll = async () => {
-      const success = await checkOrderFallback();
-      if (success) return;
-      
+      try {
+        const { data } = await supabase
+          .from("orders")
+          .select("*, order_items(*)")
+          .eq("shiprocket_order_id", shiprocketOrderId!)
+          .maybeSingle();
+
+        if (data) {
+          setOrder(data);
+          setLoading(false);
+          clearCart();
+          return;
+        }
+      } catch (err: any) {
+        console.error("Poll error:", err.message);
+      }
+
       retries++;
       if (retries >= maxRetries) {
         setLoading(false);
-        setError("We received your payment, but the order registration is taking longer than expected. Please check your account page shortly.");
+        // After 30s of waiting, redirect to failed page with timeout reason
+        navigate("/order-failed?reason=timeout");
       } else {
-        setTimeout(poll, 1500); // 1.5s delay
+        setTimeout(poll, 2000);
       }
     };
 
-    // Start fallback polling
     poll();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  }, [sessionId, orderId, shiprocketOrderId, navigate, clearCart]);
-
-  const formatVal = (val: number) => {
-    if (order?.currency === "INR") {
-      return `₹${Math.round(val).toLocaleString("en-IN")}`;
-    }
+  const fmt = (val: number) => {
+    if (order?.currency === "INR") return `₹${Math.round(val || 0).toLocaleString("en-IN")}`;
     return `A$${Number(val || 0).toFixed(2)}`;
   };
 
+  const handlePrint = () => window.print();
+
+  const addr = order?.shipping_address as any;
+
   return (
-    <div className="min-h-screen bg-background flex flex-col justify-between">
+    <div className="min-h-screen bg-background flex flex-col justify-between print:bg-white">
       <Header />
-      
+
       <main className="px-6 lg:px-12 py-16 lg:py-24 max-w-2xl mx-auto w-full">
-        {loading ? (
+
+        {/* ── Loading ── */}
+        {loading && (
           <div className="text-center py-20 space-y-6">
             <Loader2 className="h-10 w-10 text-muted-foreground animate-spin mx-auto" />
             <h1 className="text-xl font-light tracking-[0.1em] uppercase">Confirming Your Order</h1>
             <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
-              We've received your payment and are currently registering your order details. This will only take a moment.
+              We've received your payment and are registering your order. This takes only a moment.
             </p>
           </div>
-        ) : error ? (
-          <div className="text-center py-16 space-y-6 border border-border/60 p-8 bg-secondary/10 relative">
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-red-500" />
-            <AlertCircle className="h-10 w-10 text-red-500 mx-auto" />
-            <h1 className="text-lg font-light tracking-[0.1em] uppercase">Verification Status</h1>
-            <p className="text-xs text-muted-foreground leading-relaxed max-w-sm mx-auto">
-              {error}
-            </p>
-            <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
-              <Button asChild variant="outline" className="text-xs tracking-[0.1em] uppercase">
-                <Link to="/account">Go to Account</Link>
-              </Button>
-              <Button onClick={() => window.location.reload()} className="text-xs tracking-[0.1em] uppercase">
-                Refresh Page
-              </Button>
-            </div>
+        )}
+
+        {/* ── Error: redirect happens automatically, this is just a safety net ── */}
+        {!loading && error && (
+          <div className="text-center py-16 space-y-4">
+            <p className="text-sm text-muted-foreground">{error}</p>
           </div>
-        ) : order ? (
+        )}
+
+        {/* ── Success: Order Details ── */}
+        {!loading && !error && order && (
           <div className="space-y-10 animate-fade-in">
-            {/* Header section */}
-            <div className="text-center space-y-4">
-              <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto" />
-              <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground">Thank You for Your Order</p>
-              <h1 className="text-3xl font-extralight tracking-[0.08em] uppercase">Payment Successful</h1>
+
+            {/* Header */}
+            <div className="text-center space-y-3 print:space-y-1">
+              <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto print:hidden" />
+              <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground">
+                Thank You for Shopping with Scalvea
+              </p>
+              <h1 className="text-3xl font-extralight tracking-[0.08em] uppercase">Order Confirmed</h1>
               <p className="text-xs text-muted-foreground">
-                Your order is confirmed and is currently being processed.
+                Your order is confirmed and is being processed.
               </p>
             </div>
 
-            {/* Order summary card */}
-            <div className="border border-border p-6 sm:p-8 space-y-6 bg-secondary/5">
-              <div className="flex justify-between items-center border-b border-border/60 pb-4 text-xs">
+            {/* Main Card */}
+            <div className="border border-border p-6 sm:p-8 space-y-6 bg-secondary/5 print:border-gray-300">
+
+              {/* Order Meta Row */}
+              <div className="flex flex-wrap justify-between items-start gap-4 border-b border-border/60 pb-5 text-xs">
                 <div>
-                  <span className="text-muted-foreground uppercase tracking-[0.08em] block">Order Number</span>
-                  <span className="font-mono font-medium text-sm mt-0.5 block">{order.order_number}</span>
+                  <span className="text-muted-foreground uppercase tracking-[0.08em] block mb-0.5">Order Number</span>
+                  <span className="font-mono font-semibold text-sm">{order.order_number}</span>
                 </div>
-                <div className="text-right">
-                  <span className="text-muted-foreground uppercase tracking-[0.08em] block">Status</span>
-                  <span className="font-mono text-green-600 uppercase tracking-[0.05em] mt-0.5 block">Paid & processing</span>
+                <div>
+                  <span className="text-muted-foreground uppercase tracking-[0.08em] block mb-0.5">Status</span>
+                  <span className="font-mono text-green-600 uppercase tracking-[0.05em]">
+                    {order.payment_status === "paid" ? "Paid" : order.payment_status} ·{" "}
+                    {(order.order_status || "processing").replace(/_/g, " ")}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground uppercase tracking-[0.08em] block mb-0.5">Date</span>
+                  <span className="font-mono">{new Date(order.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</span>
                 </div>
               </div>
 
-              {/* Items List */}
-              <div className="space-y-4">
+              {/* Customer Details */}
+              {(order.customer_name || order.customer_email || order.customer_phone) && (
+                <div className="space-y-2">
+                  <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold flex items-center gap-1.5">
+                    <User className="h-3 w-3" /> Customer
+                  </p>
+                  <div className="text-xs text-muted-foreground space-y-0.5 font-light">
+                    {order.customer_name  && <p className="font-medium text-foreground">{order.customer_name}</p>}
+                    {order.customer_email && <p>{order.customer_email}</p>}
+                    {order.customer_phone && <p>+{order.customer_phone}</p>}
+                  </div>
+                </div>
+              )}
+
+              {/* Items */}
+              <div className="space-y-3">
                 <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold flex items-center gap-1.5">
                   <ShoppingBag className="h-3 w-3" /> Purchased Items
                 </p>
                 <div className="divide-y divide-border/40">
-                  {order.order_items?.map((item: any) => (
+                  {(order.order_items || []).map((item: any) => (
                     <div key={item.id} className="py-3.5 flex justify-between text-xs font-light">
                       <span>
-                        {item.product_name} <span className="text-muted-foreground font-normal ml-1">× {item.quantity}</span>
+                        {item.product_name}
+                        <span className="text-muted-foreground font-normal ml-1">× {item.quantity}</span>
                       </span>
                       <div className="text-right">
-                        <span className="font-mono font-medium block">{formatVal(item.price * item.quantity)}</span>
-                        <span className="text-[9px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5">Inclusive of all taxes</span>
+                        <span className="font-mono font-medium block">{fmt(item.price * item.quantity)}</span>
+                        <span className="text-[9px] text-emerald-600 block mt-0.5">Inclusive of taxes</span>
                       </div>
                     </div>
                   ))}
+                  {(!order.order_items || order.order_items.length === 0) && (
+                    <p className="text-xs text-muted-foreground py-3 italic">Item details loading...</p>
+                  )}
                 </div>
               </div>
 
               {/* Shipping Address */}
-              <div className="border-t border-border/60 pt-4 space-y-2">
-                <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold flex items-center gap-1.5">
-                  <MapPin className="h-3 w-3" /> Delivery Address
-                </p>
-                {order.shipping_address && (
+              {addr && (
+                <div className="border-t border-border/60 pt-4 space-y-2">
+                  <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-semibold flex items-center gap-1.5">
+                    <MapPin className="h-3 w-3" /> Delivery Address
+                  </p>
                   <div className="text-xs font-light leading-relaxed text-muted-foreground">
-                    <p className="font-medium text-foreground">{order.shipping_address.firstName || order.shipping_address.first_name || ""} {order.shipping_address.lastName || order.shipping_address.last_name || ""}</p>
-                    <p>{order.shipping_address.address || order.shipping_address.address_line1 || ""}</p>
-                    <p>{order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.postcode}</p>
-                    <p>{order.shipping_address.country}</p>
-                    <p className="mt-1 text-[11px] font-mono">Ph: {order.shipping_address.phone}</p>
+                    <p className="font-medium text-foreground">
+                      {addr.firstName || addr.first_name || ""} {addr.lastName || addr.last_name || ""}
+                    </p>
+                    <p>{addr.address || addr.address_line1 || ""}{addr.address_line2 ? `, ${addr.address_line2}` : ""}</p>
+                    <p>{addr.city}{addr.state ? `, ${addr.state}` : ""} {addr.postcode || ""}</p>
+                    <p>{addr.country || ""}</p>
+                    {addr.phone && <p className="mt-1 font-mono text-[11px]">Ph: {addr.phone}</p>}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
-              {/* Financial calculations */}
+              {/* Financials */}
               <div className="border-t border-border/60 pt-4 space-y-2.5 text-xs">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-light">Subtotal</span>
-                  <span className="font-mono font-light">{formatVal(order.subtotal)}</span>
+                  <span className="font-mono font-light">{fmt(order.subtotal || 0)}</span>
                 </div>
-                
+
                 {Number(order.discount_amount) > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Discount {order.coupon_code ? `(${order.coupon_code})` : ""}</span>
-                    <span className="font-mono">-{formatVal(order.discount_amount)}</span>
-                  </div>
-                )}
-
-                {Number(order.tax_amount) > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground font-light">Tax (Included)</span>
-                    <span className="font-mono font-light">{formatVal(order.tax_amount)}</span>
+                    <span className="font-mono">-{fmt(order.discount_amount)}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground font-light">Shipping Cost</span>
+                  <span className="text-muted-foreground font-light">Shipping</span>
                   <span className="font-mono font-light">
-                    {Number(order.shipping_amount) === 0 ? (
-                      "Free Shipping"
-                    ) : (
-                      <span>
-                        <span className="line-through text-muted-foreground/60 mr-1.5">
-                          {order.currency === "INR" ? "₹100" : "A$10.00"}
-                        </span>
-                        <span>{formatVal(Number(order.shipping_amount))}</span>
-                      </span>
-                    )}
+                    {Number(order.shipping_amount) === 0 ? "Free" : fmt(Number(order.shipping_amount))}
                   </span>
                 </div>
 
@@ -269,45 +260,67 @@ const OrderSuccess = () => {
                     <CreditCard className="h-3.5 w-3.5" /> Total Paid
                   </span>
                   <div className="text-right">
-                    <span className="font-mono text-base block">{formatVal(order.total_amount)}</span>
-                    <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5 font-body">Inclusive of all taxes</span>
+                    <span className="font-mono text-base block">{fmt(order.total_amount || 0)}</span>
+                    <span className="text-[10px] text-emerald-600 font-light tracking-wide block mt-0.5">
+                      Inclusive of all taxes
+                    </span>
                   </div>
                 </div>
               </div>
 
+              {/* Payment method */}
+              {order.payment_method && (
+                <div className="text-[10px] text-muted-foreground bg-secondary/30 p-3 flex items-center justify-between">
+                  <span>Payment Method</span>
+                  <span className="font-medium text-foreground capitalize">
+                    {order.payment_method.replace(/_/g, " ")}
+                  </span>
+                </div>
+              )}
+
+              {/* Delivery estimate */}
               {order.delivery_estimate && (
                 <div className="text-[10px] text-muted-foreground bg-secondary/30 p-3 text-center">
-                  Estimated Delivery Time: <span className="font-medium text-foreground">{order.delivery_estimate}</span>
+                  Estimated Delivery:{" "}
+                  <span className="font-medium text-foreground">{order.delivery_estimate}</span>
                 </div>
               )}
             </div>
 
-            {/* Actions */}
-            <div className="pt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
+            {/* CTA Buttons */}
+            <div className="pt-4 flex flex-wrap gap-3 justify-center print:hidden">
+              <Button
+                variant="outline"
+                onClick={handlePrint}
+                className="h-11 px-6 uppercase tracking-widest text-xs font-light rounded-none flex items-center gap-2"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                Print Invoice
+              </Button>
+
               <Link to="/shop">
-                <Button variant="outline" className="min-w-[200px] h-12 uppercase tracking-widest text-xs font-light rounded-none">
+                <Button variant="outline" className="h-11 min-w-[160px] uppercase tracking-widest text-xs font-light rounded-none">
                   Continue Shopping
                 </Button>
               </Link>
-              {order.user_id ? (
+
+              {order.user_id && (
                 <Link to="/account">
-                  <Button className="min-w-[200px] h-12 bg-neutral-900 hover:bg-neutral-800 text-white uppercase tracking-widest text-xs font-light rounded-none">
-                    View Orders
+                  <Button className="h-11 min-w-[160px] bg-neutral-900 hover:bg-neutral-800 text-white uppercase tracking-widest text-xs font-light rounded-none">
+                    View My Orders
                   </Button>
                 </Link>
-              ) : null}
+              )}
             </div>
 
-            <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button disabled variant="outline" className="min-w-[200px] h-12 uppercase tracking-widest text-xs font-light rounded-none text-muted-foreground">
-                Track Order (Coming Soon)
-              </Button>
-              <Button disabled variant="outline" className="min-w-[200px] h-12 uppercase tracking-widest text-xs font-light rounded-none text-muted-foreground">
-                Download Invoice
-              </Button>
+            {/* Print-only footer */}
+            <div className="hidden print:block text-center text-xs text-gray-500 pt-8 border-t border-gray-200">
+              <p className="font-semibold text-gray-800">Scalvea — Care You Deserve</p>
+              <p>www.scalvea.com · support@scalvea.com</p>
+              <p className="mt-1">Thank you for your order!</p>
             </div>
           </div>
-        ) : null}
+        )}
       </main>
 
       <Footer />

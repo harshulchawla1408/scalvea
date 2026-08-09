@@ -1,12 +1,11 @@
-// ─── Fetch Shiprocket Order (Callback Verification API) ────────────────────────
+// ─── Fetch Shiprocket Order (Callback Verification API) ───────────────────────
 // Called by ShiprocketCallback.tsx immediately after checkout redirect.
 //
-// FLOW:
-//   1. Receive Shiprocket order_id.
-//   2. Call Shiprocket Order Details API as the Source of Truth.
-//   3. Check if we already mapped this order (in case of retry/race).
-//   4. Call syncOrderFromDetails() to atomically create/update the order.
-//   5. Return the local order UUID and number back to the frontend.
+// NEW FLOW (no shiprocket_orders mapping table):
+//   1. Receive Shiprocket order_id from Shiprocket checkout callback.
+//   2. Check if order already exists in DB by shiprocket_order_id column.
+//   3. If not: call Shiprocket Order Details API → create order via syncOrderFromDetails.
+//   4. Return the local order UUID, number, and customer details to the frontend.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -51,8 +50,22 @@ serve(async (req) => {
 
     console.log(`[Callback] Verification requested for Shiprocket Order ID: ${shiprocketOrderId}`);
 
-    // ── 1. Call Order Details API (Authoritative Source) ─────────────────────
-    console.log(`[Callback] Calling Order Details API for ${shiprocketOrderId}`);
+    // ── 1. Check if order already exists in DB (idempotency via shiprocket_order_id column) ──
+    const { data: existingOrder } = await supabase
+      .from("orders")
+      .select("id, order_number, customer_email, customer_name, customer_phone, order_status, payment_status, total_amount, currency, shipping_address, order_items(*)")
+      .eq("shiprocket_order_id", String(shiprocketOrderId))
+      .maybeSingle();
+
+    if (existingOrder) {
+      console.log(`[Callback] Order ${existingOrder.order_number} already exists for Shiprocket ID ${shiprocketOrderId}. Returning.`);
+      return new Response(
+        JSON.stringify({ success: true, order: existingOrder }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── 2. Call Shiprocket Order Details API ─────────────────────────────────
     const isMock = apiKey === "mock_key" || secretKey === "mock_secret";
     let orderDetails: any;
 
@@ -61,13 +74,13 @@ serve(async (req) => {
         order_id:            String(shiprocketOrderId),
         fastrr_order_id:     String(shiprocketOrderId),
         status:              "completed",
-        payment_type:        "cod",
+        payment_type:        "prepaid",
         payment_status:      "paid",
         subtotal_price:      749,
         shipping_charges:    50,
         total_discount:      0,
         cod_charges:         0,
-        total_amount_payable:799,
+        total_amount_payable: 799,
         gst_amount:          0,
         edd:                 null,
         shipping_address: {
@@ -83,54 +96,42 @@ serve(async (req) => {
       const result = await callOrderDetailsApi(shiprocketOrderId, apiKey, secretKey);
       if (!result.ok || !result.data) {
         console.error(`[Callback] Order Details API failed: ${result.error}`);
-        // Return 404/500 so frontend knows it failed and can apply exponential backoff
+        // Return 404 so frontend knows to keep retrying (Shiprocket needs a few seconds)
         return new Response(
-          JSON.stringify({ error: "Order details not yet available from Shiprocket." }),
+          JSON.stringify({ error: "Order details not yet available from Shiprocket. Please retry." }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       orderDetails = result.data;
-      console.log(`[Callback] Order Details API verified successfully for ${shiprocketOrderId}`);
+      console.log(`[Callback] Shiprocket Order Details API success for ${shiprocketOrderId}`);
     }
 
-    // ── 2. Check if mapping already exists ──────────────────────────────────
-    // In rare cases (e.g. frontend retry, or webhook fired incredibly fast), it might exist.
-    const { data: mapping } = await supabase
-      .from("shiprocket_orders")
-      .select("order_id")
-      .eq("shiprocket_order_id", String(shiprocketOrderId))
-      .maybeSingle();
-
-    const existingOrderId = mapping?.order_id || null;
-
-    // ── 3. Atomically Create/Update Order ───────────────────────────────────
-    console.log(`[Sync] Running syncOrderFromDetails (existingId: ${existingOrderId})`);
-    
+    // ── 3. Create order in DB via syncOrderFromDetails ───────────────────────
+    console.log(`[Callback] Creating order from Shiprocket details for ${shiprocketOrderId}`);
     const { orderId: localOrderId } = await syncOrderFromDetails(
       supabase,
       String(shiprocketOrderId),
       orderDetails,
-      existingOrderId,
-      null // No webhook body
+      null, // No pre-existing order
+      null  // No webhook body
     );
 
-    // ── 4. Retrieve minimal response for redirect ───────────────────────────
+    // ── 4. Return the full order for the success page ────────────────────────
     const { data: finalOrder, error: finalErr } = await supabase
       .from("orders")
-      .select("id, order_number")
+      .select("id, order_number, customer_email, customer_name, customer_phone, order_status, payment_status, total_amount, currency, shipping_address, order_items(*)")
       .eq("id", localOrderId)
       .maybeSingle();
 
     if (finalErr || !finalOrder) {
-      console.error("[Callback] Error fetching final verified order:", finalErr?.message);
+      console.error("[Callback] Error fetching final order:", finalErr?.message);
       return new Response(
-        JSON.stringify({ error: "Order verified but failed to retrieve final record" }),
+        JSON.stringify({ error: "Order created but failed to retrieve details" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`[Callback] Verification Complete. Local Order UUID: ${finalOrder.id} (${finalOrder.order_number})`);
-
+    console.log(`[Callback] Verification Complete. Order: ${finalOrder.order_number} (${finalOrder.id})`);
     return new Response(
       JSON.stringify({ success: true, order: finalOrder }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

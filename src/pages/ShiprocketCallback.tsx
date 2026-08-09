@@ -7,149 +7,177 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 
+// ─── ShiprocketCallback ──────────────────────────────────────────────────────
+// Landing page after Shiprocket Checkout redirect.
+//
+// NEW FLOW (no heavy polling — no verification screen):
+//   1. Read ost param. If not SUCCESS → redirect back to checkout.
+//   2. Call fetch-shiprocket-order with the shiprocket order_id from URL.
+//      The function handles: DB lookup → API call → order creation atomically.
+//   3. On success: redirect straight to /order-success?id=<LOCAL_ORDER_UUID>
+//   4. On retry failure (max 3): redirect to /order-success?shiprocket_order_id=<SR_ID>
+//      The OrderSuccess page will poll DB until the webhook creates it.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const FACTS = [
+  "Processing your order...",
+  "Scalvea products are dermatologist tested.",
+  "Your hair deserves the best — almost there!",
+  "Confirming payment with Shiprocket...",
+  "Preparing your order summary...",
+];
+
 const ShiprocketCallback = () => {
   useSEO({
     title: "Processing Order - Scalvea",
-    description: "Please wait while we verify your order with Shiprocket.",
+    description: "Please wait while we confirm your order.",
     noindex: true,
   });
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const [status, setStatus] = useState<"checking" | "syncing" | "failed" | "success">("checking");
-  const [message, setMessage] = useState("Initializing callback handler...");
-  
-  // Ref to prevent double-execution in React strict mode
+  const [status, setStatus] = useState<"processing" | "success" | "failed">("processing");
+  const [message, setMessage] = useState(FACTS[0]);
+  const [retryCount, setRetryCount] = useState(0);
   const hasExecuted = useRef(false);
+  const factIdx = useRef(0);
 
-  // Read params
-  const orderIdParam = searchParams.get("oid") ||
-                        searchParams.get("order_id") || 
-                        searchParams.get("shiprocket_order_id") || 
-                        searchParams.get("token") || 
-                        searchParams.get("id");
+  // Shiprocket passes various param names — handle all of them
+  const shiprocketOrderId =
+    searchParams.get("oid") ||
+    searchParams.get("order_id") ||
+    searchParams.get("shiprocket_order_id") ||
+    searchParams.get("id") ||
+    searchParams.get("token");
+
+  const ost = searchParams.get("ost");
 
   useEffect(() => {
     if (hasExecuted.current) return;
     hasExecuted.current = true;
 
-    console.log("[Callback] === SHIPROCKET REDIRECT DETECTED ===");
-    console.log("[Callback] Full redirected URL:", window.location.href);
-    console.log("[Callback] Extracted orderIdParam:", orderIdParam);
+    console.log("[Callback] URL:", window.location.href);
+    console.log("[Callback] ost:", ost, "| shiprocketOrderId:", shiprocketOrderId);
 
-    const ost = searchParams.get("ost");
-    if (ost && ost.toUpperCase() !== "SUCCESS") {
-      console.warn("[Callback] Shiprocket checkout status indicates cancellation or failure:", ost);
-      setStatus("failed");
-      if (ost.toUpperCase() === "CANCELLED" || ost.toUpperCase() === "INITIATED") {
-        setMessage("Checkout cancelled or abandoned. Redirecting back to checkout...");
-      } else {
-        setMessage(`Checkout payment failed (Status: ${ost}). Redirecting back to checkout...`);
-      }
-      setTimeout(() => navigate("/checkout"), 3500);
+    // ── Rotate fun facts while processing ─────────────────────────────────
+    const factInterval = setInterval(() => {
+      factIdx.current = (factIdx.current + 1) % FACTS.length;
+      setMessage(FACTS[factIdx.current]);
+    }, 2000);
+
+    // ── If payment was cancelled / failed → /order-failed ───────────────────────
+    if (ost && !["SUCCESS", "PAID", "COMPLETED"].includes(ost.toUpperCase())) {
+      clearInterval(factInterval);
+      navigate(`/order-failed?reason=cancelled`);
       return;
     }
 
-    if (!orderIdParam) {
-      console.error("[Callback] No order identifier found in URL.");
-      setStatus("failed");
-      setMessage("No order identifier found in URL. Please contact support.");
+    if (!shiprocketOrderId) {
+      clearInterval(factInterval);
+      navigate(`/order-failed?reason=cancelled`);
       return;
     }
 
-    const checkShiprocketOrder = async (retries = 0) => {
-      setStatus("syncing");
-      setMessage(`Verifying payment and syncing order (Attempt ${retries + 1}/6)...`);
+    // ── Attempt to confirm the order via fetch-shiprocket-order ──────────
+    const confirm = async (attempt = 0): Promise<void> => {
       try {
         const { data, error } = await supabase.functions.invoke("fetch-shiprocket-order", {
-          body: { orderId: orderIdParam }
+          body: { orderId: shiprocketOrderId },
         });
 
-        if (error || !data?.success) {
-          throw new Error(error?.message || "Sync failed");
-        }
+        if (error) throw new Error(error.message);
+        if (!data?.success || !data?.order) throw new Error("Order not yet available");
 
-        // Success!
+        // Success! We have the local order UUID — go straight to success page
+        clearInterval(factInterval);
         setStatus("success");
-        setMessage("Payment successful! Loading your order details...");
+        setMessage("Order confirmed! Loading your receipt...");
         setTimeout(() => {
-          navigate(`/order-success?shiprocket_order_id=${orderIdParam}`);
+          navigate(`/order-success?id=${data.order.id}`);
         }, 500);
       } catch (err: any) {
-        console.warn("[Callback] Sync attempt failed:", err);
-        if (retries < 5) {
-          // Wait 2.5 seconds and retry (Shiprocket API takes a few seconds to populate)
-          setTimeout(() => checkShiprocketOrder(retries + 1), 2500);
+        console.warn(`[Callback] Attempt ${attempt + 1} failed:`, err.message);
+        setRetryCount(attempt + 1);
+
+        if (attempt < 4) {
+          // Shiprocket API takes 3-8 seconds to populate — retry
+          setTimeout(() => confirm(attempt + 1), 3000);
         } else {
-          // Max retries reached, just send to success page and let fallback/webhook handle it
-          setStatus("success");
-          setMessage("Payment recorded. Finalizing order details...");
-          setTimeout(() => {
-            navigate(`/order-success?shiprocket_order_id=${orderIdParam}`);
-          }, 1000);
+          // Exhausted all retries — payment may have been received but order not yet in DB.
+          // Redirect to order-failed with reason=timeout so user knows to email if money taken.
+          clearInterval(factInterval);
+          navigate(`/order-failed?reason=timeout`);
         }
       }
     };
 
-    checkShiprocketOrder();
+    confirm();
 
-  }, [orderIdParam, searchParams, navigate]);
+    return () => clearInterval(factInterval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
-      <main className="flex-grow flex items-center justify-center py-12 px-4 bg-gradient-to-br from-background via-muted/20 to-primary/5">
-        <div className="max-w-md w-full bg-card/60 backdrop-blur-md rounded-2xl p-8 border border-border shadow-2xl relative overflow-hidden transition-all duration-300">
-          <div className="absolute -top-12 -left-12 w-36 h-36 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-12 -right-12 w-36 h-36 bg-accent/20 rounded-full blur-3xl pointer-events-none" />
+      <main className="flex-grow flex items-center justify-center py-12 px-4">
+        <div className="max-w-sm w-full text-center space-y-8">
 
-          <div className="flex flex-col items-center text-center relative z-10">
-            {status === "success" && (
-              <div className="h-16 w-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-6 animate-bounce">
-                <CheckCircle className="h-10 w-10" />
-              </div>
-            )}
+          {status === "success" && (
+            <div className="h-16 w-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 mx-auto animate-bounce">
+              <CheckCircle className="h-10 w-10" />
+            </div>
+          )}
 
-            {status === "failed" && (
-              <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center text-destructive mb-6 animate-pulse">
-                <AlertCircle className="h-10 w-10" />
-              </div>
-            )}
+          {status === "failed" && (
+            <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center text-destructive mx-auto">
+              <AlertCircle className="h-10 w-10" />
+            </div>
+          )}
 
-            {(status === "checking" || status === "syncing") && (
-              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-6 animate-spin">
-                <Loader2 className="h-10 w-10" />
-              </div>
-            )}
+          {status === "processing" && (
+            <div className="relative mx-auto h-16 w-16">
+              <div className="absolute inset-0 rounded-full border-4 border-muted" />
+              <div className="absolute inset-0 rounded-full border-4 border-t-primary animate-spin border-l-transparent border-r-transparent border-b-transparent" />
+            </div>
+          )}
 
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground mb-3">
-              {status === "success" && "Order Verified"}
-              {status === "failed" && "Verification Timeout"}
-              {status === "checking" && "Processing Order"}
-              {status === "syncing" && "Verifying Payment"}
+          <div className="space-y-2">
+            <h1 className="text-xl font-semibold tracking-tight">
+              {status === "success" && "Order Confirmed"}
+              {status === "failed"  && "Something went wrong"}
+              {status === "processing" && "Confirming Your Order"}
             </h1>
-
-            <p className="text-muted-foreground text-sm max-w-xs mb-8 min-h-[48px] flex items-center justify-center leading-relaxed">
+            <p className="text-sm text-muted-foreground transition-all duration-500 min-h-[40px]">
               {message}
             </p>
-
-            <div className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-muted/40 text-xs text-muted-foreground border border-border/50">
-              <ShieldCheck className="h-4 w-4 text-primary" />
-              <span>Secure, encrypted checkout verification</span>
-            </div>
-
-            {status === "failed" && (
-              <div className="flex flex-col gap-2 w-full mt-6">
-                <Button variant="default" onClick={() => navigate("/account")} className="w-full shadow-lg hover:shadow-primary/20">
-                  Go to My Account
-                </Button>
-                <Button variant="ghost" onClick={() => navigate("/shop")} className="w-full">
-                  Return to Store
-                </Button>
-              </div>
-            )}
           </div>
+
+          {status === "processing" && (
+            <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-muted/40 text-xs text-muted-foreground border border-border/50">
+              <ShieldCheck className="h-4 w-4 text-primary flex-shrink-0" />
+              <span>Secure checkout by Shiprocket</span>
+            </div>
+          )}
+
+          {status === "failed" && (
+            <div className="flex flex-col gap-2 pt-2">
+              <Button onClick={() => navigate("/checkout")} className="w-full">
+                Return to Checkout
+              </Button>
+              <Button variant="ghost" onClick={() => navigate("/account")} className="w-full">
+                View My Account
+              </Button>
+            </div>
+          )}
+
+          {/* Debug info for development */}
+          {retryCount > 0 && status === "processing" && (
+            <p className="text-[10px] text-muted-foreground/50">
+              Attempt {retryCount + 1}/5
+            </p>
+          )}
         </div>
       </main>
       <Footer />

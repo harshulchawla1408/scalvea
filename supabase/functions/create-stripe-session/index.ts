@@ -180,7 +180,7 @@ Deno.serve(async (req) => {
     const subtotalAfterDiscountCents = subtotalCents - discountCents;
 
     // ── Step 7: Calculate Shipping ───────────────────────────────────────
-    let shippingCents = 799; // Standard: A$7.99
+    let shippingCents = 750; // Standard: A$7.50
     let shippingDisplayName = "Standard Shipping";
     let deliveryMinDays = 5;
     let deliveryMaxDays = 7;
@@ -322,7 +322,7 @@ Deno.serve(async (req) => {
           },
         ],
         success_url: `${origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${origin}/checkout`,
+        cancel_url:  `${origin}/order-failed?reason=cancelled`,
         metadata: {
           // All data needed by stripe-webhook to create the order
           user_id:              userId,

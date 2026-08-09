@@ -770,78 +770,32 @@ export async function syncOrderFromDetails(
     savedOrder = updated;
     console.log(`[Sync] Updated ${savedOrder.order_number} (${orderId})`);
   } else {
-    const { data: inserted, error: insertErr } = await supabase
-      .from("orders").insert(orderPayload).select().single();
-    if (insertErr) { console.error("syncOrderFromDetails INSERT failed:", insertErr.message, insertErr.code); throw insertErr; }
-    orderId    = inserted.id;
-    savedOrder = inserted;
-    created    = true;
-    console.log(`[Sync] Created ${savedOrder.order_number} (${orderId})`);
-
-    // Create shiprocket_orders mapping (UNIQUE on shiprocket_order_id)
-    const { error: mapErr } = await supabase.from("shiprocket_orders").insert({
-      order_id: orderId, shiprocket_order_id: String(shiprocketOrderId),
-      tracking_id:  webhookBody?.tracking_id  || orderDetails.tracking_id  || null,
-      courier_name: webhookBody?.courier_name || orderDetails.courier_name || null,
-    } as any);
-
-    if (mapErr) {
-      if (mapErr.code === "23505") {
-        // Concurrent webhook race condition — remove orphan, return existing order
-        console.warn(`syncOrderFromDetails: Concurrent duplicate for ${shiprocketOrderId}. Removing orphan ${orderId}.`);
-        await supabase.from("orders").delete().eq("id", orderId);
-        const { data: existMap } = await supabase.from("shiprocket_orders")
-          .select("order_id").eq("shiprocket_order_id", String(shiprocketOrderId)).maybeSingle();
-        return { orderId: existMap?.order_id || orderId, created: false, itemsCreated: [] };
-      }
-      console.error("syncOrderFromDetails: Mapping insert failed:", mapErr.message); throw mapErr;
-    }
-  }
-
-  // ── H: Update tracking info if present ───────────────────────────────────
-  const hasTracking = webhookBody?.tracking_id || webhookBody?.courier_name || orderDetails.tracking_id || orderDetails.courier_name;
-  if (existingOrderId && hasTracking) {
-    await supabase.from("shiprocket_orders").update({
-      tracking_id:  webhookBody?.tracking_id  || orderDetails.tracking_id  || undefined,
-      courier_name: webhookBody?.courier_name || orderDetails.courier_name || undefined,
-    }).eq("order_id", existingOrderId)
-      .catch((e: any) => console.warn("shiprocket_orders tracking update failed:", e.message));
-  }
-
-  // ── I: Upsert payments ────────────────────────────────────────────────────
-  if (paymentsArr.length > 0) {
-    for (const pmt of paymentsArr) {
-      const txnId = pmt.txn_id || pmt.transaction_id || pmt.id || null;
-      if (!txnId) continue;
-      const { data: existPmt } = await supabase.from("payments").select("id")
-        .eq("order_id", orderId).eq("transaction_id", txnId).maybeSingle();
-      if (!existPmt) {
-        console.log(`[Sync] Inserting payment: method=${pmt.payment_method || rawPaymentType}, txn_id=${txnId}, amount=${pmt.amount}`);
-        await supabase.from("payments").insert({
-          order_id: orderId, payment_method: mapPaymentMethod(pmt.payment_method || rawPaymentType),
-          payment_status: Number(pmt.amount_received) > 0 ? "paid" : "pending",
-          amount: Number(pmt.amount || 0), transaction_id: txnId,
-          pg_transaction_id: pmt.pg_transaction_id || null,
-          amount_received: Number(pmt.amount_received || 0),
-          gateway: pmt.gateway || null, raw_response: pmt,
-        } as any).catch((e: any) => console.warn("[Sync] payment insert failed:", e.message));
-      } else {
-        console.log(`[Sync] Payment skipped because transaction_id ${txnId} already exists`);
-      }
-    }
-  } else if (fastrrId) {
-    // Fallback: single payment record from order totals
-    const { data: existPmt } = await supabase.from("payments").select("id")
-      .eq("order_id", orderId).eq("transaction_id", fastrrId).maybeSingle();
-    if (!existPmt) {
-      console.log(`[Sync] Inserting fallback payment: method=${mappedPayment}, txn_id=${fastrrId}, amount=${totalAmountPayable}`);
-      await supabase.from("payments").insert({
-        order_id: orderId, payment_method: mappedPayment, payment_status: localPayStatus,
-        amount: totalAmountPayable, transaction_id: fastrrId, raw_response: gatewayResponse,
-      } as any).catch((e: any) => console.warn("[Sync] fallback payment insert failed:", e.message));
+    // Check if order exists by shiprocket_order_id in orders table directly
+    const { data: existingOrder } = await supabase.from("orders").select("id").eq("shiprocket_order_id", String(shiprocketOrderId)).maybeSingle();
+    if (existingOrder) {
+      orderId = existingOrder.id;
+      console.log(`[Sync] Found existing order ${orderId} by shiprocket_order_id`);
     } else {
-      console.log(`[Sync] Fallback payment skipped because transaction_id ${fastrrId} already exists`);
+      const { data: inserted, error: insertErr } = await supabase
+        .from("orders").insert(orderPayload).select().single();
+      if (insertErr) { console.error("syncOrderFromDetails INSERT failed:", insertErr.message, insertErr.code); throw insertErr; }
+      orderId    = inserted.id;
+      savedOrder = inserted;
+      created    = true;
+      console.log(`[Sync] Created ${savedOrder.order_number} (${orderId})`);
     }
+  }
+
+  // ── H: Update tracking info if present (stored directly on orders) ──
+  const newTrackingId  = webhookBody?.tracking_id  || orderDetails.tracking_id  || null;
+  const newCourierName = webhookBody?.courier_name || orderDetails.courier_name || null;
+  if (orderId && (newTrackingId || newCourierName)) {
+    await supabase.from("orders").update({
+      tracking_number: newTrackingId  || undefined,
+      courier_name:    newCourierName || undefined,
+      courier:         newCourierName || undefined,
+    }).eq("id", orderId)
+      .catch((e: any) => console.warn("orders tracking update failed:", e.message));
   }
 
   // ── J: Resolve cart items ─────────────────────────────────────────────────

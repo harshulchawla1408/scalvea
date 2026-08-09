@@ -53,7 +53,7 @@ const Checkout = () => {
   const taxAmount = subtotalAfterDiscount * taxRate;
   
   const freeShippingThreshold = isIndia ? 0 : 60;
-  const shippingAmount = subtotalAfterDiscount >= freeShippingThreshold ? 0 : (isIndia ? 0 : 7.99);
+  const shippingAmount = subtotalAfterDiscount >= freeShippingThreshold ? 0 : (isIndia ? 0 : 7.50);
   const grandTotal = subtotalAfterDiscount + taxAmount + shippingAmount;
 
   const [form, setForm] = useState({
@@ -602,12 +602,7 @@ const Checkout = () => {
                       {shippingAmount === 0 ? (
                         "Free Shipping"
                       ) : (
-                        <span>
-                          <span className="line-through text-muted-foreground/60 mr-1.5">
-                            {isIndia ? "₹100" : "A$7.99"}
-                          </span>
-                          <span className="font-medium text-foreground">{formatVal(shippingAmount)}</span>
-                        </span>
+                        <span className="font-medium text-foreground">{formatVal(shippingAmount)}</span>
                       )}
                     </span>
                   </div>
