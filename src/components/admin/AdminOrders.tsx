@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Plus, PenLine, Pencil, Search, X, AlertTriangle } from "lucide-react";
+import { Plus, PenLine, Pencil, Search, X, AlertTriangle, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import AdminManualOrder from "./AdminManualOrder";
+import { generateInvoicePDF } from "@/utils/generateInvoicePDF";
 
 /* ─── Types ─── */
 type OrderSource = "All" | "Online" | "Manual";
@@ -343,8 +344,7 @@ const AdminOrders = () => {
 
   /* ── Filters + Search ── */
   const filtered = orders
-    .filter(o => o.country === "India" || o.country === "Australia")
-    .filter(o => countryFilter === "All" || o.country === countryFilter)
+    .filter(o => countryFilter === "All" || o.country === countryFilter || (!o.country && countryFilter === "Australia"))
     .filter(o => {
       // No draft orders exist in the new flow — all orders are real confirmed orders.
       // Just filter by source (All, Online, Manual).
@@ -714,6 +714,12 @@ const AdminOrders = () => {
                       <div className="border-t border-border/10 pt-2">
                         <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Admin Notes</p>
                         <p className="text-xs italic text-muted-foreground">{order.admin_notes || "No notes."}</p>
+                      </div>
+
+                      <div className="border-t border-border/10 pt-4 flex justify-end">
+                        <Button onClick={() => generateInvoicePDF(order)} variant="outline" className="text-xs tracking-[0.1em] uppercase h-9">
+                          <Download className="h-3 w-3 mr-1.5" /> Download Invoice
+                        </Button>
                       </div>
                     </div>
                   )}

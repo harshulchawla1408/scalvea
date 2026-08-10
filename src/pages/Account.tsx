@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCountry } from "@/contexts/CountryContext";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useProducts } from "@/hooks/useProducts";
+import { generateInvoicePDF } from "@/utils/generateInvoicePDF";
 import ProductCard from "@/components/products/ProductCard";
 import { toast } from "@/hooks/use-toast";
 import { Package, ChevronRight, Pencil, Plus, Trash2, Check, X, Clock, MapPin, Heart, Eye, Download, Globe, ChevronDown, ChevronUp } from "lucide-react";
@@ -193,38 +194,9 @@ const Account = () => {
     navigate("/");
   };
 
-  // Download invoice as text/html
+  // Download invoice as PDF
   const downloadInvoice = (order: any) => {
-    const addr = order.shipping_address || {};
-    const html = `
-<!DOCTYPE html><html><head><title>Invoice ${order.order_number}</title>
-<style>body{font-family:Inter,sans-serif;padding:40px;max-width:700px;margin:auto}h1{font-size:20px;margin-bottom:4px}
-table{width:100%;border-collapse:collapse;margin:20px 0}th,td{text-align:left;padding:8px;border-bottom:1px solid #eee;font-size:13px}
-th{text-transform:uppercase;letter-spacing:1px;font-size:10px;color:#888}.total{font-weight:600;font-size:15px}
-.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px}
-.meta{font-size:12px;color:#666;line-height:1.8}</style></head><body>
-<div class="header"><div><h1>SCALVEA</h1><p style="font-size:11px;color:#888;letter-spacing:2px">CARE YOU DESERVE</p></div>
-<div style="text-align:right"><h2 style="font-size:16px;margin:0">INVOICE</h2>
-<p class="meta">${order.order_number}<br>${new Date(order.created_at).toLocaleDateString()}</p></div></div>
-<div class="meta" style="margin-bottom:20px"><strong>Ship To:</strong><br>
-${addr.first_name || ""} ${addr.last_name || ""}<br>${addr.address_line1 || ""}<br>
-${addr.city || ""} ${addr.state || ""} ${addr.postcode || ""}<br>${addr.country || order.country}</div>
-<table><tr><th>Item</th><th>Qty</th><th>Price</th></tr>
-<tr><td colspan="3" style="font-size:12px;color:#888">Order items — see order confirmation email for details</td></tr></table>
-<table><tr><td>Subtotal</td><td class="total">${order.currency === "INR" ? "₹" : "$"}${Number(order.subtotal).toFixed(2)}</td></tr>
-${Number(order.tax_amount) > 0 ? `<tr><td>Tax</td><td>${order.currency === "INR" ? "₹" : "$"}${Number(order.tax_amount).toFixed(2)}</td></tr>` : ""}
-<tr><td>Shipping</td><td>${order.currency === "INR" ? "₹" : "$"}${Number(order.shipping_amount).toFixed(2)}</td></tr>
-${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "INR" ? "₹" : "$"}${Number(order.discount_amount).toFixed(2)}</td></tr>` : ""}
-<tr><td><strong>Total</strong></td><td class="total">${order.currency === "INR" ? "₹" : "$"}${Number(order.total_amount).toFixed(2)} ${order.currency}</td></tr></table>
-<p style="font-size:11px;color:#888;margin-top:30px;text-align:center">SCALVEA GROUPS PTY LTD · ABN: 99 696 417 679 · 17 Travers St, Craigieburn VIC 3064, Australia · scalvea.com</p>
-</body></html>`;
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `invoice-${order.order_number}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
+    generateInvoicePDF(order);
     toast({ title: "Invoice downloaded" });
   };
 
@@ -418,11 +390,9 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
                     {expandedOrderId === order.id && (() => {
                       const isIndia  = order.currency === "INR";
                       const fmt      = (v: number) => isIndia ? `₹${Math.round(v || 0).toLocaleString("en-IN")}` : `$${Number(v || 0).toFixed(2)}`;
-                      const srMap    = (order as any).shiprocket_orders as any;
                       const items    = (order as any).order_items as any[] || [];
                       const addr     = (order.shipping_address as any) || {};
                       const billing  = (order.billing_address as any) || {};
-                      const srPmts   = (order as any).shiprocket_payments as any[] || [];
                       const payLabel = (order.payment_method || "").replace("shiprocket_", "").toUpperCase() || "—";
                       return (
                       <div className="border-t border-border p-4 space-y-4">
@@ -525,13 +495,13 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
                         <div className="border-t border-border/40 pt-4 grid grid-cols-2 gap-4 text-sm">
                           <div>
                             <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Courier Partner</p>
-                            <p>{srMap?.courier_name || order.courier || "Assigning..."}</p>
+                            <p>{order.courier_name || order.courier || "Assigning..."}</p>
                           </div>
                           <div>
                             <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Tracking Number</p>
                             <p className="font-mono">
-                              {srMap?.tracking_id || order.tracking_number ? (
-                                <span className="text-foreground font-semibold">{srMap?.tracking_id || order.tracking_number}</span>
+                              {order.tracking_number ? (
+                                <span className="text-foreground font-semibold">{order.tracking_number}</span>
                               ) : (
                                 <span className="text-muted-foreground">Pending shipment</span>
                               )}
@@ -545,19 +515,6 @@ ${order.discount_amount > 0 ? `<tr><td>Discount</td><td>-${order.currency === "I
                           )}
                         </div>
 
-                        {/* Payments detail for India */}
-                        {isIndia && srPmts.length > 0 && (
-                          <div className="border-t border-border/40 pt-3">
-                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-2">Payment Details</p>
-                            {srPmts.map((pmt: any, i: number) => (
-                              <div key={i} className="text-xs space-y-0.5">
-                                <p><span className="text-muted-foreground">Method: </span><span className="uppercase">{(pmt.payment_method || "").replace("shiprocket_","") || payLabel}</span></p>
-                                {pmt.gateway && <p><span className="text-muted-foreground">Gateway: </span>{pmt.gateway}</p>}
-                                {pmt.pg_transaction_id && <p><span className="text-muted-foreground">Ref: </span><span className="font-mono">{pmt.pg_transaction_id}</span></p>}
-                              </div>
-                            ))}
-                          </div>
-                        )}
 
                         {/* Shipping address */}
                         {order.shipping_address && (
