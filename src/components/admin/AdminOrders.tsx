@@ -238,11 +238,48 @@ const AdminOrders = () => {
   const [adminNames, setAdminNames] = useState<Record<string, string>>({});
 
   const fetchOrders = async () => {
-    const { data } = await supabase
+    setLoading(true);
+
+    // Step 1: Fetch all orders (simple query, no nested join)
+    const { data: ordersData, error: ordersError } = await supabase
       .from("orders")
-      .select("*, order_items(*)")
+      .select("*")
       .order("created_at", { ascending: false });
-    setOrders(data || []);
+
+    if (ordersError) {
+      console.error("[AdminOrders] Failed to fetch orders:", ordersError.message, ordersError.code);
+      toast({ title: "Failed to load orders", description: ordersError.message, variant: "destructive" });
+      setLoading(false);
+      return;
+    }
+
+    const fetchedOrders = ordersData || [];
+    console.log("[AdminOrders] Fetched orders:", fetchedOrders.length);
+
+    // Step 2: Fetch ALL order_items in one query and bucket by order_id
+    const { data: allItems, error: itemsError } = await supabase
+      .from("order_items")
+      .select("*");
+
+    if (itemsError) {
+      console.warn("[AdminOrders] Could not load order items:", itemsError.message);
+    }
+
+    // Merge items into orders as order_items[] array
+    const itemsByOrder: Record<string, any[]> = {};
+    for (const item of allItems || []) {
+      if (!itemsByOrder[item.order_id]) itemsByOrder[item.order_id] = [];
+      itemsByOrder[item.order_id].push(item);
+    }
+
+    const ordersWithItems = fetchedOrders.map(o => ({
+      ...o,
+      order_items: itemsByOrder[o.id] || [],
+    }));
+
+    setOrders(ordersWithItems);
+    // Also pre-populate the orderItems cache so expand works instantly
+    setOrderItems(itemsByOrder);
     setLoading(false);
   };
 
