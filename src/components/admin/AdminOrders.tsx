@@ -612,11 +612,11 @@ const AdminOrders = () => {
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
                         <div>
                           <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Courier</p>
-                          <p>{srMapping?.courier_name || order.courier_name || order.courier || "—"}</p>
+                          <p>{order.courier_name || order.courier || "—"}</p>
                         </div>
                         <div>
                           <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Tracking ID</p>
-                          <p>{srMapping?.tracking_id || order.tracking_number || "—"}</p>
+                          <p>{order.tracking_number || "—"}</p>
                         </div>
                         <div>
                           <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">AWB / Shipment</p>
@@ -690,23 +690,6 @@ const AdminOrders = () => {
                               <p>{order.platform_order_id}</p>
                             </div>
                           )}
-                        </div>
-                      )}
-
-                      {/* Payment details for India */}
-                      {isIndia && srPayments.length > 0 && (
-                        <div className="border-t border-border/10 pt-3">
-                          <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-2">Payment Transactions</p>
-                          <div className="space-y-1">
-                            {srPayments.map((pmt: any, i: number) => (
-                              <div key={i} className="flex flex-wrap gap-3 text-[10px] font-mono bg-secondary/30 px-2 py-1">
-                                <span className="text-foreground font-medium">{(pmt.payment_method || "").replace("shiprocket_", "").toUpperCase() || "N/A"}</span>
-                                <span>{fmt(Number(pmt.amount || 0))}</span>
-                                {pmt.gateway && <span className="text-muted-foreground">{pmt.gateway}</span>}
-                                {pmt.pg_transaction_id && <span className="text-muted-foreground">PG: {pmt.pg_transaction_id}</span>}
-                              </div>
-                            ))}
-                          </div>
                         </div>
                       )}
 
