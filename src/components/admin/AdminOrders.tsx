@@ -261,9 +261,7 @@ const AdminOrders = () => {
       .from("order_items")
       .select("*");
 
-    if (itemsError) {
-      console.warn("[AdminOrders] Could not load order items:", itemsError.message);
-    }
+    console.log("[AdminOrders] order_items fetch — count:", allItems?.length ?? 0, "| error:", itemsError?.message ?? "none");
 
     // Merge items into orders as order_items[] array
     const itemsByOrder: Record<string, any[]> = {};
@@ -278,7 +276,7 @@ const AdminOrders = () => {
     }));
 
     setOrders(ordersWithItems);
-    // Also pre-populate the orderItems cache so expand works instantly
+    // Pre-populate the orderItems cache (only for orders that actually have items)
     setOrderItems(itemsByOrder);
     setLoading(false);
   };
@@ -312,8 +310,16 @@ const AdminOrders = () => {
 
   const loadOrderItems = async (orderId: string) => {
     if (expandedOrder === orderId) { setExpandedOrder(null); return; }
-    if (!orderItems[orderId]) {
-      const { data } = await supabase.from("order_items").select("*").eq("order_id", orderId);
+    // Always re-fetch if no items are cached OR if cached array is empty
+    // (empty could mean items exist but the bulk fetch was blocked by RLS)
+    const cached = orderItems[orderId];
+    if (!cached || cached.length === 0) {
+      const { data, error } = await supabase.from("order_items").select("*").eq("order_id", orderId);
+      if (error) {
+        console.error("[AdminOrders] loadOrderItems error for", orderId, ":", error.message);
+      } else {
+        console.log("[AdminOrders] loadOrderItems for", orderId, "→", data?.length ?? 0, "items");
+      }
       setOrderItems(prev => ({ ...prev, [orderId]: data || [] }));
     }
     setExpandedOrder(orderId);
@@ -737,7 +743,15 @@ const AdminOrders = () => {
                       </div>
 
                       <div className="border-t border-border/10 pt-4 flex justify-end">
-                        <Button onClick={() => generateInvoicePDF(order)} variant="outline" className="text-xs tracking-[0.1em] uppercase h-9">
+                        <Button
+                          onClick={() => generateInvoicePDF({
+                            ...order,
+                            // Use freshly-fetched per-order items (from loadOrderItems) with fallback
+                            order_items: (orderItems[order.id]?.length ? orderItems[order.id] : order.order_items) || [],
+                          })}
+                          variant="outline"
+                          className="text-xs tracking-[0.1em] uppercase h-9"
+                        >
                           <Download className="h-3 w-3 mr-1.5" /> Download Invoice
                         </Button>
                       </div>
