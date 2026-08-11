@@ -523,9 +523,9 @@ const AdminOrders = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <button onClick={() => loadOrderItems(order.id)} className="text-sm font-medium hover:underline">
+                        <span className="text-sm font-medium">
                           {order.order_number}
-                        </button>
+                        </span>
                         {isManual && (
                           <span className="inline-flex items-center gap-1 text-[9px] tracking-wider uppercase font-semibold bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5">
                             <PenLine className="h-2.5 w-2.5" /> Manual
@@ -547,8 +547,8 @@ const AdminOrders = () => {
                     </div>
                   </div>
 
-                  {/* ── Inline items (expanded) ── */}
-                  {isExpanded && orderItems[order.id] && (
+                  {/* ── Inline items ── */}
+                  {orderItems[order.id] && (
                     <div className="bg-secondary/50 border border-border/40 p-3 space-y-2">
                       <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground font-medium">Order Items</p>
                       {orderItems[order.id].length === 0
@@ -649,8 +649,7 @@ const AdminOrders = () => {
                   </div>
 
                   {/* ── Expanded detail section ── */}
-                  {isExpanded && (
-                    <div className="border-t border-border/40 pt-3 mt-3 space-y-4">
+                  <div className="border-t border-border/40 pt-3 mt-3 space-y-4">
                       {/* Tracking */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
                         <div>
@@ -756,7 +755,6 @@ const AdminOrders = () => {
                         </Button>
                       </div>
                     </div>
-                  )}
                 </div>
               );
             })}
