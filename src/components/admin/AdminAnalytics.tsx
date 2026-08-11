@@ -146,7 +146,7 @@ const AdminAnalytics = () => {
 
   const summaryCards = [
     { label: "Avg. Order Value", value: analytics.avgOrderValueText },
-    { label: "Total Customers", value: totalCustomers },
+    { label: "Total Users", value: totalCustomers },
     { label: "Payment Types", value: analytics.paymentMethods.length },
     { label: "Active Countries", value: "2 (AU / IN)" },
   ];

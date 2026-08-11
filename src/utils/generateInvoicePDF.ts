@@ -201,11 +201,11 @@ export function generateInvoicePDF(order: OrderData): void {
     doc.text(item.label, metaRightX - 60, metaY);
     doc.setFontSize(metaFontSize);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(
-      item.label === "Payment Status" && item.value === "PAID"
-        ? COLOR.green
-        : COLOR.darkGray
-    );
+    // Must spread the color array — passing array directly crashes jsPDF
+    const textColor = (item.label === "Payment Status" && item.value === "PAID")
+      ? COLOR.green
+      : COLOR.darkGray;
+    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
     doc.text(item.value, metaRightX, metaY, { align: "right" });
     metaY += metaLineHeight;
   }
@@ -409,7 +409,9 @@ export function generateInvoicePDF(order: OrderData): void {
 
     doc.setFontSize(row.bold ? 9 : 8);
     doc.setFont("helvetica", row.bold ? "bold" : "normal");
-    doc.setTextColor(...(row.color || COLOR.darkGray));
+    // Always spread r,g,b — never pass array directly to setTextColor
+    const rowColor = row.color || COLOR.darkGray;
+    doc.setTextColor(rowColor[0], rowColor[1], rowColor[2]);
     doc.text(row.label, summaryX, y);
     doc.text(row.value, summaryValueX, y, { align: "right" });
     y += summaryLineHeight;
@@ -466,11 +468,12 @@ export function generateInvoicePDF(order: OrderData): void {
   doc.text("Your hair deserves the best — we're honoured to be part of your care routine.", pageWidth / 2, y, { align: "center" });
   y += 5;
 
-  // Free shipping message (only for AUS orders ≥ A$60)
+  // Free shipping message (only for AUS orders >= A$60)
   if (isAus && shipping === 0 && subtotal >= 60) {
     doc.setFontSize(7);
     doc.setTextColor(...COLOR.green);
-    doc.text("🎉 You qualified for FREE shipping on this order (A$60+ threshold).", pageWidth / 2, y, { align: "center" });
+    // Note: no emoji — jsPDF standard fonts don't support them
+    doc.text("You qualified for FREE shipping on this order (A$60+ threshold).", pageWidth / 2, y, { align: "center" });
     y += 5;
   }
 
