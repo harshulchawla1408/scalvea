@@ -499,7 +499,7 @@ const AdminOrders = () => {
           </p>
         ) : (
           <div className="space-y-4">
-            {filtered.map((order) => {
+            {filtered.map((order, index) => {
               const addr     = order.shipping_address as any;
               const billing  = order.billing_address  as any;
               const isExpanded = expandedOrder === order.id;
@@ -517,7 +517,7 @@ const AdminOrders = () => {
               return (
                 <div
                   key={order.id}
-                  className={`border p-4 space-y-3 bg-background ${isManual ? "border-amber-300" : "border-border"}`}
+                  className={`border p-4 space-y-3 ${index % 2 === 1 ? "bg-muted/30" : "bg-background"} ${isManual ? "border-amber-300" : "border-border"}`}
                 >
                   {/* ── Header row ── */}
                   <div className="flex items-center justify-between">

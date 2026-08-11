@@ -16,7 +16,7 @@ interface OrderItem {
   original_price?: number;
 }
 
-interface OrderData {
+export interface OrderData {
   id: string;
   order_number: string;
   created_at: string;
@@ -64,28 +64,38 @@ const SCALVEA_FROM = {
 
 const COLOR = {
   black: [0, 0, 0] as [number, number, number],
-  darkGray: [51, 51, 51] as [number, number, number],
-  medGray: [100, 100, 100] as [number, number, number],
-  lightGray: [200, 200, 200] as [number, number, number],
+  darkGray: [60, 60, 60] as [number, number, number],
+  medGray: [120, 120, 120] as [number, number, number],
+  lightGray: [220, 220, 220] as [number, number, number],
   white: [255, 255, 255] as [number, number, number],
 };
+
+const MARGIN = 15;
+const PAGE_WIDTH = 210;
+const PAGE_HEIGHT = 297;
+const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
+const LINE_HEIGHT = 4.5;
+const FOOTER_RESERVE = 30; // mm reserved for footer at bottom
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtCurrency(val: number, currency: string): string {
-  if (currency === "INR") return `₹${Math.round(val || 0).toLocaleString("en-IN")}`;
-  return `A$${Number(val || 0).toFixed(2)}`;
+  const num = Number(val || 0);
+  if (currency === "INR") return `₹${Math.round(num).toLocaleString("en-IN")}`;
+  return `A$${num.toFixed(2)}`;
 }
 
 function fmtDate(dateStr: string): string {
   try {
-    return new Date(dateStr).toLocaleDateString("en-AU", {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr || "—";
+    return d.toLocaleDateString("en-AU", {
       day: "2-digit",
       month: "short",
       year: "numeric",
     });
   } catch {
-    return dateStr;
+    return dateStr || "—";
   }
 }
 
@@ -116,10 +126,10 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
   
   const prefix = cur === "INR" ? "SCV-IND-INV" : "SCV-AUS-INV";
   const numPart = (order.order_number || "").replace(/[^0-9]/g, "");
-  const invoiceNumber = `${prefix}-${numPart.padStart(4, "0")}`;
+  const invoiceNumber = numPart ? `${prefix}-${numPart.padStart(4, "0")}` : `${prefix}-XXXX`;
 
   // Fetch actual MRPs from the database for these items if available
-  const productIds = items.map((i) => i.product_id).filter(Boolean);
+  const productIds = items.map((i) => i.product_id).filter(Boolean) as string[];
   const mrpMap: Record<string, number> = {};
   
   if (productIds.length > 0) {
@@ -132,9 +142,9 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
       if (data) {
         data.forEach((p) => {
           if (cur === "AUD") {
-            mrpMap[p.product_id] = p.mrp_aud > 0 ? p.mrp_aud : p.price_aud;
+            mrpMap[p.product_id] = (p.mrp_aud && p.mrp_aud > 0) ? p.mrp_aud : p.price_aud;
           } else {
-            mrpMap[p.product_id] = p.mrp_inr > 0 ? p.mrp_inr : p.price_inr;
+            mrpMap[p.product_id] = (p.mrp_inr && p.mrp_inr > 0) ? p.mrp_inr : p.price_inr;
           }
         });
       }
@@ -152,118 +162,134 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
   }
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 15;
-  const contentWidth = pageWidth - margin * 2;
-  let y = margin;
+  let y = MARGIN;
+
+  // ── Layout Engine Helpers ──
+
+  const checkPageBreak = (neededHeight: number) => {
+    if (y + neededHeight > PAGE_HEIGHT - FOOTER_RESERVE) {
+      doc.addPage();
+      y = MARGIN;
+    }
+  };
+
+  const drawLabelValue = (label: string, value: string, x: number, startY: number, valueOffsetX: number, maxWidth: number) => {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...COLOR.darkGray);
+    doc.text(label, x, startY);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...COLOR.black);
+    const valueLines = doc.splitTextToSize(value || "—", maxWidth - valueOffsetX);
+    doc.text(valueLines, x + valueOffsetX, startY);
+    
+    return valueLines.length * LINE_HEIGHT;
+  };
 
   // ── Header Section ───────────────────────────────────────────────────
 
+  let leftY = y;
   // Left: Logo and Tagline
   if (logoImg) {
-    // Keep aspect ratio, scale width to ~50mm
-    const imgWidth = 50;
+    const imgWidth = 45;
     const imgHeight = (logoImg.height / logoImg.width) * imgWidth;
-    doc.addImage(logoImg, "PNG", margin, y, imgWidth, imgHeight);
-    y += imgHeight + 4;
+    doc.addImage(logoImg, "PNG", MARGIN, leftY, imgWidth, imgHeight);
+    leftY += imgHeight + 4;
   } else {
     doc.setFontSize(26);
-    doc.setFont("helvetica", "normal");
+    doc.setFont("helvetica", "bold");
     doc.setTextColor(...COLOR.black);
-    doc.text("Scalvea", margin, y + 10);
-    y += 16;
+    doc.text("Scalvea", MARGIN, leftY + 8);
+    leftY += 14;
   }
 
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...COLOR.medGray);
-  doc.text("CARE YOU DESERVE", margin, y);
+  doc.text("CARE YOU DESERVE", MARGIN, leftY);
+  leftY += LINE_HEIGHT;
 
   // Right: TAX INVOICE and details
-  let rightY = margin + 5;
-  doc.setFontSize(22);
+  let rightY = y + 4;
+  doc.setFontSize(20);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...COLOR.black);
   const title = isAus ? "TAX INVOICE" : "INVOICE";
-  doc.text(title, pageWidth - margin, rightY, { align: "right" });
-  
-  rightY += 12;
+  doc.text(title, PAGE_WIDTH - MARGIN, rightY, { align: "right" });
+  rightY += 10;
   
   const metaDetails = [
-    { label: "Invoice Number", value: `:   ${invoiceNumber}` },
-    { label: "Order Number", value: `:   ${order.order_number || "—"}` },
-    { label: "Invoice Date", value: `:   ${fmtDate(new Date().toISOString())}` },
-    { label: "Order Date", value: `:   ${fmtDate(order.created_at)}` },
-    { label: "Payment Status", value: `:   ${(order.payment_status || "—").replace(/_/g, " ")}` },
-    { label: "Payment Method", value: `:   ${(order.payment_method || "—").replace(/_/g, " ")}` },
+    { label: "Invoice Number", value: invoiceNumber },
+    { label: "Order Number", value: order.order_number || "—" },
+    { label: "Invoice Date", value: fmtDate(new Date().toISOString()) },
+    { label: "Order Date", value: fmtDate(order.created_at) },
+    { label: "Payment Status", value: String(order.payment_status || "—").replace(/_/g, " ") },
+    { label: "Payment Method", value: String(order.payment_method || "—").replace(/_/g, " ") },
   ];
 
-  const metaLabelX = pageWidth - margin - 55;
-  const metaValueX = pageWidth - margin - 35;
-  
+  const metaBoxWidth = 85;
+  const metaX = PAGE_WIDTH - MARGIN - metaBoxWidth;
+  const labelWidth = 32;
+
   for (const item of metaDetails) {
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...COLOR.black);
-    doc.text(item.label, metaLabelX, rightY);
-    
-    doc.setFont("helvetica", "normal");
-    doc.text(item.value, metaValueX, rightY);
-    rightY += 6;
+    const h = drawLabelValue(item.label, item.value, metaX, rightY, labelWidth, metaBoxWidth);
+    rightY += h;
   }
 
-  y = Math.max(y + 10, rightY + 5);
+  y = Math.max(leftY, rightY) + 8;
 
   // ── Thick Separator Line ─────────────────────────────────────────────
   
-  doc.setDrawColor(...COLOR.black);
+  doc.setDrawColor(...COLOR.lightGray);
   doc.setLineWidth(0.5);
-  doc.line(margin, y, pageWidth - margin, y);
+  doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
   y += 8;
 
   // ── FROM / BILL TO Section ─────────────────────────────────────────────
 
-  const colWidth = contentWidth / 2;
-  const addressFontSize = 9;
-  const addressLineHeight = 5.5;
+  checkPageBreak(50); // Need roughly 50mm for the addresses
 
-  // FROM column
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...COLOR.black);
-  doc.text("FROM", margin, y);
-  y += 8;
+  const colWidth = CONTENT_WIDTH / 2 - 5;
+
+  const drawAddressColumn = (title: string, lines: {text: string, bold?: boolean}[], startX: number, startY: number) => {
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...COLOR.black);
+    doc.text(title, startX, startY);
+    
+    let currentY = startY + 8;
+    for (const line of lines) {
+      if (!line.text) {
+        currentY += LINE_HEIGHT;
+        continue;
+      }
+      doc.setFont("helvetica", line.bold ? "bold" : "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...(line.bold ? COLOR.black : COLOR.darkGray));
+      const split = doc.splitTextToSize(line.text, colWidth);
+      doc.text(split, startX, currentY);
+      currentY += split.length * LINE_HEIGHT;
+    }
+    return currentY;
+  };
 
   const fromLines = [
     { text: SCALVEA_FROM.name, bold: true },
-    { text: `(Operating As: ${SCALVEA_FROM.operating_as})`, bold: false },
-    { text: `ABN: ${SCALVEA_FROM.abn}`, bold: false },
-    { text: "", bold: false },
-    { text: SCALVEA_FROM.address, bold: false },
-    { text: `${SCALVEA_FROM.city}, ${SCALVEA_FROM.country}`, bold: false },
-    { text: "", bold: false },
-    { text: "Returns & RTO Address:", bold: false },
-    { text: SCALVEA_FROM.return_address, bold: false },
-    { text: `${SCALVEA_FROM.return_city}, ${SCALVEA_FROM.return_country}`, bold: false },
-    { text: "", bold: false },
-    { text: `Email: ${SCALVEA_FROM.email}`, bold: false },
-    { text: `Website: ${SCALVEA_FROM.website}`, bold: false },
+    { text: `Operating As: ${SCALVEA_FROM.operating_as}` },
+    { text: `ABN: ${SCALVEA_FROM.abn}` },
+    { text: "" },
+    { text: SCALVEA_FROM.address },
+    { text: `${SCALVEA_FROM.city}` },
+    { text: SCALVEA_FROM.country },
+    { text: "" },
+    { text: "Returns & RTO Address:", bold: true },
+    { text: SCALVEA_FROM.return_address },
+    { text: `${SCALVEA_FROM.return_city}, ${SCALVEA_FROM.return_country}` },
+    { text: "" },
+    { text: SCALVEA_FROM.email },
+    { text: SCALVEA_FROM.website },
   ];
-
-  let fromY = y;
-  for (const line of fromLines) {
-    doc.setFont("helvetica", line.bold ? "bold" : "normal");
-    doc.setFontSize(addressFontSize);
-    doc.text(line.text, margin, fromY);
-    fromY += addressLineHeight;
-  }
-
-  // BILL TO column
-  const billX = margin + colWidth;
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...COLOR.black);
-  doc.text("BILL TO", billX, y - 8);
 
   const customerName = order.customer_name
     || `${billing.first_name || billing.firstName || ""} ${billing.last_name || billing.lastName || ""}`.trim()
@@ -271,32 +297,32 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
   const customerEmail = order.customer_email || billing.email || addr.email || "";
   const customerPhone = order.customer_phone || billing.phone || addr.phone || "";
 
-  const billLines = [
-    { text: customerName, bold: false },
-    { text: customerEmail ? `Email: ${customerEmail}` : "", bold: false },
-    { text: customerPhone ? `Phone: ${customerPhone}` : "", bold: false },
-    { text: "", bold: false },
-    { text: billing.address || billing.address_line1 || addr.address || addr.address_line1 || "", bold: false },
-    { text: billing.address_line2 || addr.address_line2 || "", bold: false },
-    { text: `${billing.city || addr.city || ""} ${billing.state || addr.state || ""} ${billing.postcode || addr.postcode || ""}`.trim(), bold: false },
-    { text: billing.country || addr.country || order.country || "", bold: false },
-  ].filter(l => l.text !== "" || l.text === "");
+  const billLines: { text: string, bold?: boolean }[] = [];
+  if (customerName) billLines.push({ text: customerName, bold: true });
+  if (customerEmail) billLines.push({ text: `Email: ${customerEmail}` });
+  if (customerPhone) billLines.push({ text: `Phone: ${customerPhone}` });
+  billLines.push({ text: "" });
 
-  let billY = y;
-  for (const line of billLines) {
-    if (!line.text) { billY += addressLineHeight; continue; }
-    doc.setFont("helvetica", line.bold ? "bold" : "normal");
-    doc.setFontSize(addressFontSize);
-    doc.text(line.text, billX, billY);
-    billY += addressLineHeight;
-  }
+  const addrLine1 = billing.address_line1 || billing.address || addr.address_line1 || addr.address;
+  if (addrLine1) billLines.push({ text: addrLine1 });
+  const addrLine2 = billing.address_line2 || addr.address_line2;
+  if (addrLine2) billLines.push({ text: addrLine2 });
+  const cityStateZip = `${billing.city || addr.city || ""} ${billing.state || addr.state || ""} ${billing.postcode || addr.postcode || ""}`.trim();
+  if (cityStateZip) billLines.push({ text: cityStateZip });
+  const country = billing.country || addr.country || order.country;
+  if (country) billLines.push({ text: country });
 
-  y = Math.max(fromY, billY) + 6;
+  const fromEndY = drawAddressColumn("FROM", fromLines, MARGIN, y);
+  const billEndY = drawAddressColumn("BILL TO", billLines, MARGIN + CONTENT_WIDTH / 2 + 5, y);
+
+  y = Math.max(fromEndY, billEndY) + 12;
 
   // ── Product Table ──────────────────────────────────────────────────────
+  
+  const curSymbol = isAus ? "A$" : "₹";
 
   const tableHead = [
-    ["#", "PRODUCT", "QTY", `MRP (${cur})`, `UNIT PRICE\n(AFTER DISCOUNT) (${cur})`, `DISCOUNT\n(${cur})`, `AMOUNT (${cur})`],
+    ["#", "PRODUCT", "QTY", `MRP\n(${curSymbol})`, `UNIT PRICE\n(${curSymbol})`, `DISCOUNT\n(${curSymbol})`, `AMOUNT\n(${curSymbol})`],
   ];
 
   const tableBody = items.map((item, index) => {
@@ -311,11 +337,12 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
       mrp = item.original_price;
     }
     
+    // If MRP is somehow lower than unit price, don't show negative discount. Just adjust MRP.
+    if (mrp < unitPrice) mrp = unitPrice;
+
     const discount = (mrp - unitPrice) * qty;
     const amount = unitPrice * qty;
 
-    // We can simulate strikethrough in standard jsPDF text but it's complex inside autoTable.
-    // Instead we will just show the MRP.
     return [
       String(index + 1),
       item.product_name || "Scalvea Product",
@@ -335,12 +362,12 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
     startY: y,
     head: tableHead,
     body: tableBody,
-    margin: { left: margin, right: margin },
+    margin: { left: MARGIN, right: MARGIN, bottom: FOOTER_RESERVE },
     styles: {
       fontSize: 8.5,
       cellPadding: 5,
       textColor: COLOR.black,
-      lineColor: COLOR.black,
+      lineColor: COLOR.lightGray,
       lineWidth: 0.1,
       valign: "middle",
     },
@@ -356,116 +383,150 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
       0: { halign: "center", cellWidth: 10 },
       1: { halign: "left", cellWidth: "auto" },
       2: { halign: "center", cellWidth: 15 },
-      3: { halign: "center", cellWidth: 25 },
-      4: { halign: "center", cellWidth: 32 },
-      5: { halign: "center", cellWidth: 25 },
-      6: { halign: "center", cellWidth: 25 },
+      3: { halign: "right", cellWidth: 25 },
+      4: { halign: "right", cellWidth: 25 },
+      5: { halign: "right", cellWidth: 25 },
+      6: { halign: "right", cellWidth: 25 },
     },
     theme: "grid",
+    showHead: 'everyPage', // ensure headers repeat
   });
 
-  y = (doc as any).lastAutoTable.finalY + 8;
+  y = (doc as any).lastAutoTable.finalY + 12;
 
-  // ── Financial Summary & Thank You Box ──────────────────────────────────
+  // ── Financial Summary & Thank You ──────────────────────────────────────
 
   const subtotal = Number(order.subtotal || 0);
   const shipping = Number(order.shipping_amount || 0);
   const total = Number(order.total_amount || 0);
   const tax = Number(order.gst_amount || order.tax_amount || 0);
 
-  const summaryXOffset = pageWidth / 2 + 10;
-  const summaryWidth = pageWidth - margin - summaryXOffset;
+  const summaryWidth = 75;
+  const summaryXOffset = PAGE_WIDTH - MARGIN - summaryWidth;
+  const summaryRowHeight = 9;
+
+  // Calculate total height of summary block to check page break
+  const summaryRows = 4 + (tax > 0 ? 1 : 0); // Subtotal, Shipping, (Tax), Total, Amount Paid
+  const summaryHeight = summaryRows * summaryRowHeight + 10;
   
-  // Left side: Thank you text
-  doc.setFontSize(10);
+  checkPageBreak(Math.max(summaryHeight, 30));
+
+  // Left side: Thank you text (drawn at the same Y as the summary)
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.text("Thank you for your order!", margin, y + 4);
+  doc.setTextColor(...COLOR.black);
+  doc.text("Thank you for your order!", MARGIN, y + 4);
   
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text("We appreciate your trust in Scalvea.", margin, y + 12);
-  doc.text("If you have any questions about your order,", margin, y + 20);
-  doc.text("please contact us at info@scalvea.com", margin, y + 26);
+  doc.setTextColor(...COLOR.darkGray);
+  doc.text("We appreciate your trust in Scalvea.", MARGIN, y + 12);
+  doc.text("If you have any questions about your order,", MARGIN, y + 20);
+  doc.text("please contact us at info@scalvea.com", MARGIN, y + 26);
 
   // Right side: Box for totals
   let sumY = y;
-  const rowHeight = 9;
   
-  doc.setDrawColor(...COLOR.black);
+  doc.setDrawColor(...COLOR.lightGray);
   doc.setLineWidth(0.1);
   
-  const drawSummaryRow = (label: string, value: string, isTotal = false) => {
-    doc.rect(summaryXOffset, sumY, summaryWidth, rowHeight);
-    doc.setFont("helvetica", isTotal ? "bold" : "normal");
+  const drawSummaryRow = (label: string, value: string, isBold = false) => {
+    doc.rect(summaryXOffset, sumY, summaryWidth, summaryRowHeight);
+    doc.setFont("helvetica", isBold ? "bold" : "normal");
     doc.setFontSize(9);
+    doc.setTextColor(...COLOR.black);
     doc.text(label, summaryXOffset + 4, sumY + 6);
     doc.text(value, summaryXOffset + summaryWidth - 4, sumY + 6, { align: "right" });
-    sumY += rowHeight;
+    sumY += summaryRowHeight;
   };
 
-  drawSummaryRow("Subtotal (Product)", fmtCurrency(subtotal, cur));
-  
-  // Fix the shipping label logic
-  const shippingLabel = "Shipping Fee";
-  drawSummaryRow(shippingLabel, shipping === 0 ? "FREE" : fmtCurrency(shipping, cur));
+  drawSummaryRow("Subtotal", fmtCurrency(subtotal, cur));
+  drawSummaryRow("Shipping", shipping === 0 ? "FREE" : fmtCurrency(shipping, cur));
   
   if (tax > 0) {
     drawSummaryRow(isAus ? "Tax (Included)" : "GST (Included)", fmtCurrency(tax, cur));
   }
   
-  drawSummaryRow(`TOTAL (${cur})`, fmtCurrency(total, cur), true);
-  drawSummaryRow("Amount Paid", fmtCurrency(total, cur), false);
+  drawSummaryRow(`TOTAL`, fmtCurrency(total, cur), true);
 
-  y = Math.max(y + 35, sumY) + 5;
-  
-  // Small thank you string under the totals
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "italic");
-  doc.text("Thank you for shopping with Scalvea.", pageWidth - margin, y, { align: "right" });
+  const amountPaidRaw = (order as any).amount_paid;
+  let amountPaid = 0;
+  if (amountPaidRaw !== undefined && amountPaidRaw !== null) {
+    amountPaid = Number(amountPaidRaw);
+  } else {
+    amountPaid = (order.payment_status?.toLowerCase() === "paid" || order.payment_status?.toLowerCase() === "successful") ? total : 0;
+  }
+  drawSummaryRow("Amount Paid", fmtCurrency(amountPaid, cur), false);
 
-  y += 8;
+  y = Math.max(y + 35, sumY) + 12;
 
   // ── Payment Information Box ────────────────────────────────────────────
 
-  doc.rect(margin, y, contentWidth, 25);
+  const paymentDetails = [
+    { l: "Payment Method", v: String(order.payment_method || "—").replace(/_/g, " ") },
+    { l: "Payment Status", v: String(order.payment_status || "—").replace(/_/g, " ") },
+    { l: "Transaction ID", v: getTransactionId(order) },
+  ];
+  
+  // Calculate height needed
+  doc.setFontSize(9);
+  let paymentBoxHeight = 12; // padding top + title
+  const pLabelWidth = 32;
+  const pMaxWidth = CONTENT_WIDTH - 8;
+  
+  for (const p of paymentDetails) {
+    const lines = doc.splitTextToSize(p.v || "—", pMaxWidth - pLabelWidth);
+    paymentBoxHeight += lines.length * LINE_HEIGHT;
+  }
+  paymentBoxHeight += 4; // padding bottom
+
+  checkPageBreak(paymentBoxHeight + 10);
+
+  doc.setDrawColor(...COLOR.lightGray);
+  doc.rect(MARGIN, y, CONTENT_WIDTH, paymentBoxHeight);
   
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text("PAYMENT INFORMATION", margin + 4, y + 6);
+  doc.setTextColor(...COLOR.black);
+  doc.text("PAYMENT INFORMATION", MARGIN + 4, y + 7);
   
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  
-  const paymentDetails = [
-    { l: "Payment Method", v: `:   ${(order.payment_method || "—").replace(/_/g, " ")}` },
-    { l: "Payment Status", v: `:   ${(order.payment_status || "—").replace(/_/g, " ")}` },
-    { l: "Transaction ID", v: `:   ${getTransactionId(order)}` },
-  ];
-  
-  let py = y + 12;
+  let py = y + 14;
   for (const p of paymentDetails) {
-    doc.text(p.l, margin + 4, py);
-    doc.text(p.v, margin + 35, py);
-    py += 5;
+    const h = drawLabelValue(p.l, p.v, MARGIN + 4, py, pLabelWidth, pMaxWidth);
+    py += h;
   }
+
+  y += paymentBoxHeight + 10;
 
   // ── Footer ─────────────────────────────────────────────────────────────
 
-  const footerY = doc.internal.pageSize.getHeight() - 15;
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    const footerY = PAGE_HEIGHT - 22;
 
-  doc.setDrawColor(...COLOR.black);
-  doc.setLineWidth(0.5);
-  doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
+    doc.setDrawColor(...COLOR.lightGray);
+    doc.setLineWidth(0.5);
+    doc.line(MARGIN, footerY - 5, PAGE_WIDTH - MARGIN, footerY - 5);
 
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  doc.text("Scalvea", pageWidth / 2, footerY + 1, { align: "center" });
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...COLOR.black);
+    doc.text("Scalvea", PAGE_WIDTH / 2, footerY + 1, { align: "center" });
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.text("Care You Deserve", pageWidth / 2, footerY + 5, { align: "center" });
-  doc.text("For any enquiries, please contact us at info@scalvea.com", pageWidth / 2, footerY + 9, { align: "center" });
-  doc.text("www.scalvea.com", pageWidth / 2, footerY + 13, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...COLOR.darkGray);
+    doc.text("Care You Deserve", PAGE_WIDTH / 2, footerY + 5, { align: "center" });
+    doc.text("For any enquiries, please contact us at info@scalvea.com", PAGE_WIDTH / 2, footerY + 9, { align: "center" });
+    doc.text("www.scalvea.com", PAGE_WIDTH / 2, footerY + 13, { align: "center" });
+    
+    if (pageCount > 1) {
+      doc.setFontSize(7);
+      doc.setTextColor(...COLOR.lightGray);
+      doc.text(`Page ${i} of ${pageCount}`, PAGE_WIDTH - MARGIN, footerY + 13, { align: "right" });
+    }
+  }
 
   // ── Save ───────────────────────────────────────────────────────────────
 
