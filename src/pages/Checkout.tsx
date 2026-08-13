@@ -374,10 +374,12 @@ const Checkout = () => {
                 </div>
               ) : (
                 <>
-                  <div>
-                    <h2 className="text-xs tracking-[0.15em] uppercase mb-6">Contact</h2>
-                    <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email address" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
-                  </div>
+                  {!user && (
+                    <div>
+                      <h2 className="text-xs tracking-[0.15em] uppercase mb-6">Contact</h2>
+                      <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email address" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+                    </div>
+                  )}
 
                   <div>
                     <h2 className="text-xs tracking-[0.15em] uppercase mb-6">

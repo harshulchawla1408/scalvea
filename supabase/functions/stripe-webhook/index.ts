@@ -126,24 +126,18 @@ async function handlePaymentSuccess(event: Stripe.Event, supabase: any) {
   const customerEmail     = customerDetails?.email || meta.customer_email || "";
   const customerPhone     = customerDetails?.phone || meta.customer_phone || "";
 
-  const shippingAddress = stripeShipping?.address ? {
+  const shippingAddress = {
     firstName,   lastName,
     first_name:  firstName, last_name: lastName,
-    address:     (stripeShipping.address.line1 || "") + (stripeShipping.address.line2 ? `, ${stripeShipping.address.line2}` : ""),
-    address_line1: stripeShipping.address.line1 || "",
-    address_line2: stripeShipping.address.line2 || "",
-    city:        stripeShipping.address.city         || "",
-    state:       stripeShipping.address.state        || "",
-    postcode:    stripeShipping.address.postal_code  || "",
-    country:     stripeShipping.address.country      || "AU",
-    phone:       customerPhone,
-    email:       customerEmail,
-  } : {
-    firstName, lastName,
-    first_name: firstName, last_name: lastName,
-    address: "", address_line1: "", address_line2: "",
-    city: "", state: "", postcode: "", country: "AU",
-    phone: customerPhone, email: customerEmail,
+    address:       meta.address_line1 || stripeShipping?.address?.line1 || "",
+    address_line1: meta.address_line1 || stripeShipping?.address?.line1 || "",
+    address_line2: meta.address_line2 || stripeShipping?.address?.line2 || "",
+    city:          meta.city || stripeShipping?.address?.city || "",
+    state:         meta.state || stripeShipping?.address?.state || "",
+    postcode:      meta.postcode || stripeShipping?.address?.postal_code || "",
+    country:       "AU",
+    phone:         customerPhone,
+    email:         customerEmail,
   };
 
   // ── Parse amounts from Stripe (authoritative) ─────────────────────────────

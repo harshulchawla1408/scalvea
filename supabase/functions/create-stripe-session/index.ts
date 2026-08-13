@@ -339,6 +339,11 @@ Deno.serve(async (req) => {
           subtotal:             subtotalVal.toString(),
           shipping_amount:      shippingAmount.toString(),
           discount_amount:      discountAmount.toString(),
+          address_line1:        address || "",
+          address_line2:        address_line2 || "",
+          city:                 city || "",
+          state:                state || "",
+          postcode:             postcode || "",
         },
       };
 
