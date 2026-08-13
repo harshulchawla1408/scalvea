@@ -85,12 +85,7 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    if (!email || !firstName || !lastName) {
-      return new Response(
-        JSON.stringify({ error: "Missing contact details" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+
     console.log("Step 3: Body valid. Items count:", items.length);
 
     // ── Step 4: Fetch products and verify prices server-side ─────────────
@@ -306,7 +301,7 @@ Deno.serve(async (req) => {
         payment_method_types: ["card"],
         line_items: stripeLineItems,
         mode: "payment",
-        customer_email: email,
+        ...(email ? { customer_email: email } : {}),
         phone_number_collection: { enabled: true },
         shipping_options: [
           {
@@ -332,7 +327,7 @@ Deno.serve(async (req) => {
           customer_phone:       phone || "",
           customer_first_name:  firstName || "",
           customer_last_name:   lastName || "",
-          customer_email:       email,
+          customer_email:       email || "",
           shipping_type:        shipping_type || "standard",
           delivery_estimate:    deliveryEstimate,
           address:              address || "",
