@@ -53,7 +53,7 @@ const Checkout = () => {
   const taxAmount = subtotalAfterDiscount * taxRate;
   
   const freeShippingThreshold = isIndia ? 0 : 60;
-  const shippingAmount = subtotalAfterDiscount >= freeShippingThreshold ? 0 : (isIndia ? 0 : 7.50);
+  const shippingAmount = subtotalAfterDiscount >= freeShippingThreshold ? 0 : (isIndia ? 0 : 9.50);
   const grandTotal = subtotalAfterDiscount + taxAmount + shippingAmount;
 
   const [form, setForm] = useState({
@@ -545,16 +545,13 @@ const Checkout = () => {
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">State / Territory</label>
-                        <select
+                        <input
+                          id="state"
                           value={form.state}
                           onChange={(e) => setForm({ ...form, state: e.target.value })}
-                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors appearance-none"
-                        >
-                          <option value="">Select State</option>
-                          {AUSTRALIA_STATES.map((s) => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
+                          placeholder="State"
+                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
+                        />
                       </div>
                       <div>
                         <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Destination</p>

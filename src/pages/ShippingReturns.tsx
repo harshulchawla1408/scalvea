@@ -108,7 +108,7 @@ const ShippingReturns = () => {
                   <div>
                     <h2 className="text-foreground text-xs tracking-[0.12em] uppercase mb-3 font-semibold">Domestic Shipping (Australia)</h2>
                     <ul className="space-y-2 border-l border-border pl-4">
-                      <li><strong className="text-foreground">Standard Delivery:</strong> 3-7 business days — <span className="line-through text-muted-foreground/60 mr-1">$10.00 AUD</span> <strong className="font-semibold text-foreground">$7.50 AUD</strong></li>
+                      <li><strong className="text-foreground">Standard Delivery:</strong> 3-7 business days — <span className="line-through text-muted-foreground/60 mr-1">$10.00 AUD</span> <strong className="font-semibold text-foreground">$9.50 AUD</strong></li>
                       <li><strong className="text-foreground">Express Delivery:</strong> 1-3 business days — $14.95 AUD</li>
                       <li>Free standard shipping applies automatically to all orders over $75 AUD.</li>
                     </ul>

@@ -51,7 +51,7 @@ const COUNTRY_FALLBACKS: Record<CountryType, CountrySettings> = {
     currency: "AUD",
     currency_symbol: "A$",
     tax_percentage: 0,
-    shipping_charge: 7.50,
+    shipping_charge: 9.50,
     free_shipping_above: 60.00,
     delivery_time: "5-7 business days",
     is_enabled: true
@@ -135,7 +135,7 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
                 return {
                   ...c,
                   tax_percentage: 0,
-                  shipping_charge: 7.50,
+                  shipping_charge: 9.50,
                 };
               }
               return c;
@@ -174,7 +174,7 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
   const settings = rawSettings ? {
     ...rawSettings,
     tax_percentage: 0,
-    shipping_charge: activeCountry === "india" ? 50.00 : 7.50
+    shipping_charge: activeCountry === "india" ? 50.00 : 9.50
   } : null;
   const countryConfig = settings;
 

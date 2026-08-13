@@ -26,7 +26,7 @@ const Cart = () => {
   };
 
   const freeShippingThreshold = isIndia ? 0 : 60;
-  const shipping = total >= freeShippingThreshold ? 0 : (isIndia ? 0 : 7.50);
+  const shipping = total >= freeShippingThreshold ? 0 : (isIndia ? 0 : 9.50);
 
   return (
     <div className="min-h-screen bg-background">

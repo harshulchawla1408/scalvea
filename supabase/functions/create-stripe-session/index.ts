@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
     const subtotalAfterDiscountCents = subtotalCents - discountCents;
 
     // ── Step 7: Calculate Shipping ───────────────────────────────────────
-    let shippingCents = 750; // Standard: A$7.50
+    let shippingCents = 950; // Standard: A$9.50
     let shippingDisplayName = "Standard Shipping";
     let deliveryMinDays = 5;
     let deliveryMaxDays = 7;
