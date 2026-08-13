@@ -335,15 +335,15 @@ Deno.serve(async (req) => {
           customer_email:       email,
           shipping_type:        shipping_type || "standard",
           delivery_estimate:    deliveryEstimate,
-          // Amounts for reference (Stripe session amounts are authoritative)
-          subtotal:             subtotalVal.toString(),
-          shipping_amount:      shippingAmount.toString(),
-          discount_amount:      discountAmount.toString(),
-          address_line1:        address || "",
+          address:              address || "",
           address_line2:        address_line2 || "",
           city:                 city || "",
           state:                state || "",
           postcode:             postcode || "",
+          // Amounts for reference (Stripe session amounts are authoritative)
+          subtotal:             subtotalVal.toString(),
+          shipping_amount:      shippingAmount.toString(),
+          discount_amount:      discountAmount.toString(),
         },
       };
 

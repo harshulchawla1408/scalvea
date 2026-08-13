@@ -80,6 +80,65 @@ const Checkout = () => {
     setPaymentMethod(isIndia ? "shiprocket" : "stripe");
   }, [isIndia]);
 
+  // Initialize Addressfinder widget for AU
+  useEffect(() => {
+    if (isIndia) return;
+
+    let widget: any;
+
+    const initAddressFinder = () => {
+      const addressInput = document.getElementById('address');
+      if (!addressInput || !(window as any).AddressFinder) return;
+      
+      const apiKey = import.meta.env.VITE_ADDRESSFINDER_KEY || 'ADDRESSFINDER_DEMO_KEY';
+      
+      widget = new (window as any).AddressFinder.Widget(
+        addressInput,
+        apiKey,
+        'AU',
+        {
+          address_params: { gnaf: "1" },
+          address_metadata_params: {}
+        }
+      );
+      
+      widget.on('result:select', function(fullAddress: string, metaData: any) {
+        setForm(prev => ({
+          ...prev,
+          address: metaData.address_line_1 || fullAddress || '',
+          address_line2: metaData.address_line_2 || '',
+          city: metaData.locality_name || '',
+          state: metaData.state_territory || prev.state,
+          postcode: metaData.postcode || ''
+        }));
+      });
+    };
+
+    const downloadAddressfinder = () => {
+      if ((window as any).AddressFinder) {
+        initAddressFinder();
+        return;
+      }
+      
+      if (document.getElementById('addressfinder-script')) return;
+      
+      const script = document.createElement('script');
+      script.id = 'addressfinder-script';
+      script.src = 'https://api.addressfinder.io/assets/v3/widget.js';
+      script.async = true;
+      script.onload = initAddressFinder;
+      document.body.appendChild(script);
+    };
+
+    downloadAddressfinder();
+
+    return () => {
+      if (widget && typeof widget.destroy === 'function') {
+        widget.destroy();
+      }
+    };
+  }, [isIndia]);
+
   const formatVal = (val: number) => {
     if (isIndia) {
       return `₹${Math.round(val).toLocaleString("en-IN")}`;
@@ -374,10 +433,10 @@ const Checkout = () => {
                 </div>
               ) : (
                 <>
-                  {!user && (
+                  {!user?.email && (
                     <div>
                       <h2 className="text-xs tracking-[0.15em] uppercase mb-6">Contact</h2>
-                      <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email address" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+                      <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email address" className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
                     </div>
                   )}
 
@@ -388,8 +447,8 @@ const Checkout = () => {
                     
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder="First name" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
-                        <input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder="Last name" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+                        <input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder="First name" className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+                        <input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder="Last name" className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
                       </div>
                       
                       <div className="flex flex-col gap-1">
@@ -397,7 +456,6 @@ const Checkout = () => {
                           value={form.phone} 
                           onChange={(e) => setForm({ ...form, phone: e.target.value })} 
                           placeholder="Phone number" 
-                          required
                           className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" 
                         />
                       </div>
@@ -461,12 +519,12 @@ const Checkout = () => {
                   ) : (
                     <div className="space-y-4 pt-4 border-t border-border">
                       <div className="space-y-1">
-                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Street Address *</label>
+                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Street Address</label>
                         <input
+                          id="address"
                           value={form.address}
                           onChange={(e) => setForm({ ...form, address: e.target.value })}
                           placeholder="123 Example Street"
-                          required
                           className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
                         />
                       </div>
@@ -481,34 +539,32 @@ const Checkout = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">City / Suburb *</label>
+                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">City / Suburb</label>
                           <input
                             value={form.city}
                             onChange={(e) => setForm({ ...form, city: e.target.value })}
                             placeholder="Sydney"
-                            required
                             className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Postcode *</label>
+                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Postcode</label>
                           <input
                             value={form.postcode}
                             onChange={(e) => setForm({ ...form, postcode: e.target.value })}
                             placeholder="2000"
-                            required
                             className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
                           />
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">State / Territory *</label>
+                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">State / Territory</label>
                         <select
                           value={form.state}
                           onChange={(e) => setForm({ ...form, state: e.target.value })}
-                          required
                           className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors appearance-none"
                         >
+                          <option value="">Select State</option>
                           {AUSTRALIA_STATES.map((s) => (
                             <option key={s} value={s}>{s}</option>
                           ))}

@@ -126,18 +126,28 @@ async function handlePaymentSuccess(event: Stripe.Event, supabase: any) {
   const customerEmail     = customerDetails?.email || meta.customer_email || "";
   const customerPhone     = customerDetails?.phone || meta.customer_phone || "";
 
+  // Extract address either from Stripe native shipping or our custom metadata passed from checkout
+  const addressLine1 = stripeShipping?.address?.line1 || meta.address || "";
+  const addressLine2 = stripeShipping?.address?.line2 || meta.address_line2 || "";
+  const city         = stripeShipping?.address?.city  || meta.city || "";
+  const state        = stripeShipping?.address?.state || meta.state || "";
+  const postcode     = stripeShipping?.address?.postal_code || meta.postcode || "";
+  const country      = stripeShipping?.address?.country || "AU";
+
+  const fullAddressStr = addressLine1 + (addressLine2 ? `, ${addressLine2}` : "");
+
   const shippingAddress = {
     firstName,   lastName,
     first_name:  firstName, last_name: lastName,
-    address:       meta.address_line1 || stripeShipping?.address?.line1 || "",
-    address_line1: meta.address_line1 || stripeShipping?.address?.line1 || "",
-    address_line2: meta.address_line2 || stripeShipping?.address?.line2 || "",
-    city:          meta.city || stripeShipping?.address?.city || "",
-    state:         meta.state || stripeShipping?.address?.state || "",
-    postcode:      meta.postcode || stripeShipping?.address?.postal_code || "",
-    country:       "AU",
-    phone:         customerPhone,
-    email:         customerEmail,
+    address:     fullAddressStr,
+    address_line1: addressLine1,
+    address_line2: addressLine2,
+    city:        city,
+    state:       state,
+    postcode:    postcode,
+    country:     country,
+    phone:       customerPhone,
+    email:       customerEmail,
   };
 
   // ── Parse amounts from Stripe (authoritative) ─────────────────────────────
