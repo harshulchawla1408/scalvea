@@ -85,12 +85,16 @@ const Checkout = () => {
     if (isIndia) return;
 
     let widget: any;
-
+    
     const initAddressFinder = () => {
       const addressInput = document.getElementById('address');
       if (!addressInput || !(window as any).AddressFinder) return;
       
       const apiKey = import.meta.env.VITE_ADDRESSFINDER_KEY || 'ADDRESSFINDER_DEMO_KEY';
+      
+      // Prevent attaching multiple widgets to the same input
+      if ((addressInput as any)._af_bound) return;
+      (addressInput as any)._af_bound = true;
       
       widget = new (window as any).AddressFinder.Widget(
         addressInput,
@@ -114,27 +118,24 @@ const Checkout = () => {
       });
     };
 
-    const downloadAddressfinder = () => {
-      if ((window as any).AddressFinder) {
-        initAddressFinder();
-        return;
-      }
-      
-      if (document.getElementById('addressfinder-script')) return;
-      
+    if (!(window as any).AddressFinder) {
       const script = document.createElement('script');
-      script.id = 'addressfinder-script';
       script.src = 'https://api.addressfinder.io/assets/v3/widget.js';
       script.async = true;
       script.onload = initAddressFinder;
       document.body.appendChild(script);
-    };
-
-    downloadAddressfinder();
+    } else {
+      // Small timeout to ensure DOM is fully ready if script is already loaded
+      setTimeout(initAddressFinder, 100);
+    }
 
     return () => {
       if (widget && typeof widget.destroy === 'function') {
         widget.destroy();
+      }
+      const addressInput = document.getElementById('address');
+      if (addressInput) {
+        (addressInput as any)._af_bound = false;
       }
     };
   }, [isIndia]);
@@ -359,22 +360,7 @@ const Checkout = () => {
       return;
     }
 
-    // Australia Validation
-    if (!form.email || !form.firstName || !form.lastName || !form.phone) {
-      toast({ title: "Missing details", description: "Please fill in all required contact fields.", variant: "destructive" });
-      return;
-    }
-
-    if (!form.address || !form.city || !form.state || !form.postcode) {
-      toast({ title: "Missing address", description: "Please fill in your full shipping address.", variant: "destructive" });
-      return;
-    }
-
-    const phoneClean = form.phone.replace(/[^0-9+]/g, '');
-    if (phoneClean.length < 9) {
-      toast({ title: "Invalid Phone", description: "Please enter a valid Australian phone number.", variant: "destructive" });
-      return;
-    }
+    // Australia Validation (Removed as per user request to make all fields optional)
 
     setPlacing(true);
     await startStripeCheckout();
