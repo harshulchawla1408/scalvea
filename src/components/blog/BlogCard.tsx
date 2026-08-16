@@ -16,7 +16,7 @@ export const BlogCard = ({ post, index = 0 }: { post: BlogPost; index?: number }
         <img 
           src={post.meta.featuredImage} 
           alt={post.meta.title} 
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-[0.16,1,0.3,1]"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-luxury"
           loading="lazy"
         />
         <div className="absolute top-4 left-4">

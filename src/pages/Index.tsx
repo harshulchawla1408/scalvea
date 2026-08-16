@@ -24,6 +24,7 @@ import mob3 from "@/assets/mob3.webp";
 import hero2 from "@/assets/hero2.webp";
 import hero3 from "@/assets/hero3.webp";
 import heroMp4 from "@/assets/hero.mp4";
+import heroPoster from "@/assets/hero-poster.jpg";
 import scalpPng from "@/assets/scalp.webp";
 import puneetPng from "@/assets/puneet.webp";
 import puneetMobPng from "@/assets/puneet-mob.webp";
@@ -456,7 +457,7 @@ const Index = () => {
       <section className="relative w-full overflow-hidden bg-black flex items-center justify-center h-[70vh] min-h-[560px] md:h-[90vh] md:min-h-[720px] select-none">
         <LazyVideo 
           videoSrc={heroMp4} 
-          posterSrc={lap1}
+          posterSrc={heroPoster}
           className="absolute inset-0 w-full h-full object-cover pointer-events-none" 
         />
         {/* Dark Overlay */}

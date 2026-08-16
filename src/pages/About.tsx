@@ -7,9 +7,9 @@ import { ArrowRight, Mail } from "lucide-react";
 
 // Asset imports
 import heroMp4 from "@/assets/about.mp4";
+import aboutPoster from "@/assets/about-poster.jpg";
 import puneetPng from "@/assets/puneet.webp";
 import puneetMobPng from "@/assets/puneet-mob.webp";
-import lap1 from "@/assets/lap1.webp";
 import { LazyVideo } from "@/components/ui/LazyVideo";
 
 // ─── Story blocks data ───────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ const About = () => {
         <section className="relative h-screen min-h-[600px] w-full overflow-hidden bg-black flex items-center justify-center">
           <LazyVideo 
             videoSrc={heroMp4} 
-            posterSrc={lap1}
+            posterSrc={aboutPoster}
             className="absolute inset-0 w-full h-full object-cover opacity-55 scale-105" 
           />
 

@@ -93,7 +93,7 @@ const BlogList = () => {
                 <img 
                   src={featuredBlog.meta.featuredImage} 
                   alt={featuredBlog.meta.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-[0.16,1,0.3,1]"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-luxury"
                 />
                 <div className="absolute top-6 left-6">
                   <span className="bg-white/90 backdrop-blur-sm text-neutral-800 text-[10px] uppercase tracking-[0.2em] font-semibold px-4 py-2 rounded-full shadow-sm">

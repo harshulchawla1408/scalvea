@@ -19,6 +19,9 @@ export default {
         body: ["var(--font-body)", "sans-serif"],
         chillax: ["var(--font-chillax)", "sans-serif"],
       },
+      transitionTimingFunction: {
+        'luxury': 'cubic-bezier(0.16, 1, 0.3, 1)',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
