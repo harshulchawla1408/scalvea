@@ -6,16 +6,18 @@ import { toast } from "@/hooks/use-toast";
 import { LayoutDashboard, Package, ShoppingCart, Users, Globe, Tag, BarChart3, LogOut, Menu, X, Star, LineChart, Settings } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 
-import AdminDashboard from "@/components/admin/AdminDashboard";
-import AdminProducts from "@/components/admin/AdminProducts";
-import AdminOrders from "@/components/admin/AdminOrders";
-import AdminUsers from "@/components/admin/AdminUsers";
-import AdminCountrySettings from "@/components/admin/AdminCountrySettings";
-import AdminCoupons from "@/components/admin/AdminCoupons";
-import AdminInventory from "@/components/admin/AdminInventory";
-import AdminReviews from "@/components/admin/AdminReviews";
-import AdminAnalytics from "@/components/admin/AdminAnalytics";
-import AdminSettings from "@/components/admin/AdminSettings";
+import { lazy, Suspense } from "react";
+
+const AdminDashboard = lazy(() => import("@/components/admin/AdminDashboard"));
+const AdminProducts = lazy(() => import("@/components/admin/AdminProducts"));
+const AdminOrders = lazy(() => import("@/components/admin/AdminOrders"));
+const AdminUsers = lazy(() => import("@/components/admin/AdminUsers"));
+const AdminCountrySettings = lazy(() => import("@/components/admin/AdminCountrySettings"));
+const AdminCoupons = lazy(() => import("@/components/admin/AdminCoupons"));
+const AdminInventory = lazy(() => import("@/components/admin/AdminInventory"));
+const AdminReviews = lazy(() => import("@/components/admin/AdminReviews"));
+const AdminAnalytics = lazy(() => import("@/components/admin/AdminAnalytics"));
+const AdminSettings = lazy(() => import("@/components/admin/AdminSettings"));
 
 const adminPages = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -113,7 +115,9 @@ const Admin = () => {
           <Link to="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">← Back to Store</Link>
         </header>
         <main className="p-6 lg:p-8">
-          {renderPage()}
+          <Suspense fallback={<div className="h-64 flex items-center justify-center"><div className="w-6 h-6 border-2 border-neutral-200 border-t-black rounded-full animate-spin"></div></div>}>
+            {renderPage()}
+          </Suspense>
         </main>
       </div>
     </div>

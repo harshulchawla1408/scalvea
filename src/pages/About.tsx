@@ -7,8 +7,10 @@ import { ArrowRight, Mail } from "lucide-react";
 
 // Asset imports
 import heroMp4 from "@/assets/about.mp4";
-import puneetPng from "@/assets/puneet.png";
-import puneetMobPng from "@/assets/puneet-mob.png";
+import puneetPng from "@/assets/puneet.webp";
+import puneetMobPng from "@/assets/puneet-mob.webp";
+import lap1 from "@/assets/lap1.webp";
+import { LazyVideo } from "@/components/ui/LazyVideo";
 
 // ─── Story blocks data ───────────────────────────────────────────────────────
 const STORY_BLOCKS = [
@@ -53,19 +55,18 @@ const fadeUp = {
 // ─── Component ────────────────────────────────────────────────────────────────
 const About = () => {
   useSEO({
-    title: "About Scalvea | Science-First Hair Care",
+    title: "About Scalvea | Care You Deserve",
     description: "Scalvea was built on one belief: that hair care should be honest, transparent, and clinically grounded. Read the story behind the brand.",
-    keywords: "Scalvea story, about Scalvea, hair care brand, founder, science-first hair care",
     schema: {
       "@context": "https://schema.org",
       "@type": "AboutPage",
-      "name": "About Scalvea | Science-First Hair Care",
+      "name": "About Scalvea | Care You Deserve",
       "description": "Scalvea was built on one belief: that hair care should be honest, transparent, and clinically grounded.",
       "mainEntity": {
         "@type": "Organization",
         "name": "Scalvea",
         "url": "https://scalvea.com",
-        "logo": "https://scalvea.com/logo.png"
+        "logo": "https://scalvea.com/scalvea-logo.webp"
       }
     }
   });
@@ -83,16 +84,11 @@ const About = () => {
             1. HERO VIDEO
         ══════════════════════════════════════════════════════════════ */}
         <section className="relative h-screen min-h-[600px] w-full overflow-hidden bg-black flex items-center justify-center">
-          {/* Background Video */}
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover opacity-55 scale-105"
-          >
-            <source src={heroMp4} type="video/mp4" />
-          </video>
+          <LazyVideo 
+            videoSrc={heroMp4} 
+            posterSrc={lap1}
+            className="absolute inset-0 w-full h-full object-cover opacity-55 scale-105" 
+          />
 
           {/* Overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/70 pointer-events-none" />

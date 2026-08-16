@@ -7,7 +7,6 @@ const ShippingPolicy = () => {
   useSEO({
     title: "Shipping & Delivery Policy",
     description: "Learn about Scalvea's order processing timelines, delivery networks (Shiprocket and Australia Post), shipping fees, and package damage guidelines.",
-    keywords: "Scalvea shipping rates, transit times, Shiprocket India, Australia Post, order tracking, transit damage claim",
   });
 
   return (
@@ -158,13 +157,13 @@ const ShippingPolicy = () => {
                 <p className="text-xs text-neutral-500 font-light">Need to trace a package or change shipping details? Contact us.</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 text-xs shrink-0">
-                <a href="mailto:scalvea.operations@gmail.com" className="flex items-center gap-2 text-neutral-700 hover:text-black transition-colors font-medium">
+                <a href="mailto:info@scalvea.com" className="flex items-center gap-2 text-neutral-700 hover:text-black transition-colors font-medium">
                   <Mail className="size-[15px] text-neutral-450" />
-                  <span>scalvea.operations@gmail.com</span>
+                  <span>info@scalvea.com</span>
                 </a>
-                <a href="tel:+919877191114" className="flex items-center gap-2 text-neutral-700 hover:text-black transition-colors font-medium">
+                <a href="tel:+61494754851" className="flex items-center gap-2 text-neutral-700 hover:text-black transition-colors font-medium">
                   <Phone className="size-[15px] text-neutral-450" />
-                  <span>+91 98771 91114</span>
+                  <span>+61 494 754 851</span>
                 </a>
               </div>
             </div>

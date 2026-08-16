@@ -16,6 +16,8 @@ const TiktokIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+import { WhatsappIcon } from "@/components/ui/whatsapp-icon";
+
 const FooterLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
   <li>
     <Link to={to} className="hover:text-white transition-colors relative group block w-fit">
@@ -77,6 +79,15 @@ const Footer = () => {
                 aria-label="TikTok"
               >
                 <TiktokIcon className="size-[18px]" />
+              </a>
+              <a
+                href="https://wa.me/61494754851?text=Hi%20Scalvea%2C%20I%20would%20like%20to%20know%20more%20about%20your%20premium%20hair%20care%20products."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-neutral-400 hover:text-white transition-colors duration-200 p-1"
+                aria-label="WhatsApp"
+              >
+                <WhatsappIcon className="size-[18px]" />
               </a>
               <a
                 href="mailto:info@scalvea.com"

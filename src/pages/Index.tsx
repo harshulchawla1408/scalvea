@@ -9,23 +9,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import Lenis from "lenis";
 import { useSEO } from "@/hooks/useSEO";
+import { LazyVideo } from "@/components/ui/LazyVideo";
 
 // Asset imports
 const follicle8Serum = hero2;
 const follicle8Black = scalpPng;
 
-import lap1 from "@/assets/lap1.png";
-import lap2 from "@/assets/lap2.png";
-import lap3 from "@/assets/lap3.png";
-import mob1 from "@/assets/mob1.png";
-import mob2 from "@/assets/mob2.png";
-import mob3 from "@/assets/mob3.png";
-import hero2 from "@/assets/hero2.png";
-import hero3 from "@/assets/hero3.png";
+import lap1 from "@/assets/lap1.webp";
+import lap2 from "@/assets/lap2.webp";
+import lap3 from "@/assets/lap3.webp";
+import mob1 from "@/assets/mob1.webp";
+import mob2 from "@/assets/mob2.webp";
+import mob3 from "@/assets/mob3.webp";
+import hero2 from "@/assets/hero2.webp";
+import hero3 from "@/assets/hero3.webp";
 import heroMp4 from "@/assets/hero.mp4";
-import scalpPng from "@/assets/scalp.png";
-import puneetPng from "@/assets/puneet.png";
-import puneetMobPng from "@/assets/puneet-mob.png";
+import scalpPng from "@/assets/scalp.webp";
+import puneetPng from "@/assets/puneet.webp";
+import puneetMobPng from "@/assets/puneet-mob.webp";
 import dropperIcon from "@/assets/dropper.svg";
 import hairFollicleIcon from "@/assets/hair.svg";
 import microscopeIcon from "@/assets/microscope.svg";
@@ -86,10 +87,9 @@ const TRUST_ITEMS = [
 
 const Index = () => {
   useSEO({
-    title: "Care You Deserve | Science-Backed Hair Care",
-    description: "Scalvea creates science-backed hair care powered by clinically researched ingredients for healthier scalp and stronger hair. Discover transparent formulations designed for everyday results. Care You Deserve.",
-    keywords: "Scalvea, Hair Care, Hair Growth Serum, Anti Dandruff Serum, Scalp Care, Clinically Researched Hair Care, Transparent Ingredients, Healthy Hair, Hair Wellness, Hair Fall Solution, Hair Growth, Scalp Health, Follicle 8, Scalp-5, Hair Serum, Premium Hair Care, Care You Deserve",
-    image: "https://scalvea.com/scalvea-logo.png",
+    noImagePreview: true,
+    description: "Science-backed hair care powered by clinically researched ingredients for healthier scalp and stronger hair. Discover transparent formulations designed for everyday results. Care You Deserve.",
+    image: "https://scalvea.com/og-image.webp",
     schema: {
       "@context": "https://schema.org",
       "@graph": [
@@ -99,15 +99,15 @@ const Index = () => {
           "name": "Scalvea",
           "alternateName": "Scalvea Hair Care",
           "slogan": "Care You Deserve",
-          "description": "Science-backed hair care powered by clinically researched ingredients for healthier scalp and stronger hair.",
+          "description": "Science-backed hair care powered by clinically researched ingredients for healthier scalp and stronger-looking hair.",
           "url": "https://scalvea.com",
           "logo": {
             "@type": "ImageObject",
-            "url": "https://scalvea.com/scalvea-logo.png",
+            "url": "https://scalvea.com/scalvea-logo.webp",
             "width": 512,
             "height": 512
           },
-          "image": "https://scalvea.com/scalvea-logo.png",
+          "image": "https://scalvea.com/scalvea-logo.webp",
           "email": "info@scalvea.com",
           "contactPoint": {
             "@type": "ContactPoint",
@@ -130,17 +130,11 @@ const Index = () => {
           "@type": "WebSite",
           "@id": "https://scalvea.com/#website",
           "name": "Scalvea",
+          "alternateName": "Scalvea | Care You Deserve",
           "url": "https://scalvea.com",
+          "description": "Science-backed hair care powered by clinically researched ingredients for healthier scalp and stronger-looking hair.",
           "publisher": { "@id": "https://scalvea.com/#organization" },
-          "inLanguage": "en",
-          "potentialAction": {
-            "@type": "SearchAction",
-            "target": {
-              "@type": "EntryPoint",
-              "urlTemplate": "https://scalvea.com/shop?search={search_term_string}"
-            },
-            "query-input": "required name=search_term_string"
-          }
+          "inLanguage": "en"
         }
       ]
     }
@@ -238,7 +232,7 @@ const Index = () => {
                     src={slide.lap}
                     alt={slide.alt}
                     loading={isFirst ? "eager" : "lazy"}
-                    fetchPriority={isFirst ? "high" : "low"}
+                    fetchpriority={isFirst ? "high" : "low"}
                     className="w-full object-cover object-center block max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)] lg:max-h-[calc(100vh-74px)] h-auto"
                   />
                 </picture>
@@ -460,16 +454,11 @@ const Index = () => {
 
       {/* SCIENTIFIC LAB VIDEO BANNER SECTION */}
       <section className="relative w-full overflow-hidden bg-black flex items-center justify-center h-[70vh] min-h-[560px] md:h-[90vh] md:min-h-[720px] select-none">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-        >
-          <source src={heroMp4} type="video/mp4" />
-        </video>
+        <LazyVideo 
+          videoSrc={heroMp4} 
+          posterSrc={lap1}
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none" 
+        />
         {/* Dark Overlay */}
         <div 
           className="absolute inset-0 pointer-events-none" 

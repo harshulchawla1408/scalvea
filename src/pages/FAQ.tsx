@@ -157,9 +157,9 @@ const faqs = [
 
 const FAQ = () => {
   useSEO({
-    title: "Frequently Asked Questions (FAQs)",
-    description: "Find answers to frequently asked questions about Scalvea products, order tracking, shipping rates, and returns policy.",
-    keywords: "Scalvea FAQ, Scalvea questions, hair growth serum guide, track order, refund status",
+    title: "Frequently Asked Questions",
+    description: "Find answers to frequently asked questions about Scalvea products, order tracking, shipping rates, and our returns policy.",
+    canonical: "https://scalvea.com/faq",
     schema: {
       "@context": "https://schema.org",
       "@type": "FAQPage",

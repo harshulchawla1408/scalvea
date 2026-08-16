@@ -1,6 +1,6 @@
-import hero2 from "@/assets/hero2.png";
-import hero3 from "@/assets/hero3.png";
-import scalpPng from "@/assets/scalp.png";
+import hero2 from "@/assets/hero2.webp";
+import hero3 from "@/assets/hero3.webp";
+import scalpPng from "@/assets/scalp.webp";
 
 const follicle8Serum = hero2;
 const follicle8Black = scalpPng;

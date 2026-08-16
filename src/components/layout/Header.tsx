@@ -7,7 +7,7 @@ import { useCountry } from "@/contexts/CountryContext";
 import CartDrawer from "@/components/cart/CartDrawer";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { motion } from "framer-motion";
-import logo1 from "@/assets/logo1.png";
+import logo1 from "@/assets/logo1.webp";
 
 const headerVariants = {
   hidden: { opacity: 0, y: -20 },

@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { supabase } from "@/integrations/supabase/client";
-import logoUrl from "@/assets/logo1.png";
+import logoUrl from "@/assets/logo1.webp";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

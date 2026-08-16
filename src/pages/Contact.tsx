@@ -5,9 +5,10 @@ import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Mail, Instagram, ArrowRight, Send, Linkedin } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
+import { WhatsappIcon } from "@/components/ui/whatsapp-icon";
 
 // Asset imports
-import worldPng from "@/assets/world.png";
+import worldPng from "@/assets/world.webp";
 
 // TikTok icon
 const TiktokIcon = ({ className }: { className?: string }) => (
@@ -29,19 +30,18 @@ const Contact = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useSEO({
-    title: "Contact Us | Scalvea",
-    description: "Get in touch with Scalvea's support team. Reach us via email, Instagram, or TikTok for product questions, orders, partnerships, or wholesale enquiries.",
-    keywords: "Scalvea contact, Scalvea support, hair growth serum help, Scalvea email",
+    title: "Contact Scalvea | Care You Deserve",
+    description: "Get in touch with Scalvea's support team. Reach us via email, WhatsApp, Instagram, or TikTok for product questions, orders, partnerships, or wholesale enquiries.",
     schema: {
       "@context": "https://schema.org",
       "@type": "ContactPage",
-      "name": "Contact Us | Scalvea",
+      "name": "Contact Scalvea",
       "description": "Get in touch with Scalvea's support team for product questions, orders, and partnerships.",
       "mainEntity": {
         "@type": "Organization",
         "name": "Scalvea",
         "url": "https://scalvea.com",
-        "logo": "https://scalvea.com/logo.png",
+        "logo": "https://scalvea.com/scalvea-logo.webp",
         "email": "info@scalvea.com"
       }
     }
@@ -200,6 +200,24 @@ const Contact = () => {
                       <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-0.5">Email</p>
                       <p className="text-sm font-body font-medium text-neutral-900 truncate">info@scalvea.com</p>
                       <p className="text-[10px] text-neutral-400 font-body font-light">We respond within 24 hours</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-neutral-300 group-hover:text-neutral-600 group-hover:translate-x-1 transition-all duration-300 shrink-0" />
+                  </a>
+
+                  {/* WhatsApp */}
+                  <a
+                    href="https://wa.me/61494754851?text=Hi%20Scalvea%2C%20I%20would%20like%20to%20know%20more%20about%20your%20premium%20hair%20care%20products."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center gap-5 p-5 border border-neutral-100 rounded-2xl bg-[#F9F9F7] hover:border-neutral-300 hover:bg-white hover:shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition-all duration-300"
+                  >
+                    <div className="w-11 h-11 rounded-xl bg-white border border-neutral-100 flex items-center justify-center shadow-sm shrink-0 group-hover:bg-black group-hover:border-black transition-all duration-300">
+                      <WhatsappIcon className="h-4.5 w-4.5 text-neutral-700 group-hover:text-white transition-colors duration-300" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-0.5">WhatsApp</p>
+                      <p className="text-sm font-body font-medium text-neutral-900 truncate">+61 494 754 851</p>
+                      <p className="text-[10px] text-neutral-400 font-body font-light">Message us anytime</p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-neutral-300 group-hover:text-neutral-600 group-hover:translate-x-1 transition-all duration-300 shrink-0" />
                   </a>

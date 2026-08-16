@@ -6,28 +6,23 @@ const SUPABASE_URL = 'https://dtehgajreecaonqalxlf.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_DAFWNN0PB8JNNBIP3c8CBw_gyVRijeE';
 
 // Define static routes with their SEO priorities and change frequencies
+// Only canonical URLs — redirect sources are NOT listed here
 const staticRoutes = [
-  { path: '/',                    priority: '1.0', changefreq: 'daily' },
-  { path: '/shop',                priority: '0.9', changefreq: 'daily' },
-  { path: '/about',               priority: '0.8', changefreq: 'weekly' },
-  { path: '/contact',             priority: '0.8', changefreq: 'weekly' },
-  { path: '/blogs',               priority: '0.8', changefreq: 'weekly' },
-  { path: '/faqs',                priority: '0.7', changefreq: 'weekly' },
-  { path: '/faq',                 priority: '0.7', changefreq: 'weekly' },
-  { path: '/privacy-policy',      priority: '0.5', changefreq: 'monthly' },
-  { path: '/terms-conditions',    priority: '0.5', changefreq: 'monthly' },
-  { path: '/return-refund-policy',priority: '0.5', changefreq: 'monthly' },
-  { path: '/shipping-policy',     priority: '0.5', changefreq: 'monthly' },
-  { path: '/payment-policy',      priority: '0.4', changefreq: 'monthly' },
+  { path: '/',                     priority: '1.0', changefreq: 'daily' },
+  { path: '/shop',                 priority: '0.9', changefreq: 'daily' },
+  { path: '/about',                priority: '0.8', changefreq: 'weekly' },
+  { path: '/contact',              priority: '0.8', changefreq: 'weekly' },
+  { path: '/blogs',                priority: '0.8', changefreq: 'weekly' },
+  { path: '/faq',                  priority: '0.7', changefreq: 'weekly' },
+  { path: '/privacy-policy',       priority: '0.5', changefreq: 'monthly' },
+  { path: '/terms-of-service',     priority: '0.5', changefreq: 'monthly' },
+  { path: '/returns-policy',       priority: '0.5', changefreq: 'monthly' },
+  { path: '/shipping-policy',      priority: '0.5', changefreq: 'monthly' },
+  { path: '/payment-policy',       priority: '0.4', changefreq: 'monthly' },
+  { path: '/cancellation-policy',  priority: '0.4', changefreq: 'monthly' },
 ];
 
-const staticProducts = [
-  'follicle-8-hair-growth-serum',
-  'hair-growth-serum-black-edition',
-  'follicle-8-spray-serum'
-];
-
-const staticCategories = ['Serums', 'Sprays'];
+// No static product seeds — live Supabase fetch handles all products
 
 // Read blog slugs from MDX frontmatter
 function getBlogRoutes() {
@@ -56,22 +51,12 @@ function getBlogRoutes() {
 async function getDynamicRoutes() {
   const routes = [];
 
-  // Static products
-  staticProducts.forEach(slug => {
-    routes.push({ path: `/product/${slug}`, priority: '0.8', changefreq: 'weekly' });
-  });
-
-  // Static categories
-  staticCategories.forEach(cat => {
-    routes.push({ path: `/shop?category=${encodeURIComponent(cat)}`, priority: '0.7', changefreq: 'weekly' });
-  });
-
   // Blog routes from MDX files
   routes.push(...getBlogRoutes());
 
-  // Live products from Supabase
+  // Live products from Supabase (no category URLs — canonical is /shop only)
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=slug,category,is_active_australia,is_active_india`, {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/products?select=slug,is_active_australia,is_active_india`, {
       headers: {
         'apikey': SUPABASE_KEY,
         'Authorization': `Bearer ${SUPABASE_KEY}`
@@ -88,20 +73,16 @@ async function getDynamicRoutes() {
             routes.push({ path: `/product/${p.slug}`, priority: '0.8', changefreq: 'weekly' });
           }
         });
-
-        const categories = [...new Set(activeProducts.map(p => p.category).filter(Boolean))];
-        categories.forEach(cat => {
-          routes.push({ path: `/shop?category=${encodeURIComponent(cat)}`, priority: '0.7', changefreq: 'weekly' });
-        });
       }
     }
   } catch (error) {
     console.error('Error fetching dynamic routes for sitemap:', error);
   }
 
-  // Deduplicate routes by path
+  // Deduplicate routes by path, and strip any that have query params
   const seenPaths = new Set();
   return routes.filter(r => {
+    if (r.path.includes('?')) return false;
     if (seenPaths.has(r.path)) return false;
     seenPaths.add(r.path);
     return true;

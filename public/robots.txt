@@ -33,7 +33,9 @@ Disallow: /wishlist/
 Disallow: /auth
 Disallow: /auth/
 Disallow: /order-success
+Disallow: /order-failed
 Disallow: /shiprocket-callback
+Disallow: /support
 
 # ── Block search queries and sort parameters to save crawl budget ─────────────
 Disallow: /*?search=

@@ -26,9 +26,8 @@ const BlogList = () => {
   const featuredBlog = useMemo(() => blogs.find(b => b.meta.featured) || blogs[0], [blogs]);
 
   useSEO({
-    title: "Hair Care Journal | Scalvea",
-    description: "Science-backed hair care education, ingredient guides, scalp health articles, routines and research.",
-    keywords: "hair care blog, hair loss research, scalable hair growth, scalp health",
+    title: "Hair Care Journal",
+    description: "Science-backed hair care education, ingredient guides, scalp health articles, routines and research from the Scalvea team.",
   });
 
   // Filter blogs based on search and category

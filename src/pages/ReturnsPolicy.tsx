@@ -7,7 +7,6 @@ const ReturnsPolicy = () => {
   useSEO({
     title: "Return & Refund Policy",
     description: "Review Scalvea's Return and Refund Policy. Learn about eligibility criteria under Australian Consumer Law and Indian Consumer Guidelines.",
-    keywords: "Scalvea returns policy, refund guidelines, change of mind, product leakage refund, unboxing video verification",
   });
 
   return (
@@ -127,7 +126,7 @@ const ReturnsPolicy = () => {
               </p>
               <ol className="space-y-3 list-decimal list-inside pl-2">
                 <li>
-                  <strong>Contact Support:</strong> Email `scalvea.operations@gmail.com` within **48 hours** of package delivery. Include your Order Number in the subject line.
+                  <strong>Contact Support:</strong> Email `info@scalvea.com` within **48 hours** of package delivery. Include your Order Number in the subject line.
                 </li>
                 <li>
                   <strong>Provide Evidence:</strong> Attach clear photos of the damaged items and the shipping box. *An unboxing video is highly recommended* to ensure smooth and fast processing.
@@ -191,13 +190,13 @@ const ReturnsPolicy = () => {
                 <p className="text-xs text-neutral-500 font-light">Need to file a claim or check return status? Get in touch.</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 text-xs shrink-0">
-                <a href="mailto:scalvea.operations@gmail.com" className="flex items-center gap-2 text-neutral-700 hover:text-black transition-colors font-medium">
+                <a href="mailto:info@scalvea.com" className="flex items-center gap-2 text-neutral-700 hover:text-black transition-colors font-medium">
                   <Mail className="size-[15px] text-neutral-450" />
-                  <span>scalvea.operations@gmail.com</span>
+                  <span>info@scalvea.com</span>
                 </a>
-                <a href="tel:+919877191114" className="flex items-center gap-2 text-neutral-700 hover:text-black transition-colors font-medium">
+                <a href="tel:+61494754851" className="flex items-center gap-2 text-neutral-700 hover:text-black transition-colors font-medium">
                   <Phone className="size-[15px] text-neutral-450" />
-                  <span>+91 98771 91114</span>
+                  <span>+61 494 754 851</span>
                 </a>
               </div>
             </div>

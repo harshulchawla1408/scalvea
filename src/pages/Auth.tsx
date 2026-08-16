@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/useSEO";
 
 // Import beauty/lifestyle assets
-import about1 from "@/assets/hero2.png";
+import about1 from "@/assets/hero2.webp";
 
 const authImage = about1;
 

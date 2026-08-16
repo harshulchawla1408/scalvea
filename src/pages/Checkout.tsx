@@ -8,7 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { loadStripe } from "@stripe/stripe-js";
 import { useSEO } from "@/hooks/useSEO";
 import { Lock, CheckCircle2, ShieldCheck } from "lucide-react";
 
@@ -318,7 +317,7 @@ const Checkout = () => {
       const sessionId = data.sessionId;
       const checkoutUrl = data.checkoutUrl;
 
-      // 3. Redirect using @stripe/stripe-js
+      // 3. Dynamically import and redirect using @stripe/stripe-js
       const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
       if (!stripePublishableKey) {
         console.warn("VITE_STRIPE_PUBLISHABLE_KEY is not configured. Redirecting directly using session URL.");
@@ -326,6 +325,7 @@ const Checkout = () => {
         return;
       }
 
+      const { loadStripe } = await import("@stripe/stripe-js");
       const stripe = await loadStripe(stripePublishableKey);
       if (stripe) {
         const { error: redirectError } = await stripe.redirectToCheckout({ sessionId });

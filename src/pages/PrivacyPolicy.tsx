@@ -14,7 +14,6 @@ const PrivacyPolicy = () => {
   useSEO({
     title: "Privacy Policy",
     description: "Learn how Scalvea collects, uses, and safeguards your personal data under global data protection standards.",
-    keywords: "Scalvea privacy, data security, customer information protection",
   });
 
   return (
@@ -38,7 +37,7 @@ const PrivacyPolicy = () => {
           </div>
           <div>
             <h2 className="text-foreground text-xs tracking-[0.12em] uppercase mb-2">Contact</h2>
-            <p>For privacy inquiries, contact us at {settings.au_address} or call {settings.au_phone}.</p>
+            <p>For privacy inquiries, contact us at <a href="mailto:info@scalvea.com" className="underline hover:text-foreground">info@scalvea.com</a> or call <a href="tel:+61494754851" className="underline hover:text-foreground">+61 494 754 851</a>.</p>
           </div>
         </div>
       </main>

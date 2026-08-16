@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProductCard from "@/components/products/ProductCard";
@@ -341,14 +341,9 @@ const ProductDetail = () => {
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
-  useSEO({
-    title: product ? product.name : "Product Detail",
-    description: product ? (product.description || "").slice(0, 155) : "View product details for Scalvea hair growth treatments.",
-    keywords: product ? `${product.name}, ${product.category}, hair growth, Scalvea` : "hair growth, Scalvea",
-    image: product && product.images?.[0] ? product.images[0] : "https://scalvea.com/og-image.jpg",
-    type: "product",
-    canonical: product ? `https://scalvea.com/product/${product.slug}` : undefined,
-    schema: product ? {
+  const schema = useMemo(() => {
+    if (!product) return undefined;
+    return {
       "@context": "https://schema.org",
       "@graph": [
         {
@@ -396,7 +391,15 @@ const ProductDetail = () => {
           ],
         },
       ],
-    } : undefined,
+    };
+  }, [product, selectedCountry, reviews, avgRating]);
+
+  useSEO({
+    title: product ? product.name : "Product Detail",
+    description: product ? (product.description || "").slice(0, 155) : "View product details for Scalvea hair growth treatments.",
+    image: product && product.images?.[0] ? product.images[0] : "https://scalvea.com/og-image.jpg",
+    canonical: product ? `https://scalvea.com/product/${product.slug}` : undefined,
+    schema,
   });
 
   const handleRequireAuth = () => {
@@ -585,7 +588,7 @@ const ProductDetail = () => {
                       id={`product-image-thumb-${i}`}
                       className={`flex-shrink-0 w-16 h-16 rounded-xl bg-[#f9f9f9] overflow-hidden border-2 transition-all duration-200 ${selectedImage === i ? "border-black" : "border-transparent opacity-60 hover:opacity-100"}`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <img src={img} alt={`${product.name} thumbnail ${i + 1}`} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
