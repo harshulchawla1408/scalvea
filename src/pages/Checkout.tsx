@@ -79,65 +79,7 @@ const Checkout = () => {
     setPaymentMethod(isIndia ? "shiprocket" : "stripe");
   }, [isIndia]);
 
-  // Initialize Addressfinder widget for AU
-  useEffect(() => {
-    if (isIndia) return;
 
-    let widget: any;
-    
-    const initAddressFinder = () => {
-      const addressInput = document.getElementById('address');
-      if (!addressInput || !(window as any).AddressFinder) return;
-      
-      const apiKey = import.meta.env.VITE_ADDRESSFINDER_KEY || 'ADDRESSFINDER_DEMO_KEY';
-      
-      // Prevent attaching multiple widgets to the same input
-      if ((addressInput as any)._af_bound) return;
-      (addressInput as any)._af_bound = true;
-      
-      widget = new (window as any).AddressFinder.Widget(
-        addressInput,
-        apiKey,
-        'AU',
-        {
-          address_params: { gnaf: "1" },
-          address_metadata_params: {}
-        }
-      );
-      
-      widget.on('result:select', function(fullAddress: string, metaData: any) {
-        setForm(prev => ({
-          ...prev,
-          address: metaData.address_line_1 || fullAddress || '',
-          address_line2: metaData.address_line_2 || '',
-          city: metaData.locality_name || '',
-          state: metaData.state_territory || prev.state,
-          postcode: metaData.postcode || ''
-        }));
-      });
-    };
-
-    if (!(window as any).AddressFinder) {
-      const script = document.createElement('script');
-      script.src = 'https://api.addressfinder.io/assets/v3/widget.js';
-      script.async = true;
-      script.onload = initAddressFinder;
-      document.body.appendChild(script);
-    } else {
-      // Small timeout to ensure DOM is fully ready if script is already loaded
-      setTimeout(initAddressFinder, 100);
-    }
-
-    return () => {
-      if (widget && typeof widget.destroy === 'function') {
-        widget.destroy();
-      }
-      const addressInput = document.getElementById('address');
-      if (addressInput) {
-        (addressInput as any)._af_bound = false;
-      }
-    };
-  }, [isIndia]);
 
   const formatVal = (val: number) => {
     if (isIndia) {
@@ -360,7 +302,24 @@ const Checkout = () => {
       return;
     }
 
-    // Australia Validation (Removed as per user request to make all fields optional)
+    // Australia Validation — all address fields are required
+    if (!form.email || !form.firstName || !form.lastName || !form.address || !form.city || !form.state || !form.postcode || !form.phone) {
+      toast({ title: "Missing details", description: "Please fill in all required fields.", variant: "destructive" });
+      return;
+    }
+
+    // Validate Australian postcode format (4 digits)
+    if (!/^\d{4}$/.test(form.postcode.trim())) {
+      toast({ title: "Invalid postcode", description: "Please enter a valid 4-digit Australian postcode.", variant: "destructive" });
+      return;
+    }
+
+    // Validate phone (at least 8 digits)
+    const phoneDigits = form.phone.replace(/\D/g, "");
+    if (phoneDigits.length < 8) {
+      toast({ title: "Invalid phone number", description: "Please enter a valid phone number.", variant: "destructive" });
+      return;
+    }
 
     setPlacing(true);
     await startStripeCheckout();
@@ -428,139 +387,100 @@ const Checkout = () => {
 
                   <div>
                     <h2 className="text-xs tracking-[0.15em] uppercase mb-6">
-                      🇦🇺 Australian Shipping Details
+                      🇦🇺 Shipping Details
                     </h2>
                     
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
-                        <input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder="First name" className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
-                        <input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder="Last name" className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+                        <div className="space-y-1">
+                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">First Name *</label>
+                          <input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder="First name" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Last Name *</label>
+                          <input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder="Last name" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
+                        </div>
                       </div>
                       
-                      <div className="flex flex-col gap-1">
+                      <div className="space-y-1">
+                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Mobile Number *</label>
                         <input 
                           value={form.phone} 
                           onChange={(e) => setForm({ ...form, phone: e.target.value })} 
-                          placeholder="Phone number" 
+                          placeholder="04XX XXX XXX"
+                          type="tel"
+                          required
                           className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" 
                         />
                       </div>
                     </div>
                   </div>
 
-                  {/* Address fields only shown for India, as Stripe Hosted Checkout collects AU address natively */}
-                  {isIndia ? (
-                    <div className="space-y-4 pt-4 border-t border-border">
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <div className="space-y-1">
+                      <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Street Address *</label>
+                      <input
+                        value={form.address}
+                        onChange={(e) => setForm({ ...form, address: e.target.value })}
+                        placeholder="123 Example Street"
+                        required
+                        className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Apartment, Suite, Unit (optional)</label>
+                      <input
+                        value={form.address_line2}
+                        onChange={(e) => setForm({ ...form, address_line2: e.target.value })}
+                        placeholder="Apt 4B"
+                        className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Address / Apartment / Suite</label>
-                        <input 
-                          value={form.address} 
-                          onChange={(e) => setForm({ ...form, address: e.target.value })} 
-                          required 
-                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground"
+                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">City / Suburb *</label>
+                        <input
+                          value={form.city}
+                          onChange={(e) => setForm({ ...form, city: e.target.value })}
+                          placeholder="Sydney"
+                          required
+                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
                         />
                       </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">City / Suburb</label>
-                          <input 
-                            value={form.city} 
-                            onChange={(e) => setForm({ ...form, city: e.target.value })} 
-                            required 
-                            className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">State / Territory</label>
-                          <input
-                            value={form.state}
-                            onChange={(e) => setForm({ ...form, state: e.target.value })}
-                            required
-                            placeholder="State"
-                            className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Postcode / PIN</label>
-                          <input 
-                            value={form.postcode} 
-                            onChange={(e) => setForm({ ...form, postcode: e.target.value })} 
-                            required 
-                            className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground"
-                          />
-                        </div>
-
-                        <div>
-                          <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Destination</p>
-                          <div className="w-full h-11 px-4 text-sm bg-secondary border border-border flex items-center text-muted-foreground cursor-not-allowed">
-                            🇮🇳 India
-                          </div>
-                        </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Postcode *</label>
+                        <input
+                          value={form.postcode}
+                          onChange={(e) => setForm({ ...form, postcode: e.target.value })}
+                          placeholder="2000"
+                          required
+                          maxLength={4}
+                          inputMode="numeric"
+                          pattern="\d{4}"
+                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
+                        />
                       </div>
                     </div>
-                  ) : (
-                    <div className="space-y-4 pt-4 border-t border-border">
-                      <div className="space-y-1">
-                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Street Address</label>
-                        <input
-                          id="address"
-                          value={form.address}
-                          onChange={(e) => setForm({ ...form, address: e.target.value })}
-                          placeholder="123 Example Street"
-                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Apartment, Suite, Unit (optional)</label>
-                        <input
-                          value={form.address_line2}
-                          onChange={(e) => setForm({ ...form, address_line2: e.target.value })}
-                          placeholder="Apt 4B"
-                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">City / Suburb</label>
-                          <input
-                            value={form.city}
-                            onChange={(e) => setForm({ ...form, city: e.target.value })}
-                            placeholder="Sydney"
-                            className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Postcode</label>
-                          <input
-                            value={form.postcode}
-                            onChange={(e) => setForm({ ...form, postcode: e.target.value })}
-                            placeholder="2000"
-                            className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">State / Territory</label>
-                        <input
-                          id="state"
-                          value={form.state}
-                          onChange={(e) => setForm({ ...form, state: e.target.value })}
-                          placeholder="State"
-                          className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Destination</p>
-                        <div className="w-full h-11 px-4 text-sm bg-secondary border border-border flex items-center text-muted-foreground cursor-not-allowed">
-                          🇦🇺 Australia
-                        </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">State / Territory *</label>
+                      <select
+                        value={form.state}
+                        onChange={(e) => setForm({ ...form, state: e.target.value })}
+                        required
+                        className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors appearance-none cursor-pointer"
+                      >
+                        {AUSTRALIA_STATES.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Destination</p>
+                      <div className="w-full h-11 px-4 text-sm bg-secondary border border-border flex items-center text-muted-foreground cursor-not-allowed">
+                        🇦🇺 Australia
                       </div>
                     </div>
-                  )}
+                  </div>
 
                   <div className="pt-4">
                     <h2 className="text-xs tracking-[0.15em] uppercase mb-4">Secure Payment</h2>
