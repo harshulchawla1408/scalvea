@@ -79,6 +79,13 @@ const Checkout = () => {
     setPaymentMethod(isIndia ? "shiprocket" : "stripe");
   }, [isIndia]);
 
+  // Sync user email into form once auth finishes loading
+  useEffect(() => {
+    if (user?.email) {
+      setForm(prev => ({ ...prev, email: prev.email || user.email || "" }));
+    }
+  }, [user?.email]);
+
 
 
   const formatVal = (val: number) => {
@@ -160,7 +167,7 @@ const Checkout = () => {
           couponCode: appliedCoupon?.code || null,
           discountAmount: discountAmount > 0 ? discountAmount : null,
           // Pass user details for draft order creation
-          email: form.email,
+          email: form.email || user?.email || "",
           phone: form.phone,
           firstName: form.firstName,
           lastName: form.lastName,
@@ -236,7 +243,7 @@ const Checkout = () => {
             productId: item.productId,
             quantity: item.quantity
           })),
-          email: form.email,
+          email: form.email || user?.email || "",
           phone: form.phone,
           firstName: form.firstName,
           lastName: form.lastName,
@@ -293,8 +300,11 @@ const Checkout = () => {
       return;
     }
 
+    // Resolve email: form field takes priority, fall back to authenticated user email
+    const effectiveEmail = form.email || user?.email || "";
+
     if (isIndia) {
-      if (!form.email || !form.firstName || !form.lastName || !form.address || !form.city || !form.state || !form.postcode || !form.phone) {
+      if (!form.firstName || !form.lastName || !form.address || !form.city || !form.state || !form.postcode || !form.phone) {
         toast({ title: "Missing details", description: "Please fill in all required fields.", variant: "destructive" });
         return;
       }
@@ -302,8 +312,8 @@ const Checkout = () => {
       return;
     }
 
-    // Australia Validation — all address fields are required
-    if (!form.email || !form.firstName || !form.lastName || !form.address || !form.city || !form.state || !form.postcode || !form.phone) {
+    // Australia Validation — all address fields are required (email is optional)
+    if (!form.firstName || !form.lastName || !form.address || !form.city || !form.state || !form.postcode || !form.phone) {
       toast({ title: "Missing details", description: "Please fill in all required fields.", variant: "destructive" });
       return;
     }
