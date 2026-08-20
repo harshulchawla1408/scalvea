@@ -153,10 +153,20 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
     }
   }
 
-  // Pre-load the logo
-  let logoImg: HTMLImageElement | null = null;
+  // Pre-load the logo and flatten transparency to white
+  let logoDataUrl: string | null = null;
   try {
-    logoImg = await loadImage(logoUrl);
+    const logoImg = await loadImage(logoUrl);
+    // Draw on an offscreen canvas with white background so transparent
+    // regions (common in webp) don't render as black in the PDF.
+    const canvas = document.createElement("canvas");
+    canvas.width = logoImg.naturalWidth;
+    canvas.height = logoImg.naturalHeight;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(logoImg, 0, 0);
+    logoDataUrl = canvas.toDataURL("image/png");
   } catch (e) {
     console.error("Could not load logo for invoice", e);
   }
@@ -191,10 +201,12 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
 
   let leftY = y;
   // Left: Logo and Tagline
-  if (logoImg) {
+  if (logoDataUrl) {
+    // Load the flattened data URL to get dimensions for aspect ratio
+    const flatImg = await loadImage(logoDataUrl);
     const imgWidth = 45;
-    const imgHeight = (logoImg.height / logoImg.width) * imgWidth;
-    doc.addImage(logoImg, "PNG", MARGIN, leftY, imgWidth, imgHeight);
+    const imgHeight = (flatImg.height / flatImg.width) * imgWidth;
+    doc.addImage(logoDataUrl, "PNG", MARGIN, leftY, imgWidth, imgHeight);
     leftY += imgHeight + 4;
   } else {
     doc.setFontSize(26);

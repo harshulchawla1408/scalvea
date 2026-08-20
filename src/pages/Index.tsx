@@ -454,11 +454,12 @@ const Index = () => {
       </section>
 
       {/* SCIENTIFIC LAB VIDEO BANNER SECTION */}
-      <section className="relative w-full overflow-hidden bg-black flex items-center justify-center h-[70vh] min-h-[560px] md:h-[90vh] md:min-h-[720px] select-none">
+      <section className="relative w-full overflow-hidden bg-black flex items-center justify-center h-[60vh] min-h-[420px] md:h-[90vh] md:min-h-[720px] select-none">
         <LazyVideo 
           videoSrc={heroMp4} 
           posterSrc={heroPoster}
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none" 
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          imgClassName="absolute inset-0 w-full h-full object-cover hidden md:block"
         />
         {/* Dark Overlay */}
         <div 
