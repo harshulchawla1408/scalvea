@@ -126,20 +126,19 @@ async function handlePaymentSuccess(event: Stripe.Event, supabase: any) {
   const customerEmail     = customerDetails?.email || meta.customer_email || "";
   const customerPhone     = customerDetails?.phone || meta.customer_phone || "";
 
-  // Extract address either from Stripe native shipping or our custom metadata passed from checkout
-  const addressLine1 = stripeShipping?.address?.line1 || meta.address || "";
-  const addressLine2 = stripeShipping?.address?.line2 || meta.address_line2 || "";
-  const city         = stripeShipping?.address?.city  || meta.city || "";
-  const state        = stripeShipping?.address?.state || meta.state || "";
-  const postcode     = stripeShipping?.address?.postal_code || meta.postcode || "";
+  // Extract address: prefer our checkout metadata first (user-entered),
+  // fall back to Stripe's native shipping_details only if metadata is empty.
+  const addressLine1 = meta.address || stripeShipping?.address?.line1 || "";
+  const addressLine2 = meta.address_line2 || stripeShipping?.address?.line2 || "";
+  const city         = meta.city || stripeShipping?.address?.city || "";
+  const state        = meta.state || stripeShipping?.address?.state || "";
+  const postcode     = meta.postcode || stripeShipping?.address?.postal_code || "";
   const country      = stripeShipping?.address?.country || "AU";
-
-  const fullAddressStr = addressLine1 + (addressLine2 ? `, ${addressLine2}` : "");
 
   const shippingAddress = {
     firstName,   lastName,
     first_name:  firstName, last_name: lastName,
-    address:     fullAddressStr,
+    address:     addressLine1,
     address_line1: addressLine1,
     address_line2: addressLine2,
     city:        city,
