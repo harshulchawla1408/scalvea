@@ -91,9 +91,9 @@ const OrderFailed = () => {
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
             <Link to="/checkout">
               <Button
-                className="w-full sm:w-auto h-12 min-w-[160px] bg-neutral-900 hover:bg-neutral-800 text-white uppercase tracking-widest text-xs font-light rounded-none flex items-center gap-2"
+                className="w-full sm:w-auto h-12 min-w-[160px] bg-neutral-900 hover:bg-neutral-800 text-white uppercase tracking-[0.08em] text-sm font-medium rounded-none flex items-center gap-2"
               >
-                <RotateCcw className="h-3.5 w-3.5" />
+                <RotateCcw className="h-4 w-4" />
                 Try Again
               </Button>
             </Link>
@@ -101,9 +101,9 @@ const OrderFailed = () => {
             <Link to="/shop">
               <Button
                 variant="outline"
-                className="w-full sm:w-auto h-12 min-w-[160px] uppercase tracking-widest text-xs font-light rounded-none flex items-center gap-2"
+                className="w-full sm:w-auto h-12 min-w-[160px] uppercase tracking-[0.08em] text-sm font-medium rounded-none flex items-center gap-2"
               >
-                <ShoppingBag className="h-3.5 w-3.5" />
+                <ShoppingBag className="h-4 w-4" />
                 Back to Shop
               </Button>
             </Link>
@@ -111,7 +111,7 @@ const OrderFailed = () => {
 
           <Link
             to="/account"
-            className="block text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+            className="block text-sm font-medium text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
           >
             Check My Orders
           </Link>

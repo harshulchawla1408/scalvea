@@ -83,22 +83,22 @@ const Admin = () => {
             <Link to="/" className="text-lg tracking-[0.2em] uppercase">Scalvea</Link>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden"><X className="h-5 w-5" /></button>
           </div>
-          <p className="px-6 pt-4 pb-2 text-[10px] tracking-[0.15em] uppercase opacity-40">Admin Panel</p>
+          <p className="px-6 pt-4 pb-2 text-xs tracking-[0.15em] uppercase opacity-60 font-semibold">Admin Panel</p>
           <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
             {adminPages.map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
                 onClick={() => { setActivePage(key); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs tracking-[0.06em] transition-colors ${activePage === key ? "bg-primary-foreground/10 opacity-100" : "opacity-60 hover:opacity-100"}`}
+                className={`w-full flex items-center gap-3 px-3.5 py-3 text-sm font-medium tracking-[0.04em] transition-colors rounded-sm ${activePage === key ? "bg-primary-foreground/15 opacity-100 font-semibold" : "opacity-70 hover:opacity-100"}`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-4.5 w-4.5 shrink-0" />
                 {label}
               </button>
             ))}
           </nav>
           <div className="p-4 border-t border-primary-foreground/10">
-            <button onClick={handleSignOut} className="flex items-center gap-3 text-xs opacity-60 hover:opacity-100 transition-opacity">
-              <LogOut className="h-4 w-4" /> Sign Out
+            <button onClick={handleSignOut} className="flex items-center gap-3 text-sm font-medium opacity-70 hover:opacity-100 transition-opacity">
+              <LogOut className="h-4.5 w-4.5" /> Sign Out
             </button>
           </div>
         </div>
@@ -110,9 +110,9 @@ const Admin = () => {
         <header className="sticky top-0 z-30 bg-background border-b border-border px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button onClick={() => setSidebarOpen(true)} className="lg:hidden"><Menu className="h-5 w-5" /></button>
-            <h1 className="text-sm tracking-[0.1em] uppercase font-normal">{adminPages.find(p => p.key === activePage)?.label}</h1>
+            <h1 className="text-base tracking-[0.08em] uppercase font-medium">{adminPages.find(p => p.key === activePage)?.label}</h1>
           </div>
-          <Link to="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">← Back to Store</Link>
+          <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5">← Back to Store</Link>
         </header>
         <main className="p-6 lg:p-8">
           <Suspense fallback={<div className="h-64 flex items-center justify-center"><div className="w-6 h-6 border-2 border-neutral-200 border-t-black rounded-full animate-spin"></div></div>}>

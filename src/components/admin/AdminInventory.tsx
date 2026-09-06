@@ -97,7 +97,7 @@ const AdminInventory = () => {
                   {/* Australia Stock Panel */}
                   <div className="border border-border/60 p-3 flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">🇦🇺 Australia Stock</p>
+                      <p className="text-xs uppercase tracking-[0.06em] font-medium text-muted-foreground">🇦🇺 Australia Stock</p>
                       <p className={`text-sm mt-1 font-mono font-medium ${(p.inventory_quantity_australia ?? 0) < (p.low_stock_threshold || 10) ? "text-red-500 font-semibold" : ""}`}>
                         {p.inventory_quantity_australia ?? 0} {(p.inventory_quantity_australia ?? 0) < (p.low_stock_threshold || 10) && "⚠️"}
                       </p>
@@ -106,18 +106,18 @@ const AdminInventory = () => {
                       <div className="flex items-center gap-2">
                         <input type="number" value={newQty} onChange={(e) => setNewQty(parseInt(e.target.value) || 0)} className="w-16 h-8 px-2 text-xs border border-border bg-transparent outline-none" />
                         <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason" className="w-24 h-8 px-2 text-xs border border-border bg-transparent outline-none" />
-                        <Button onClick={() => handleUpdate(p.id, p.inventory_quantity_australia ?? 0, "australia")} className="bg-foreground text-background h-8 px-3 text-[10px] uppercase tracking-[0.05em]">Save</Button>
-                        <Button variant="outline" onClick={() => setUpdateId(null)} className="h-8 px-2 text-[10px] uppercase">Cancel</Button>
+                        <Button onClick={() => handleUpdate(p.id, p.inventory_quantity_australia ?? 0, "australia")} className="bg-foreground text-background h-8 px-3 text-xs uppercase font-medium tracking-[0.05em]">Save</Button>
+                        <Button variant="outline" onClick={() => setUpdateId(null)} className="h-8 px-2.5 text-xs uppercase font-medium">Cancel</Button>
                       </div>
                     ) : (
-                      <button onClick={() => { setUpdateId({ id: p.id, target: "australia" }); setNewQty(p.inventory_quantity_australia ?? 0); }} className="text-[10px] uppercase tracking-[0.05em] text-muted-foreground hover:text-foreground underline">Update</button>
+                      <button onClick={() => { setUpdateId({ id: p.id, target: "australia" }); setNewQty(p.inventory_quantity_australia ?? 0); }} className="text-xs uppercase font-medium tracking-[0.05em] text-muted-foreground hover:text-foreground underline">Update</button>
                     )}
                   </div>
 
                   {/* India Stock Panel */}
                   <div className="border border-border/60 p-3 flex items-center justify-between">
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">🇮🇳 India Stock</p>
+                      <p className="text-xs uppercase tracking-[0.06em] font-medium text-muted-foreground">🇮🇳 India Stock</p>
                       <p className={`text-sm mt-1 font-mono font-medium ${(p.inventory_quantity ?? 0) < (p.low_stock_threshold || 10) ? "text-red-500 font-semibold" : ""}`}>
                         {p.inventory_quantity ?? 0} {(p.inventory_quantity ?? 0) < (p.low_stock_threshold || 10) && "⚠️"}
                       </p>
@@ -126,11 +126,11 @@ const AdminInventory = () => {
                       <div className="flex items-center gap-2">
                         <input type="number" value={newQty} onChange={(e) => setNewQty(parseInt(e.target.value) || 0)} className="w-16 h-8 px-2 text-xs border border-border bg-transparent outline-none" />
                         <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason" className="w-24 h-8 px-2 text-xs border border-border bg-transparent outline-none" />
-                        <Button onClick={() => handleUpdate(p.id, p.inventory_quantity ?? 0, "india")} className="bg-foreground text-background h-8 px-3 text-[10px] uppercase tracking-[0.05em]">Save</Button>
-                        <Button variant="outline" onClick={() => setUpdateId(null)} className="h-8 px-2 text-[10px] uppercase">Cancel</Button>
+                        <Button onClick={() => handleUpdate(p.id, p.inventory_quantity ?? 0, "india")} className="bg-foreground text-background h-8 px-3 text-xs uppercase font-medium tracking-[0.05em]">Save</Button>
+                        <Button variant="outline" onClick={() => setUpdateId(null)} className="h-8 px-2.5 text-xs uppercase font-medium">Cancel</Button>
                       </div>
                     ) : (
-                      <button onClick={() => { setUpdateId({ id: p.id, target: "india" }); setNewQty(p.inventory_quantity ?? 0); }} className="text-[10px] uppercase tracking-[0.05em] text-muted-foreground hover:text-foreground underline">Update</button>
+                      <button onClick={() => { setUpdateId({ id: p.id, target: "india" }); setNewQty(p.inventory_quantity ?? 0); }} className="text-xs uppercase font-medium tracking-[0.05em] text-muted-foreground hover:text-foreground underline">Update</button>
                     )}
                   </div>
                 </div>

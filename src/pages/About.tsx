@@ -4,13 +4,15 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useSEO } from "@/hooks/useSEO";
 import { ArrowRight, Mail } from "lucide-react";
+import { useRef, useState, useCallback } from "react";
 
 // Asset imports
-import heroMp4 from "@/assets/about.mp4";
-import aboutPoster from "@/assets/about-poster.jpg";
 import puneetPng from "@/assets/puneet.webp";
 import puneetMobPng from "@/assets/puneet-mob.webp";
-import { LazyVideo } from "@/components/ui/LazyVideo";
+
+// Supabase public video URL
+const ABOUT_VIDEO_SRC =
+  "https://dtehgajreecaonqalxlf.supabase.co/storage/v1/object/public/Videos/About.mp4";
 
 // ─── Story blocks data ───────────────────────────────────────────────────────
 const STORY_BLOCKS = [
@@ -71,6 +73,16 @@ const About = () => {
     }
   });
 
+  const [videoError, setVideoError] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleVideoError = useCallback(() => {
+    setVideoError(true);
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[About] Failed to load About.mp4 from Supabase");
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-white overflow-hidden relative">
       {/* Grain overlay */}
@@ -81,80 +93,26 @@ const About = () => {
       <main className="relative z-10">
 
         {/* ══════════════════════════════════════════════════════════════
-            1. HERO VIDEO
+            1. HERO VIDEO — Clean, full-width, no overlays
         ══════════════════════════════════════════════════════════════ */}
-        <section className="relative h-screen min-h-[600px] w-full overflow-hidden bg-black flex items-center justify-center">
-          <LazyVideo 
-            videoSrc={heroMp4} 
-            posterSrc={aboutPoster}
-            className="absolute inset-0 w-full h-full object-cover opacity-55 scale-105" 
-          />
-
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/70 pointer-events-none" />
-
-          {/* Content */}
-          <div className="relative z-10 text-center max-w-3xl px-6 space-y-6 pt-20">
-
-            {/* Main heading */}
-            <motion.h1
-              initial="hidden"
-              animate="visible"
-              variants={{
-                hidden: { opacity: 0 },
-                visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
-              }}
-              className="text-[52px] md:text-[80px] lg:text-[96px] leading-none text-white font-heading tracking-tight uppercase select-none"
-            >
-              {"CARE YOU DESERVE".split(" ").map((word, wIdx) => (
-                <span key={wIdx} className="inline-block mr-4 last:mr-0">
-                  {word.split("").map((letter, lIdx) => (
-                    <motion.span
-                      key={lIdx}
-                      variants={{
-                        hidden: { opacity: 0, y: 8, filter: "blur(6px)" },
-                        visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.9, ease: "easeOut" } }
-                      }}
-                      className="inline-block"
-                    >
-                      {letter}
-                    </motion.span>
-                  ))}
-                </span>
-              ))}
-            </motion.h1>
-
-            {/* Divider */}
-            <motion.div
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ duration: 1.0, delay: 1.0, ease: [0.16, 1, 0.3, 1] }}
-              className="h-[1px] bg-white/20 w-16 mx-auto origin-left"
-            />
-
-            {/* Subheading */}
-            <motion.p
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.0, delay: 1.2 }}
-              className="text-sm md:text-base text-white/70 font-body font-light leading-relaxed max-w-xl mx-auto"
-            >
-              Science-first hair care built around transparency,<br className="hidden sm:block" />
-              clinically researched ingredients,<br className="hidden sm:block" />
-              and everyday confidence.
-            </motion.p>
-
-            {/* Micro text */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 1.2, delay: 1.8 }}
-              className="text-[9px] tracking-[0.25em] text-white/35 font-body font-light uppercase pt-4"
-            >
-              Clinically developed formulations for healthier scalp and hair.
-            </motion.p>
-          </div>
-        </section>
+        {!videoError && (
+          <section className="w-full bg-black">
+            <div className="max-w-7xl mx-auto">
+              <video
+                ref={videoRef}
+                src={ABOUT_VIDEO_SRC}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                onError={handleVideoError}
+                className="w-full h-auto block"
+                aria-label="Scalvea brand film"
+              />
+            </div>
+          </section>
+        )}
 
         {/* ══════════════════════════════════════════════════════════════
             2. WHY I STARTED SCALVEA — STORY BLOCKS
@@ -309,10 +267,10 @@ const About = () => {
               >
                 <a
                   href="mailto:info@scalvea.com"
-                  className="group relative overflow-hidden inline-flex items-center justify-center gap-2 h-12 px-10 text-[10px] tracking-[0.22em] uppercase font-semibold bg-black text-white border border-black hover:bg-transparent hover:text-black transition-all duration-500 hover:-translate-y-0.5 rounded-none shadow-lg"
+                  className="group relative overflow-hidden inline-flex items-center justify-center gap-2.5 h-12 px-10 text-xs sm:text-sm tracking-[0.12em] uppercase font-semibold bg-black text-white border border-black hover:bg-transparent hover:text-black transition-all duration-500 hover:-translate-y-0.5 rounded-none shadow-lg"
                 >
                   <span className="absolute inset-0 w-0 bg-neutral-50 transition-all duration-500 ease-out group-hover:w-full" />
-                  <Mail className="relative z-10 h-3.5 w-3.5" />
+                  <Mail className="relative z-10 h-4 w-4" />
                   <span className="relative z-10">Email Us</span>
                 </a>
               </motion.div>

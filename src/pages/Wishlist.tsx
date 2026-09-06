@@ -29,7 +29,7 @@ const Wishlist = () => {
           <div className="text-center py-20 space-y-6">
             <Heart className="h-16 w-16 mx-auto text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Your wishlist is empty</p>
-            <Button asChild variant="outline" className="text-xs tracking-[0.1em] uppercase">
+            <Button asChild variant="outline" className="h-11 px-6 text-sm font-medium tracking-[0.08em] uppercase">
               <Link to="/shop">Browse Products</Link>
             </Button>
           </div>

@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import Lenis from "lenis";
 import { useSEO } from "@/hooks/useSEO";
-import { LazyVideo } from "@/components/ui/LazyVideo";
+import ScalveaInMotion from "@/components/sections/ScalveaInMotion";
 
 // Asset imports
 const follicle8Serum = hero2;
@@ -23,8 +23,6 @@ import mob2 from "@/assets/mob2.webp";
 import mob3 from "@/assets/mob3.webp";
 import hero2 from "@/assets/hero2.webp";
 import hero3 from "@/assets/hero3.webp";
-import heroMp4 from "@/assets/hero.mp4";
-import heroPoster from "@/assets/hero-poster.jpg";
 import scalpPng from "@/assets/scalp.webp";
 import puneetPng from "@/assets/puneet.webp";
 import puneetMobPng from "@/assets/puneet-mob.webp";
@@ -305,9 +303,9 @@ const Index = () => {
             </div>
             <Link 
               to="/shop" 
-              className="group text-[10px] tracking-[0.15em] uppercase text-black hover:opacity-60 transition-opacity flex items-center gap-2 font-medium w-fit border-b border-black/15 pb-1 shrink-0"
+              className="group text-xs sm:text-sm tracking-[0.1em] uppercase text-black hover:opacity-60 transition-opacity flex items-center gap-2 font-semibold w-fit border-b border-black/20 pb-1 shrink-0"
             >
-              View Collection <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1.5 transition-transform duration-300" />
+              View Collection <ArrowRight className="h-3.5 w-3.5 transform group-hover:translate-x-1.5 transition-transform duration-300" />
             </Link>
           </div>
 
@@ -332,6 +330,9 @@ const Index = () => {
           )}
         </div>
       </section>
+
+      {/* SCALVEA IN MOTION — Editorial Video Carousel */}
+      <ScalveaInMotion />
 
       {/* 3. FOLLICLE 8 PREMIUM SHOWCASE SECTION */}
       <section id="ingredients" className="bg-white py-6 md:py-8 lg:py-10 overflow-hidden border-t border-border/30 relative select-none">
@@ -421,10 +422,10 @@ const Index = () => {
                 <div className="flex flex-col gap-3">
                   <Link 
                     to="/product/follicle-8-hair-growth-serum"
-                    className="group bg-black text-white hover:bg-neutral-900 transition-all duration-300 px-6 py-3 text-[10px] md:text-xs tracking-[0.2em] uppercase font-semibold h-11 flex items-center justify-center gap-2 hover:-translate-y-0.5 shadow-sm rounded-none w-fit"
+                    className="group bg-black text-white hover:bg-neutral-900 transition-all duration-300 px-7 py-3 text-xs md:text-sm tracking-[0.12em] uppercase font-semibold h-12 flex items-center justify-center gap-2 hover:-translate-y-0.5 shadow-sm rounded-none w-fit"
                   >
                     Explore Follicle 8
-                    <ArrowRight className="h-3.5 w-3.5 transform group-hover:translate-x-1 transition-transform duration-300" />
+                    <ArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform duration-300" />
                   </Link>
                 </div>
               </div>
@@ -450,63 +451,6 @@ const Index = () => {
             </motion.div>
 
           </div>
-        </div>
-      </section>
-
-      {/* SCIENTIFIC LAB VIDEO BANNER SECTION */}
-      <section className="relative w-full overflow-hidden bg-black flex items-center justify-center h-[60vh] min-h-[420px] md:h-[90vh] md:min-h-[720px] select-none">
-        <LazyVideo 
-          videoSrc={heroMp4} 
-          posterSrc={heroPoster}
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-          imgClassName="absolute inset-0 w-full h-full object-cover hidden md:block"
-        />
-        {/* Dark Overlay */}
-        <div 
-          className="absolute inset-0 pointer-events-none" 
-          style={{ backgroundColor: "rgba(0,0,0,0.38)" }} 
-        />
-        
-        {/* Centered Content Container */}
-        <div className="relative z-10 text-center max-w-[760px] px-6 flex items-center justify-center h-full">
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-            className="flex flex-col items-center justify-center text-center space-y-6 md:space-y-8"
-          >
-            {/* Small Label */}
-            <span 
-              className="text-[9px] md:text-[10px] tracking-[5px] uppercase font-medium text-white"
-              style={{ fontFamily: "'Clash Display', sans-serif", fontWeight: 500 }}
-            >
-              SCIENTIFICALLY FORMULATED
-            </span>
-
-            {/* Heading */}
-            <h3 
-              className="text-4xl md:text-5xl lg:text-[54px] leading-tight font-heading text-white font-medium"
-              style={{ fontFamily: "'Clash Display', sans-serif", fontWeight: 500 }}
-            >
-              Science Meets Hair Care.<br />Every Formula. Every Drop.
-            </h3>
-
-            {/* Paragraph */}
-            <p className="text-xs md:text-sm text-white font-body font-normal leading-relaxed max-w-[620px] w-[90%] md:w-auto mx-auto opacity-95">
-              Every Scalvea formula is developed using clinically inspired ingredients selected for performance, stability, and everyday use. Designed to support healthier hair and scalp with modern science, uncompromising quality, and complete ingredient transparency.
-            </p>
-
-            {/* CTA Outlined Button */}
-            <div className="pt-2 w-full sm:w-auto">
-              <Link
-                to="/shop"
-                className="inline-flex items-center justify-center border border-white text-white bg-transparent hover:bg-white hover:text-black transition-all duration-300 px-8 py-3.5 text-[10px] md:text-xs tracking-[0.2em] uppercase font-semibold h-12 w-full sm:w-auto rounded-none"
-              >
-                EXPLORE OUR FORMULAS &rarr;
-              </Link>
-            </div>
-          </motion.div>
         </div>
       </section>
 
@@ -598,10 +542,10 @@ const Index = () => {
                 <div className="flex flex-col gap-3">
                   <Link 
                     to="/product/scalp-5-anti-dandruff-hair-serum"
-                    className="group bg-black text-white hover:bg-neutral-900 transition-all duration-300 px-6 py-3 text-[10px] md:text-xs tracking-[0.2em] uppercase font-semibold h-11 flex items-center justify-center gap-2 hover:-translate-y-0.5 shadow-sm rounded-none w-fit"
+                    className="group bg-black text-white hover:bg-neutral-900 transition-all duration-300 px-7 py-3 text-xs md:text-sm tracking-[0.12em] uppercase font-semibold h-12 flex items-center justify-center gap-2 hover:-translate-y-0.5 shadow-sm rounded-none w-fit"
                   >
                     Discover Scalp-5
-                    <ArrowRight className="h-3.5 w-3.5 transform group-hover:translate-x-1 transition-transform duration-300" />
+                    <ArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform duration-300" />
                   </Link>
                 </div>
               </div>
@@ -840,7 +784,7 @@ const Index = () => {
               >
                 <Link
                   to="/shop"
-                  className="group relative overflow-hidden inline-flex items-center justify-center gap-2 h-12 px-10 text-[10px] tracking-[0.22em] uppercase font-semibold bg-white text-black border border-white hover:bg-transparent hover:text-white transition-all duration-500 hover:-translate-y-0.5 rounded-none shadow-lg"
+                  className="group relative overflow-hidden inline-flex items-center justify-center gap-2 h-12 px-10 text-xs sm:text-sm tracking-[0.14em] uppercase font-semibold bg-white text-black border border-white hover:bg-transparent hover:text-white transition-all duration-500 hover:-translate-y-0.5 rounded-none shadow-lg"
                 >
                   <span className="absolute inset-0 w-0 bg-white/20 backdrop-blur-sm transition-all duration-500 ease-out group-hover:w-full" />
                   <span className="relative z-10">Shop Now</span>
@@ -915,15 +859,15 @@ const Index = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email address"
-              className="flex-1 h-12 px-5 text-xs bg-white border border-neutral-200 rounded-full outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-200 transition-all duration-300 font-body font-light text-neutral-900 placeholder:text-neutral-400"
+              className="flex-1 h-12 px-5 text-sm bg-white border border-neutral-200 rounded-full outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-200 transition-all duration-300 font-body font-light text-neutral-900 placeholder:text-neutral-400"
               required
             />
             <button
               type="submit"
-              className="group h-12 px-8 bg-black text-white hover:bg-neutral-900 transition-all duration-300 text-[9px] md:text-[10px] tracking-[0.22em] uppercase font-semibold flex items-center justify-center gap-2 rounded-full hover:-translate-y-0.5 shadow-sm whitespace-nowrap"
+              className="group h-12 px-8 bg-black text-white hover:bg-neutral-900 transition-all duration-300 text-xs md:text-sm tracking-[0.1em] uppercase font-semibold flex items-center justify-center gap-2 rounded-full hover:-translate-y-0.5 shadow-sm whitespace-nowrap"
             >
               Subscribe
-              <ArrowRight className="h-3 w-3 transform group-hover:translate-x-1 transition-transform duration-300" />
+              <ArrowRight className="h-3.5 w-3.5 transform group-hover:translate-x-1 transition-transform duration-300" />
             </button>
           </motion.form>
 

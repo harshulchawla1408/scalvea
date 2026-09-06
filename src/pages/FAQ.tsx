@@ -189,7 +189,7 @@ const FAQ = () => {
           <div className="space-y-10">
             {faqs.map((section) => (
               <div key={section.category}>
-                <h2 className="text-xs tracking-[0.15em] uppercase mb-4">{section.category}</h2>
+                <h2 className="text-sm font-semibold tracking-[0.1em] uppercase mb-4">{section.category}</h2>
                 <Accordion type="single" collapsible className="border-t border-border">
                   {section.items.map((item, i) => (
                     <AccordionItem key={i} value={`${section.category}-${i}`} className="border-b border-border">
@@ -207,9 +207,9 @@ const FAQ = () => {
           </div>
 
           <div className="mt-16 border border-border p-8 text-center">
-            <h3 className="text-xs tracking-[0.15em] uppercase mb-2">Still have questions?</h3>
+            <h3 className="text-sm font-semibold tracking-[0.1em] uppercase mb-2">Still have questions?</h3>
             <p className="text-sm text-muted-foreground mb-4">We're here to help. Reach out and we'll get back to you within 24 hours.</p>
-            <a href="/contact" className="inline-block text-xs tracking-[0.12em] uppercase border border-foreground px-6 py-3 hover:bg-foreground hover:text-background transition-colors">
+            <a href="/contact" className="inline-block text-sm font-medium tracking-[0.08em] uppercase border border-foreground px-8 py-3.5 hover:bg-foreground hover:text-background transition-colors">
               Contact Us
             </a>
           </div>

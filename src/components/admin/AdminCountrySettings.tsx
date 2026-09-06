@@ -48,7 +48,7 @@ const AdminCountrySettings = () => {
                 {!c.is_enabled && <span className="text-[10px] text-red-500 uppercase">Disabled</span>}
               </div>
               {editId !== c.id && (
-                <button onClick={() => startEdit(c)} className="text-xs text-muted-foreground hover:text-foreground transition-colors underline">Edit</button>
+                <button onClick={() => startEdit(c)} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors underline">Edit</button>
               )}
             </div>
 
@@ -56,26 +56,26 @@ const AdminCountrySettings = () => {
               <div className="space-y-3">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
-                    <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block mb-1">Tax %</label>
+                    <label className="text-xs uppercase tracking-[0.08em] text-muted-foreground font-medium block mb-1">Tax %</label>
                     <input type="number" step="0.01" value={form.tax_percentage} onChange={(e) => setForm({ ...form, tax_percentage: parseFloat(e.target.value) || 0 })} className="w-full h-9 px-3 text-sm border border-border bg-transparent outline-none" />
                   </div>
                   <div>
-                    <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block mb-1">Shipping</label>
+                    <label className="text-xs uppercase tracking-[0.08em] text-muted-foreground font-medium block mb-1">Shipping</label>
                     <input type="number" step="0.01" value={form.shipping_charge} onChange={(e) => setForm({ ...form, shipping_charge: parseFloat(e.target.value) || 0 })} className="w-full h-9 px-3 text-sm border border-border bg-transparent outline-none" />
                   </div>
                   <div>
-                    <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block mb-1">Free Above</label>
+                    <label className="text-xs uppercase tracking-[0.08em] text-muted-foreground font-medium block mb-1">Free Above</label>
                     <input type="number" step="0.01" value={form.free_shipping_above} onChange={(e) => setForm({ ...form, free_shipping_above: parseFloat(e.target.value) || 0 })} className="w-full h-9 px-3 text-sm border border-border bg-transparent outline-none" />
                   </div>
                   <div>
-                    <label className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground block mb-1">Delivery Time</label>
+                    <label className="text-xs uppercase tracking-[0.08em] text-muted-foreground font-medium block mb-1">Delivery Time</label>
                     <input value={form.delivery_time} onChange={(e) => setForm({ ...form, delivery_time: e.target.value })} className="w-full h-9 px-3 text-sm border border-border bg-transparent outline-none" />
                   </div>
                 </div>
                 <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.is_enabled} onChange={(e) => setForm({ ...form, is_enabled: e.target.checked })} className="accent-foreground" /> Enabled</label>
                 <div className="flex gap-2">
-                  <Button onClick={handleSave} className="bg-foreground text-background hover:bg-foreground/90 text-xs h-9">Save</Button>
-                  <Button variant="outline" onClick={() => setEditId(null)} className="text-xs h-9">Cancel</Button>
+                  <Button onClick={handleSave} className="bg-foreground text-background hover:bg-foreground/90 text-sm font-medium h-10 px-5">Save</Button>
+                  <Button variant="outline" onClick={() => setEditId(null)} className="text-sm font-medium h-10 px-5">Cancel</Button>
                 </div>
               </div>
             ) : (

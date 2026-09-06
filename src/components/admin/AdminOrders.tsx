@@ -178,11 +178,11 @@ const EditManualOrderPanel = ({ order, onSave, onClose }: EditPanelProps) => {
           <Button
             onClick={save}
             disabled={saving}
-            className="flex-1 h-11 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.08em] uppercase"
+            className="flex-1 h-11 bg-foreground text-background hover:bg-foreground/90 text-sm font-medium tracking-[0.06em] uppercase"
           >
             {saving ? "Saving…" : "Save Changes"}
           </Button>
-          <Button variant="outline" onClick={onClose} className="h-11 text-xs tracking-[0.08em] uppercase px-6">
+          <Button variant="outline" onClick={onClose} className="h-11 text-sm font-medium tracking-[0.06em] uppercase px-6">
             Cancel
           </Button>
         </div>
@@ -210,10 +210,10 @@ const CancelConfirm = ({ order, onConfirm, onClose }: CancelConfirmProps) => (
         This action is logged.
       </p>
       <div className="flex gap-2">
-        <Button onClick={onConfirm} className="flex-1 h-10 text-xs uppercase tracking-wide bg-red-600 hover:bg-red-700 text-white">
+        <Button onClick={onConfirm} className="flex-1 h-11 text-xs sm:text-sm font-medium uppercase tracking-wide bg-red-600 hover:bg-red-700 text-white">
           Cancel Order & Restore Stock
         </Button>
-        <Button variant="outline" onClick={onClose} className="flex-1 h-10 text-xs uppercase tracking-wide">Keep Order</Button>
+        <Button variant="outline" onClick={onClose} className="flex-1 h-11 text-xs sm:text-sm font-medium uppercase tracking-wide">Keep Order</Button>
       </div>
     </div>
   </div>
@@ -517,120 +517,142 @@ const AdminOrders = () => {
               return (
                 <div
                   key={order.id}
-                  className={`border p-4 space-y-3 ${index % 2 === 1 ? "bg-muted/30" : "bg-background"} ${isManual ? "border-amber-300" : "border-border"}`}
+                  className={`border p-5 space-y-4 shadow-sm ${index % 2 === 1 ? "bg-muted/30" : "bg-background"} ${isManual ? "border-amber-300" : "border-neutral-200"}`}
                 >
-                  {/* ── Header row ── */}
-                  <div className="flex items-center justify-between">
+                  {/* ── Header row: Order number, date/time, and financial totals ── */}
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3.5 border-b border-neutral-200">
                     <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium">
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <span className="text-lg sm:text-xl font-bold text-black font-mono tracking-tight">
                           {order.order_number}
                         </span>
                         {isManual && (
-                          <span className="inline-flex items-center gap-1 text-[9px] tracking-wider uppercase font-semibold bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5">
-                            <PenLine className="h-2.5 w-2.5" /> Manual
+                          <span className="inline-flex items-center gap-1 text-xs tracking-wider uppercase font-semibold bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-0.5">
+                            <PenLine className="h-3 w-3" /> Manual
                           </span>
                         )}
                         {order.sales_channel && order.sales_channel !== "WEBSITE" && (
-                          <span className="text-[9px] tracking-wider uppercase bg-secondary text-muted-foreground border border-border px-2 py-0.5">
+                          <span className="text-xs tracking-wider uppercase bg-secondary text-black font-semibold border border-border px-2.5 py-0.5">
                             {order.sales_channel}
                           </span>
                         )}
                       </div>
-                      <p className="text-[10px] text-muted-foreground">{new Date(order.created_at).toLocaleString()}</p>
+                      <p className="text-sm font-semibold text-black mt-1">
+                        {new Date(order.created_at).toLocaleString("en-US", {
+                          year: "numeric",
+                          month: "numeric",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                          second: "2-digit",
+                          hour12: true,
+                        })}
+                      </p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-mono font-medium">{fmt(Number(order.total_amount))}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase font-mono mt-0.5">
+
+                    <div className="text-left sm:text-right">
+                      <p className="text-xl sm:text-2xl font-mono font-bold text-black">{fmt(Number(order.total_amount))}</p>
+                      <p className="text-xs font-semibold text-black uppercase font-mono mt-1">
                         {order.market || (isIndia ? "IN" : "AU")} | {order.payment_provider || order.payment_method} | {order.order_status} | {order.payment_status} | {order.currency}
                       </p>
                     </div>
                   </div>
 
-                  {/* ── Inline items ── */}
+                  {/* ── Inline items: Complete black font color and larger ── */}
                   {orderItems[order.id] && (
-                    <div className="bg-secondary/50 border border-border/40 p-3 space-y-2">
-                      <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground font-medium">Order Items</p>
+                    <div className="bg-neutral-50/80 border border-neutral-200 p-4 space-y-2.5">
+                      <p className="text-xs tracking-[0.1em] uppercase text-black font-bold">Order Items</p>
                       {orderItems[order.id].length === 0
-                        ? <p className="text-xs text-muted-foreground italic">No items stored.</p>
+                        ? <p className="text-sm text-black italic">No items stored.</p>
                         : orderItems[order.id].map((item: any) => (
-                            <div key={item.id} className="flex justify-between text-xs font-light">
-                              <span>{item.product_name} × {item.quantity}</span>
-                              <span>{fmt(Number(item.price * item.quantity))}</span>
+                            <div key={item.id} className="flex justify-between items-center text-sm sm:text-base font-semibold text-black">
+                              <span>{item.product_name} <span className="font-bold text-neutral-600 ml-1.5">× {item.quantity}</span></span>
+                              <span className="font-mono text-black">{fmt(Number(item.price * item.quantity))}</span>
                             </div>
                           ))
                       }
                     </div>
                   )}
 
-                  {/* ── Customer + address row ── */}
-                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div className="text-xs text-muted-foreground font-light space-y-1 flex-1">
+                  {/* ── Customer + address row + Action buttons (Status + Download Invoice) ── */}
+                  <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 py-1">
+                    <div className="text-sm sm:text-[15px] text-black font-normal space-y-2 flex-1 leading-relaxed">
                       <div>
-                        <span className="font-medium text-foreground">Customer: </span>
-                        {order.customer_name || `${addr?.firstName || addr?.first_name || ""} ${addr?.lastName || addr?.last_name || ""}`.trim()}
+                        <span className="font-bold text-black">Customer: </span>
+                        <span className="text-black font-semibold">{order.customer_name || `${addr?.firstName || addr?.first_name || ""} ${addr?.lastName || addr?.last_name || ""}`.trim() || "—"}</span>
                       </div>
                       <div>
-                        <span className="font-medium text-foreground">Contact: </span>
-                        {order.customer_email || addr?.email} | Ph: {order.customer_phone || addr?.phone}
+                        <span className="font-bold text-black">Contact: </span>
+                        <span className="text-black font-medium">{order.customer_email || addr?.email || "—"} | Ph: {order.customer_phone || addr?.phone || "—"}</span>
                       </div>
                       <div>
-                        <span className="font-medium text-foreground">Ship To: </span>
-                        {addr ? `${addr.address || addr.address_line1 || ""}, ${addr.city || ""}, ${addr.state || ""} ${addr.postcode || ""}, ${addr.country || ""}` : "—"}
+                        <span className="font-bold text-black">Ship To: </span>
+                        <span className="text-black font-medium">{addr ? `${addr.address || addr.address_line1 || ""}, ${addr.city || ""}, ${addr.state || ""} ${addr.postcode || ""}, ${addr.country || ""}` : "—"}</span>
                       </div>
                       {isIndia && billing && billing.address_line1 && billing.address_line1 !== (addr?.address_line1 || addr?.address) && (
                         <div>
-                          <span className="font-medium text-foreground">Bill To: </span>
-                          {`${billing.address_line1}, ${billing.city || ""}, ${billing.state || ""} ${billing.postcode || ""}`}
+                          <span className="font-bold text-black">Bill To: </span>
+                          <span className="text-black font-medium">{`${billing.address_line1}, ${billing.city || ""}, ${billing.state || ""} ${billing.postcode || ""}`}</span>
                         </div>
                       )}
-                      <div className="flex items-center gap-2 text-[10px] uppercase font-mono mt-2 flex-wrap">
-                        <span className="bg-secondary px-2 py-0.5">{isIndia ? "🇮🇳 India" : "🇦🇺 Australia"}</span>
+                      <div className="flex items-center gap-2 text-xs uppercase font-mono mt-3 flex-wrap font-semibold text-black">
+                        <span className="bg-neutral-200 text-black px-2.5 py-1 font-semibold">{isIndia ? "🇮🇳 India" : "🇦🇺 Australia"}</span>
                         {isManual && order.delivery_method && (
-                          <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5">{order.delivery_method.replace(/_/g, " ")}</span>
+                          <span className="bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-1 font-semibold">{order.delivery_method.replace(/_/g, " ")}</span>
                         )}
                         {isManual && order.manual_payment_method && (
-                          <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5">{order.manual_payment_method}</span>
+                          <span className="bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-1 font-semibold">{order.manual_payment_method}</span>
                         )}
                         {order.stripe_session_id && (
-                          <span className="bg-blue-50 text-blue-600 px-2 py-0.5 truncate max-w-[150px]" title={order.stripe_session_id}>Stripe: {order.stripe_session_id}</span>
+                          <span className="bg-blue-100 text-blue-900 border border-blue-200 px-2.5 py-1 truncate max-w-[220px] font-semibold" title={order.stripe_session_id}>Stripe: {order.stripe_session_id}</span>
                         )}
                         {(order.fastrr_order_id || order.shiprocket_order_id) && (
-                          <span className="bg-purple-50 text-purple-600 px-2 py-0.5 truncate max-w-[180px]" title={order.fastrr_order_id || order.shiprocket_order_id}>SR: {order.shiprocket_order_id || order.fastrr_order_id}</span>
+                          <span className="bg-purple-100 text-purple-900 border border-purple-200 px-2.5 py-1 truncate max-w-[220px] font-semibold" title={order.fastrr_order_id || order.shiprocket_order_id}>SR: {order.shiprocket_order_id || order.fastrr_order_id}</span>
                         )}
                       </div>
                     </div>
 
-                    {/* Status select + action buttons */}
-                    <div className="flex flex-col gap-2 items-end">
+                    {/* Status select + Action buttons (Download Invoice placed cleanly here) */}
+                    <div className="flex flex-wrap items-center gap-3 self-start lg:self-center">
                       <select
                         value={order.order_status}
                         onChange={e => updateStatus(order.id, e.target.value, order.order_status)}
-                        className={`text-xs tracking-[0.08em] uppercase bg-transparent border px-2 py-1 outline-none ${
-                          ["delivered","hand_delivered","store_pickup","completed"].includes(order.order_status) ? "border-green-500 text-green-600 font-medium" :
-                          ["cancelled","refunded"].includes(order.order_status) ? "border-red-500 text-red-500 font-medium" :
-                          "border-border"
+                        className={`h-11 text-xs sm:text-sm tracking-[0.08em] uppercase bg-white border px-3.5 py-1 outline-none cursor-pointer font-semibold shadow-sm ${
+                          ["delivered","hand_delivered","store_pickup","completed"].includes(order.order_status) ? "border-green-600 text-green-700" :
+                          ["cancelled","refunded"].includes(order.order_status) ? "border-red-600 text-red-600" :
+                          "border-neutral-300 text-black"
                         }`}
                       >
                         {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
                       </select>
 
-                      {/* Edit / Cancel buttons — only for manual orders (item 2, 3) */}
+                      <Button
+                        onClick={() => generateInvoicePDF({
+                          ...order,
+                          order_items: (orderItems[order.id]?.length ? orderItems[order.id] : order.order_items) || [],
+                        })}
+                        variant="outline"
+                        className="h-11 px-4 text-xs sm:text-sm font-semibold tracking-[0.06em] uppercase border-black text-black hover:bg-black hover:text-white transition-all shadow-sm flex items-center gap-2"
+                      >
+                        <Download className="h-4 w-4" /> Download Invoice
+                      </Button>
+
+                      {/* Edit / Cancel buttons — only for manual orders */}
                       {isManual && (
                         <div className="flex gap-2">
                           <button
                             onClick={() => setEditingOrder(order)}
-                            className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-amber-700 hover:text-amber-900 border border-amber-300 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 transition-colors"
+                            className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-amber-900 hover:text-amber-950 font-semibold border border-amber-300 px-3.5 py-2 bg-amber-50 hover:bg-amber-100 transition-colors h-11"
                           >
-                            <Pencil className="h-3 w-3" /> Edit
+                            <Pencil className="h-3.5 w-3.5" /> Edit
                           </button>
                           {isCancellable && (
                             <button
                               onClick={() => setCancelOrder(order)}
                               disabled={cancelling}
-                              className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-red-600 hover:text-red-800 border border-red-300 px-2.5 py-1 bg-red-50 hover:bg-red-100 transition-colors disabled:opacity-50"
+                              className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-red-700 hover:text-red-900 font-semibold border border-red-300 px-3.5 py-2 bg-red-50 hover:bg-red-100 transition-colors disabled:opacity-50 h-11"
                             >
-                              <X className="h-3 w-3" /> Cancel
+                              <X className="h-3.5 w-3.5" /> Cancel
                             </button>
                           )}
                         </div>
@@ -638,123 +660,91 @@ const AdminOrders = () => {
                     </div>
                   </div>
 
-                  {/* ── Financials row ── */}
-                  <div className="text-[10px] text-muted-foreground border-t border-border/20 pt-2 flex flex-wrap gap-4 font-mono">
-                    <span>Subtotal: {fmt(Number(order.subtotal))}</span>
-                    {Number(order.gst_amount || order.tax_amount) > 0 && <span>GST: {fmt(Number(order.gst_amount || order.tax_amount))}</span>}
-                    <span>Shipping: {fmt(Number(order.shipping_amount))}</span>
-                    {Number(order.cod_charges) > 0 && <span>COD: {fmt(Number(order.cod_charges))}</span>}
-                    {Number(order.discount_amount) > 0 && <span>Discount: -{fmt(Number(order.discount_amount))}</span>}
-                    {order.coupon_code && <span>Coupon: {order.coupon_code}</span>}
+                  {/* ── Financials row: Bold black text and clear spacing ── */}
+                  <div className="text-xs sm:text-sm text-black border-t border-neutral-200 pt-3 flex flex-wrap gap-5 font-mono font-medium">
+                    <span><strong className="text-black font-bold">Subtotal:</strong> {fmt(Number(order.subtotal))}</span>
+                    {Number(order.gst_amount || order.tax_amount) > 0 && <span><strong className="text-black font-bold">GST:</strong> {fmt(Number(order.gst_amount || order.tax_amount))}</span>}
+                    <span><strong className="text-black font-bold">Shipping:</strong> {fmt(Number(order.shipping_amount))}</span>
+                    {Number(order.cod_charges) > 0 && <span><strong className="text-black font-bold">COD:</strong> {fmt(Number(order.cod_charges))}</span>}
+                    {Number(order.discount_amount) > 0 && <span className="text-emerald-700 font-semibold"><strong className="font-bold">Discount:</strong> -{fmt(Number(order.discount_amount))}</span>}
+                    {order.coupon_code && <span><strong className="text-black font-bold">Coupon:</strong> {order.coupon_code}</span>}
                   </div>
 
-                  {/* ── Expanded detail section ── */}
-                  <div className="border-t border-border/40 pt-3 mt-3 space-y-4">
-                      {/* Tracking */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
+                  {/* ── Manual order audit panel (only if manual) ── */}
+                  {isManual && (
+                    <div className="border-t border-neutral-200 pt-3">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs font-mono border border-amber-200 bg-amber-50/40 p-3.5">
                         <div>
-                          <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Courier</p>
-                          <p>{order.courier_name || order.courier || "—"}</p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Tracking ID</p>
-                          <p>{order.tracking_number || "—"}</p>
+                          <p className="text-[10px] uppercase text-amber-800 tracking-wider mb-1 font-bold">Order Source</p>
+                          <p className="text-black font-semibold">Manual</p>
                         </div>
                         <div>
-                          <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">AWB / Shipment</p>
-                          <p>{order.awb || order.shipment_id || "—"}</p>
+                          <p className="text-[10px] uppercase text-amber-800 tracking-wider mb-1 font-bold">Sales Channel</p>
+                          <p className="text-black font-medium">{order.sales_channel || "—"}</p>
                         </div>
                         <div>
-                          <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Invoice</p>
-                          <p>{order.invoice_number || "—"}</p>
+                          <p className="text-[10px] uppercase text-amber-800 tracking-wider mb-1 font-bold">Delivery Method</p>
+                          <p className="text-black font-medium">{(order.delivery_method || "—").replace(/_/g, " ")}</p>
                         </div>
-                      </div>
-
-                      {/* Manual order audit panel (item 1 — shows admin name) */}
-                      {isManual && (
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs font-mono border border-amber-200 bg-amber-50/40 p-3">
-                          <div>
-                            <p className="text-[9px] uppercase text-amber-600 tracking-widest mb-1">Order Source</p>
-                            <p className="text-amber-800 font-semibold">Manual</p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] uppercase text-amber-600 tracking-widest mb-1">Sales Channel</p>
-                            <p>{order.sales_channel || "—"}</p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] uppercase text-amber-600 tracking-widest mb-1">Delivery Method</p>
-                            <p>{(order.delivery_method || "—").replace(/_/g, " ")}</p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] uppercase text-amber-600 tracking-widest mb-1">Payment Method</p>
-                            <p>{order.manual_payment_method || "—"}</p>
-                          </div>
-                          {order.courier_name && (
-                            <div>
-                              <p className="text-[9px] uppercase text-amber-600 tracking-widest mb-1">Courier Name</p>
-                              <p>{order.courier_name}</p>
-                            </div>
-                          )}
-                          {/* item 1: resolved admin name */}
-                          <div>
-                            <p className="text-[9px] uppercase text-amber-600 tracking-widest mb-1">Created By</p>
-                            <p className="font-medium">{adminDisplay || "—"}</p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] uppercase text-amber-600 tracking-widest mb-1">Created At</p>
-                            <p>{order.admin_created_at ? new Date(order.admin_created_at).toLocaleString() : "—"}</p>
-                          </div>
+                        <div>
+                          <p className="text-[10px] uppercase text-amber-800 tracking-wider mb-1 font-bold">Payment Method</p>
+                          <p className="text-black font-medium">{order.manual_payment_method || "—"}</p>
                         </div>
-                      )}
-
-                      {/* India-specific details */}
-                      {isIndia && (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono border-t border-border/10 pt-3">
+                        {order.courier_name && (
                           <div>
-                            <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">EDD</p>
-                            <p>{order.edd_date || order.delivery_estimate || "—"}</p>
+                            <p className="text-[10px] uppercase text-amber-800 tracking-wider mb-1 font-bold">Courier Name</p>
+                            <p className="text-black font-medium">{order.courier_name}</p>
                           </div>
-                          <div>
-                            <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">RTO Risk</p>
-                            <p className={order.rto_prediction === "high" ? "text-red-500 font-medium" : ""}>{order.rto_prediction || "—"}</p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Shipping Plan</p>
-                            <p>{order.shipping_plan || "—"}</p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Cart ID</p>
-                            <p className="truncate">{order.cart_id || "—"}</p>
-                          </div>
-                          {order.platform_order_id && (
-                            <div>
-                              <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Platform Order ID</p>
-                              <p>{order.platform_order_id}</p>
-                            </div>
-                          )}
+                        )}
+                        <div>
+                          <p className="text-[10px] uppercase text-amber-800 tracking-wider mb-1 font-bold">Created By</p>
+                          <p className="text-black font-semibold">{adminDisplay || "—"}</p>
                         </div>
-                      )}
-
-                      {/* Admin notes */}
-                      <div className="border-t border-border/10 pt-2">
-                        <p className="text-[9px] uppercase text-muted-foreground tracking-widest mb-1">Admin Notes</p>
-                        <p className="text-xs italic text-muted-foreground">{order.admin_notes || "No notes."}</p>
-                      </div>
-
-                      <div className="border-t border-border/10 pt-4 flex justify-end">
-                        <Button
-                          onClick={() => generateInvoicePDF({
-                            ...order,
-                            // Use freshly-fetched per-order items (from loadOrderItems) with fallback
-                            order_items: (orderItems[order.id]?.length ? orderItems[order.id] : order.order_items) || [],
-                          })}
-                          variant="outline"
-                          className="text-xs tracking-[0.1em] uppercase h-9"
-                        >
-                          <Download className="h-3 w-3 mr-1.5" /> Download Invoice
-                        </Button>
+                        <div>
+                          <p className="text-[10px] uppercase text-amber-800 tracking-wider mb-1 font-bold">Created At</p>
+                          <p className="text-black font-medium">{order.admin_created_at ? new Date(order.admin_created_at).toLocaleString() : "—"}</p>
+                        </div>
                       </div>
                     </div>
+                  )}
+
+                  {/* ── India-specific shipping details (only if India and present) ── */}
+                  {isIndia && (order.edd_date || order.rto_prediction || order.shipping_plan || order.cart_id || order.platform_order_id) && (
+                    <div className="border-t border-neutral-200 pt-3">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono text-black">
+                        {order.edd_date && (
+                          <div>
+                            <p className="text-[10px] uppercase text-neutral-600 tracking-wider mb-1 font-bold">EDD</p>
+                            <p className="text-black font-semibold">{order.edd_date || order.delivery_estimate}</p>
+                          </div>
+                        )}
+                        {order.rto_prediction && (
+                          <div>
+                            <p className="text-[10px] uppercase text-neutral-600 tracking-wider mb-1 font-bold">RTO Risk</p>
+                            <p className={`font-semibold ${order.rto_prediction === "high" ? "text-red-600 font-bold" : "text-black"}`}>{order.rto_prediction}</p>
+                          </div>
+                        )}
+                        {order.shipping_plan && (
+                          <div>
+                            <p className="text-[10px] uppercase text-neutral-600 tracking-wider mb-1 font-bold">Shipping Plan</p>
+                            <p className="text-black font-semibold">{order.shipping_plan}</p>
+                          </div>
+                        )}
+                        {order.cart_id && (
+                          <div>
+                            <p className="text-[10px] uppercase text-neutral-600 tracking-wider mb-1 font-bold">Cart ID</p>
+                            <p className="truncate text-black font-medium">{order.cart_id}</p>
+                          </div>
+                        )}
+                        {order.platform_order_id && (
+                          <div>
+                            <p className="text-[10px] uppercase text-neutral-600 tracking-wider mb-1 font-bold">Platform Order ID</p>
+                            <p className="text-black font-medium">{order.platform_order_id}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

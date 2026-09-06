@@ -229,15 +229,15 @@ const AdminProducts = () => {
             setShowForm(true);
             fetchNextSrIds(); // pre-load next available IDs
           }}
-          className="bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.1em] uppercase h-9"
+          className="bg-foreground text-background hover:bg-foreground/90 text-sm font-medium tracking-[0.08em] uppercase h-10 px-5"
         >
-          <Plus className="h-3 w-3 mr-2" /> Add Product
+          <Plus className="h-4 w-4 mr-2" /> Add Product
         </Button>
       </div>
 
       {showForm && (
         <form onSubmit={handleSubmit} className="border border-border p-6 space-y-6 bg-background">
-          <h3 className="text-xs tracking-[0.15em] uppercase mb-4">{editProduct ? "Edit Product" : "New Product"}</h3>
+          <h3 className="text-sm tracking-[0.1em] uppercase font-semibold mb-4">{editProduct ? "Edit Product" : "New Product"}</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
@@ -432,8 +432,8 @@ const AdminProducts = () => {
           </div>
 
           <div className="flex gap-3">
-            <Button type="submit" className="bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.1em] uppercase h-10">{editProduct ? "Update Product" : "Create Product"}</Button>
-            <Button type="button" variant="outline" onClick={resetForm} className="text-xs tracking-[0.1em] uppercase h-10">Cancel</Button>
+            <Button type="submit" className="bg-foreground text-background hover:bg-foreground/90 text-sm font-medium tracking-[0.08em] uppercase h-11 px-6">{editProduct ? "Update Product" : "Create Product"}</Button>
+            <Button type="button" variant="outline" onClick={resetForm} className="text-sm font-medium tracking-[0.08em] uppercase h-11 px-6">Cancel</Button>
           </div>
         </form>
       )}

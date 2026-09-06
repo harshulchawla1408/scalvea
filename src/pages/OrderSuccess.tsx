@@ -292,21 +292,21 @@ const OrderSuccess = () => {
               <Button
                 variant="outline"
                 onClick={handlePrint}
-                className="h-11 px-6 uppercase tracking-widest text-xs font-light rounded-none flex items-center gap-2"
+                className="h-11 px-6 uppercase tracking-[0.08em] text-sm font-medium rounded-none flex items-center gap-2"
               >
-                <Printer className="h-3.5 w-3.5" />
+                <Printer className="h-4 w-4" />
                 Print Invoice
               </Button>
 
               <Link to="/shop">
-                <Button variant="outline" className="h-11 min-w-[160px] uppercase tracking-widest text-xs font-light rounded-none">
+                <Button variant="outline" className="h-11 min-w-[160px] uppercase tracking-[0.08em] text-sm font-medium rounded-none">
                   Continue Shopping
                 </Button>
               </Link>
 
               {order.user_id && (
                 <Link to="/account">
-                  <Button className="h-11 min-w-[160px] bg-neutral-900 hover:bg-neutral-800 text-white uppercase tracking-widest text-xs font-light rounded-none">
+                  <Button className="h-11 min-w-[160px] bg-neutral-900 hover:bg-neutral-800 text-white uppercase tracking-[0.08em] text-sm font-medium rounded-none">
                     View My Orders
                   </Button>
                 </Link>

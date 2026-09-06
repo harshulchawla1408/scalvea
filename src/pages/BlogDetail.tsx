@@ -73,11 +73,11 @@ const BlogDetail = () => {
         
         {/* Breadcrumb */}
         <div className="max-w-4xl mx-auto px-6 lg:px-16 pt-8 pb-4">
-          <nav className="flex items-center gap-2 text-[10px] uppercase tracking-[0.15em] font-medium text-neutral-400">
+          <nav className="flex items-center gap-2 text-xs sm:text-[13px] uppercase tracking-[0.06em] font-medium text-neutral-400">
             <Link to="/" className="hover:text-black transition-colors">Home</Link>
-            <ChevronRight className="w-3 h-3" />
+            <ChevronRight className="w-3.5 h-3.5" />
             <Link to="/blogs" className="hover:text-black transition-colors">Journal</Link>
-            <ChevronRight className="w-3 h-3" />
+            <ChevronRight className="w-3.5 h-3.5" />
             <span className="text-neutral-800 line-clamp-1">{post.meta.title}</span>
           </nav>
         </div>
@@ -177,7 +177,7 @@ const BlogDetail = () => {
                 <div className="mt-12">
                   <Link 
                     to="/blogs"
-                    className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.15em] font-medium text-neutral-500 hover:text-black transition-colors"
+                    className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.08em] font-semibold text-neutral-600 hover:text-black transition-colors"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Back to Journal
@@ -203,7 +203,7 @@ const BlogDetail = () => {
                 </div>
                 <Link 
                   to="/blogs"
-                  className="hidden md:inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.15em] font-medium text-neutral-900 hover:text-neutral-500 transition-colors"
+                  className="hidden md:inline-flex items-center gap-2 text-xs sm:text-sm uppercase tracking-[0.08em] font-semibold text-neutral-900 hover:text-neutral-500 transition-colors"
                 >
                   View All
                   <ChevronRight className="w-4 h-4" />

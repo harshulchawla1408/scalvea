@@ -36,8 +36,8 @@ const Cart = () => {
         
         {/* HIGHLIGHTED SHIPPING BANNER */}
         <div className="bg-black text-white border border-neutral-800/80 py-2 px-2 text-center select-none shadow-sm mb-8 overflow-hidden">
-          <div className="flex items-center justify-center text-[9.5px] sm:text-[11px] md:text-xs font-medium tracking-wide whitespace-nowrap">
-            <span className="text-neutral-200 flex items-center justify-center gap-1 sm:gap-1.5">
+          <div className="flex items-center justify-center text-xs sm:text-[13px] md:text-sm font-medium tracking-wide whitespace-nowrap">
+            <span className="text-neutral-200 flex items-center justify-center gap-1 sm:gap-2">
               <span className="font-semibold text-white">Free Delivery</span> in India 
               <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-3.5 sm:w-4 h-auto ml-0.5 rounded-sm shadow-sm" /> 
               <span className="mx-0.5 sm:mx-1.5 text-neutral-600">|</span> 
@@ -90,7 +90,7 @@ const Cart = () => {
             </div>
 
             <div className="lg:sticky lg:top-32 lg:h-fit bg-secondary p-8 space-y-6">
-              <h2 className="text-xs tracking-[0.15em] uppercase">Order Summary</h2>
+              <h2 className="text-sm font-semibold tracking-[0.1em] uppercase">Order Summary</h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-light">Subtotal</span>
@@ -107,15 +107,15 @@ const Cart = () => {
                   </span>
                 </div>
                 <div className="border-t border-border pt-3 flex justify-between font-normal">
-                  <span>Total</span>
+                  <span className="font-medium">Total</span>
                   <div className="text-right font-mono">
-                    <span className="block font-medium">{formatVal(total + shipping)} {currencyCode}</span>
+                    <span className="block font-semibold text-base">{formatVal(total + shipping)} {currencyCode}</span>
                     <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5 font-body">Inclusive of all taxes</span>
                   </div>
                 </div>
               </div>
-              <Button asChild className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase"><Link to="/checkout">Checkout</Link></Button>
-              <Link to="/shop" className="block text-center text-xs tracking-[0.08em] uppercase text-muted-foreground hover:text-foreground transition-colors">Continue Shopping</Link>
+              <Button asChild className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 text-sm font-semibold tracking-[0.1em] uppercase"><Link to="/checkout">Checkout</Link></Button>
+              <Link to="/shop" className="block text-center text-sm font-medium tracking-[0.08em] uppercase text-muted-foreground hover:text-foreground transition-colors">Continue Shopping</Link>
             </div>
           </div>
         )}

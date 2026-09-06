@@ -308,7 +308,7 @@ const Contact = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     {/* Name */}
                     <div className="space-y-2">
-                      <label className="text-[9px] tracking-[0.18em] uppercase text-neutral-500 font-body font-medium block">
+                      <label className="text-xs font-medium tracking-[0.08em] uppercase text-neutral-600 font-body block">
                         Your Name
                       </label>
                       <input
@@ -316,13 +316,13 @@ const Contact = () => {
                         onChange={e => setForm({ ...form, name: e.target.value })}
                         required
                         placeholder="e.g. Puneet"
-                        className="w-full h-11 px-4 text-xs bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-400"
+                        className="w-full h-11 px-4 text-sm bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-400"
                       />
                     </div>
 
                     {/* Email */}
                     <div className="space-y-2">
-                      <label className="text-[9px] tracking-[0.18em] uppercase text-neutral-500 font-body font-medium block">
+                      <label className="text-xs font-medium tracking-[0.08em] uppercase text-neutral-600 font-body block">
                         Email Address
                       </label>
                       <input
@@ -331,14 +331,14 @@ const Contact = () => {
                         onChange={e => setForm({ ...form, email: e.target.value })}
                         required
                         placeholder="you@example.com"
-                        className="w-full h-11 px-4 text-xs bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-400"
+                        className="w-full h-11 px-4 text-sm bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-400"
                       />
                     </div>
                   </div>
 
                   {/* Subject */}
                   <div className="space-y-2">
-                    <label className="text-[9px] tracking-[0.18em] uppercase text-neutral-500 font-body font-medium block">
+                    <label className="text-xs font-medium tracking-[0.08em] uppercase text-neutral-600 font-body block">
                       Subject
                     </label>
                     <input
@@ -346,13 +346,13 @@ const Contact = () => {
                       onChange={e => setForm({ ...form, subject: e.target.value })}
                       required
                       placeholder="What is your enquiry about?"
-                      className="w-full h-11 px-4 text-xs bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-400"
+                      className="w-full h-11 px-4 text-sm bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-400"
                     />
                   </div>
 
                   {/* Message */}
                   <div className="space-y-2">
-                    <label className="text-[9px] tracking-[0.18em] uppercase text-neutral-500 font-body font-medium block">
+                    <label className="text-xs font-medium tracking-[0.08em] uppercase text-neutral-600 font-body block">
                       Message
                     </label>
                     <textarea
@@ -361,7 +361,7 @@ const Contact = () => {
                       required
                       rows={5}
                       placeholder="Please describe your question or concern in detail..."
-                      className="w-full px-4 py-3.5 text-xs bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light resize-none text-neutral-900 placeholder:text-neutral-400"
+                      className="w-full px-4 py-3.5 text-sm bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light resize-none text-neutral-900 placeholder:text-neutral-400"
                     />
                   </div>
 
@@ -369,7 +369,7 @@ const Contact = () => {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="group w-full h-12 flex items-center justify-center gap-2.5 bg-black text-white text-[10px] tracking-[0.22em] uppercase font-semibold rounded-xl hover:bg-neutral-800 hover:-translate-y-0.5 transition-all duration-300 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
+                    className="group w-full h-12 flex items-center justify-center gap-2.5 bg-black text-white text-xs sm:text-sm tracking-[0.12em] uppercase font-semibold rounded-xl hover:bg-neutral-800 hover:-translate-y-0.5 transition-all duration-300 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
                   >
                     {submitting ? (
                       <span className="flex items-center gap-2">
@@ -379,7 +379,7 @@ const Contact = () => {
                     ) : (
                       <>
                         Send Message
-                        <Send className="h-3.5 w-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
+                        <Send className="h-4 w-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-300" />
                       </>
                     )}
                   </button>

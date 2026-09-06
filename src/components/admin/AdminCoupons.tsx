@@ -47,40 +47,40 @@ const AdminCoupons = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">{coupons.length} coupons</p>
-        <Button onClick={() => setShowForm(!showForm)} className="bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.1em] uppercase h-9">
-          <Plus className="h-3 w-3 mr-2" /> Create Coupon
+        <Button onClick={() => setShowForm(!showForm)} className="bg-foreground text-background hover:bg-foreground/90 text-sm font-medium tracking-[0.08em] uppercase h-10 px-5">
+          <Plus className="h-4 w-4 mr-2" /> Create Coupon
         </Button>
       </div>
 
       {showForm && (
         <form onSubmit={handleSubmit} className="border border-border p-6 space-y-4 bg-background">
-          <h3 className="text-xs uppercase tracking-[0.12em] font-medium mb-2">New Coupon</h3>
+          <h3 className="text-sm uppercase tracking-[0.1em] font-semibold mb-2">New Coupon</h3>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-[9px] uppercase tracking-[0.05em] text-muted-foreground">Code</label>
+              <label className="text-xs uppercase tracking-[0.05em] text-muted-foreground font-medium">Code</label>
               <input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="COUPON10" required className="h-10 px-3 text-sm border border-border bg-transparent outline-none uppercase" />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-[9px] uppercase tracking-[0.05em] text-muted-foreground">Discount %</label>
+              <label className="text-xs uppercase tracking-[0.05em] text-muted-foreground font-medium">Discount %</label>
               <input type="number" value={form.discount_percentage} onChange={(e) => setForm({ ...form, discount_percentage: parseFloat(e.target.value) || 0 })} placeholder="10" className="h-10 px-3 text-sm border border-border bg-transparent outline-none" />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-[9px] uppercase tracking-[0.05em] text-muted-foreground">Expires At</label>
+              <label className="text-xs uppercase tracking-[0.05em] text-muted-foreground font-medium">Expires At</label>
               <input type="date" value={form.expires_at} onChange={(e) => setForm({ ...form, expires_at: e.target.value })} className="h-10 px-3 text-sm border border-border bg-transparent outline-none" />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-[9px] uppercase tracking-[0.05em] text-muted-foreground">Max Usage</label>
+              <label className="text-xs uppercase tracking-[0.05em] text-muted-foreground font-medium">Max Usage</label>
               <input type="number" value={form.max_usage} onChange={(e) => setForm({ ...form, max_usage: parseInt(e.target.value) || 0 })} placeholder="0 (unlimited)" className="h-10 px-3 text-sm border border-border bg-transparent outline-none" />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-[9px] uppercase tracking-[0.05em] text-muted-foreground">Target Country</label>
+              <label className="text-xs uppercase tracking-[0.05em] text-muted-foreground font-medium">Target Country</label>
               <select value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className="h-10 px-3 text-sm border border-border bg-transparent outline-none">
                 <option value="Australia">🇦🇺 Australia</option>
                 <option value="India">🇮🇳 India</option>
               </select>
             </div>
           </div>
-          <Button type="submit" className="bg-foreground text-background hover:bg-foreground/90 text-xs h-9 uppercase tracking-[0.08em]">Create</Button>
+          <Button type="submit" className="bg-foreground text-background hover:bg-foreground/90 text-sm font-medium h-10 px-6 uppercase tracking-[0.08em]">Create</Button>
         </form>
       )}
 

@@ -253,61 +253,61 @@ const Account = () => {
     const [form, setForm] = useState({ ...initial, country: selectedCountry });
     return (
       <div className="border border-border p-4 space-y-3">
-        <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">
+        <p className="text-xs tracking-[0.08em] uppercase text-muted-foreground font-medium">
           Adding address for <span className="text-foreground font-medium">{selectedCountry}</span>
         </p>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-[10px] uppercase tracking-[0.1em]">First Name</Label>
-            <Input value={form.first_name || ""} onChange={e => setForm({ ...form, first_name: e.target.value })} className="h-9 text-sm" />
+            <Label className="text-xs uppercase tracking-[0.08em] font-medium">First Name</Label>
+            <Input value={form.first_name || ""} onChange={e => setForm({ ...form, first_name: e.target.value })} className="h-10 text-sm" />
           </div>
           <div>
-            <Label className="text-[10px] uppercase tracking-[0.1em]">Last Name</Label>
-            <Input value={form.last_name || ""} onChange={e => setForm({ ...form, last_name: e.target.value })} className="h-9 text-sm" />
+            <Label className="text-xs uppercase tracking-[0.08em] font-medium">Last Name</Label>
+            <Input value={form.last_name || ""} onChange={e => setForm({ ...form, last_name: e.target.value })} className="h-10 text-sm" />
           </div>
         </div>
         <div>
-          <Label className="text-[10px] uppercase tracking-[0.1em]">Label</Label>
-          <Input value={form.label || ""} onChange={e => setForm({ ...form, label: e.target.value })} placeholder="Home, Office..." className="h-9 text-sm" />
+          <Label className="text-xs uppercase tracking-[0.08em] font-medium">Label</Label>
+          <Input value={form.label || ""} onChange={e => setForm({ ...form, label: e.target.value })} placeholder="Home, Office..." className="h-10 text-sm" />
         </div>
         <div>
-          <Label className="text-[10px] uppercase tracking-[0.1em]">Address Line 1</Label>
-          <Input value={form.address_line1 || ""} onChange={e => setForm({ ...form, address_line1: e.target.value })} className="h-9 text-sm" />
+          <Label className="text-xs uppercase tracking-[0.08em] font-medium">Address Line 1</Label>
+          <Input value={form.address_line1 || ""} onChange={e => setForm({ ...form, address_line1: e.target.value })} className="h-10 text-sm" />
         </div>
         <div>
-          <Label className="text-[10px] uppercase tracking-[0.1em]">Address Line 2</Label>
-          <Input value={form.address_line2 || ""} onChange={e => setForm({ ...form, address_line2: e.target.value })} className="h-9 text-sm" />
+          <Label className="text-xs uppercase tracking-[0.08em] font-medium">Address Line 2</Label>
+          <Input value={form.address_line2 || ""} onChange={e => setForm({ ...form, address_line2: e.target.value })} className="h-10 text-sm" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-[10px] uppercase tracking-[0.1em]">City</Label>
-            <Input value={form.city || ""} onChange={e => setForm({ ...form, city: e.target.value })} className="h-9 text-sm" />
+            <Label className="text-xs uppercase tracking-[0.08em] font-medium">City</Label>
+            <Input value={form.city || ""} onChange={e => setForm({ ...form, city: e.target.value })} className="h-10 text-sm" />
           </div>
           <div>
-            <Label className="text-[10px] uppercase tracking-[0.1em]">State</Label>
-            <Input value={form.state || ""} onChange={e => setForm({ ...form, state: e.target.value })} className="h-9 text-sm" />
+            <Label className="text-xs uppercase tracking-[0.08em] font-medium">State</Label>
+            <Input value={form.state || ""} onChange={e => setForm({ ...form, state: e.target.value })} className="h-10 text-sm" />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-[10px] uppercase tracking-[0.1em]">Postcode</Label>
-            <Input value={form.postcode || ""} onChange={e => setForm({ ...form, postcode: e.target.value })} className="h-9 text-sm" />
+            <Label className="text-xs uppercase tracking-[0.08em] font-medium">Postcode</Label>
+            <Input value={form.postcode || ""} onChange={e => setForm({ ...form, postcode: e.target.value })} className="h-10 text-sm" />
           </div>
           <div>
-            <Label className="text-[10px] uppercase tracking-[0.1em]">Country</Label>
-            <Input value={selectedCountry} disabled className="h-9 text-sm bg-secondary cursor-not-allowed" />
+            <Label className="text-xs uppercase tracking-[0.08em] font-medium">Country</Label>
+            <Input value={selectedCountry} disabled className="h-10 text-sm bg-secondary cursor-not-allowed" />
           </div>
         </div>
         <div>
-          <Label className="text-[10px] uppercase tracking-[0.1em]">Phone</Label>
-          <Input value={form.phone || ""} onChange={e => setForm({ ...form, phone: e.target.value })} className="h-9 text-sm" />
+          <Label className="text-xs uppercase tracking-[0.08em] font-medium">Phone</Label>
+          <Input value={form.phone || ""} onChange={e => setForm({ ...form, phone: e.target.value })} className="h-10 text-sm" />
         </div>
         <div className="flex gap-2 pt-1">
-          <Button onClick={() => onSave(form)} className="h-9 text-[10px] tracking-[0.1em] uppercase bg-foreground text-background hover:bg-foreground/90">
-            <Check className="h-3 w-3 mr-1" /> Save
+          <Button onClick={() => onSave(form)} className="h-10 text-xs sm:text-sm font-medium tracking-[0.08em] uppercase px-5 bg-foreground text-background hover:bg-foreground/90">
+            <Check className="h-3.5 w-3.5 mr-1.5" /> Save
           </Button>
-          <Button onClick={onCancel} variant="outline" className="h-9 text-[10px] tracking-[0.1em] uppercase">
-            <X className="h-3 w-3 mr-1" /> Cancel
+          <Button onClick={onCancel} variant="outline" className="h-10 text-xs sm:text-sm font-medium tracking-[0.08em] uppercase px-5">
+            <X className="h-3.5 w-3.5 mr-1.5" /> Cancel
           </Button>
         </div>
       </div>
@@ -323,7 +323,7 @@ const Account = () => {
             <h1 className="text-3xl font-light tracking-[0.04em]">My Account</h1>
             <div className="flex items-center gap-3">
               {isAdmin && (
-                <Button asChild variant="outline" className="text-xs tracking-[0.1em] uppercase border-foreground">
+                <Button asChild variant="outline" className="text-sm font-medium tracking-[0.08em] uppercase border-foreground px-5 py-2.5 h-10">
                   <Link to="/admin">Admin Dashboard</Link>
                 </Button>
               )}
@@ -340,8 +340,8 @@ const Account = () => {
                 { value: "country", label: "Country", icon: Globe },
               ].map(({ value, label, icon: Icon }) => (
                 <TabsTrigger key={value} value={value}
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none text-xs tracking-[0.1em] uppercase px-4 py-3 shrink-0">
-                  <Icon className="h-3.5 w-3.5 mr-1.5" /> {label}
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none text-sm font-medium tracking-[0.08em] uppercase px-5 py-3.5 shrink-0">
+                  <Icon className="h-4 w-4 mr-2" /> {label}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -351,8 +351,8 @@ const Account = () => {
               {orders.length === 0 ? (
                 <div className="text-center py-16 space-y-4">
                   <Package className="h-12 w-12 mx-auto text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">No orders yet</p>
-                  <Button asChild variant="outline" className="text-xs tracking-[0.1em] uppercase">
+                  <p className="text-base text-muted-foreground">No orders yet</p>
+                  <Button asChild variant="outline" className="text-sm font-medium tracking-[0.08em] uppercase h-11 px-6">
                     <Link to="/shop">Start Shopping</Link>
                   </Button>
                 </div>
@@ -398,7 +398,7 @@ const Account = () => {
                       <div className="border-t border-border p-4 space-y-4">
                         {/* Status tracker (item 6 — uses dynamic steps based on delivery method) */}
                         <div>
-                          <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-3">Order Status</p>
+                          <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-3">Order Status</p>
                           {(() => {
                             const steps = getStatusSteps(order);
                             const stepIdx = getStepIndex(steps, order.order_status);
@@ -435,7 +435,7 @@ const Account = () => {
                         {/* Items */}
                         {items.length > 0 && (
                           <div>
-                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-2">Items</p>
+                            <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-2">Items</p>
                             <div className="space-y-1">
                               {items.map((item: any) => (
                                 <div key={item.id} className="flex justify-between text-sm">
@@ -450,43 +450,43 @@ const Account = () => {
                         {/* Financials */}
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div>
-                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Subtotal</p>
+                            <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-1">Subtotal</p>
                             <p>{fmt(Number(order.subtotal))}</p>
                           </div>
                           {Number(order.gst_amount || order.tax_amount) > 0 && (
                             <div>
-                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">{isIndia ? "GST" : "Tax"}</p>
+                              <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-1">{isIndia ? "GST" : "Tax"}</p>
                               <p>{fmt(Number(order.gst_amount || order.tax_amount))}</p>
                             </div>
                           )}
                           <div>
-                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping</p>
+                            <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-1">Shipping</p>
                             <p>{fmt(Number(order.shipping_amount))}</p>
                           </div>
                           {Number(order.cod_charges) > 0 && (
                             <div>
-                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">COD Charges</p>
+                              <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-1">COD Charges</p>
                               <p>{fmt(Number(order.cod_charges))}</p>
                             </div>
                           )}
                           {Number(order.discount_amount) > 0 && (
                             <div>
-                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Discount</p>
+                              <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-1">Discount</p>
                               <p>-{fmt(Number(order.discount_amount))}</p>
                             </div>
                           )}
                           {order.coupon_code && (
                             <div>
-                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Coupon</p>
+                              <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-1">Coupon</p>
                               <p className="font-mono">{order.coupon_code}</p>
                             </div>
                           )}
                           <div>
-                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">{isIndia ? "Estimated Delivery" : "Delivery Estimate"}</p>
+                            <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-1">{isIndia ? "Estimated Delivery" : "Delivery Estimate"}</p>
                             <p>{(order as any).edd_date || order.delivery_estimate || "—"}</p>
                           </div>
                           <div>
-                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Payment Method</p>
+                            <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-1">Payment Method</p>
                             <p className="uppercase">{payLabel}</p>
                           </div>
                         </div>
@@ -494,11 +494,11 @@ const Account = () => {
                         {/* Tracking */}
                         <div className="border-t border-border/40 pt-4 grid grid-cols-2 gap-4 text-sm">
                           <div>
-                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Courier Partner</p>
+                            <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-1">Courier Partner</p>
                             <p>{order.courier_name || order.courier || "Assigning..."}</p>
                           </div>
                           <div>
-                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Tracking Number</p>
+                            <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-1">Tracking Number</p>
                             <p className="font-mono">
                               {order.tracking_number ? (
                                 <span className="text-foreground font-semibold">{order.tracking_number}</span>
@@ -509,7 +509,7 @@ const Account = () => {
                           </div>
                           {isIndia && (order as any).shipping_plan && (
                             <div>
-                              <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Plan</p>
+                              <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-1">Shipping Plan</p>
                               <p className="uppercase">{(order as any).shipping_plan}</p>
                             </div>
                           )}
@@ -519,7 +519,7 @@ const Account = () => {
                         {/* Shipping address */}
                         {order.shipping_address && (
                           <div className="border-t border-border/40 pt-3 text-sm">
-                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Address</p>
+                            <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-1">Shipping Address</p>
                             <p>{(addr.firstName || addr.first_name || "")} {(addr.lastName || addr.last_name || "")}</p>
                             <p className="text-muted-foreground">{addr.address || addr.address_line1}, {addr.city} {addr.state} {addr.postcode}</p>
                           </div>
@@ -528,14 +528,14 @@ const Account = () => {
                         {/* Billing address (India only, if different from shipping) */}
                         {isIndia && order.billing_address && billing.address_line1 && billing.address_line1 !== (addr.address_line1 || addr.address) && (
                           <div className="text-sm">
-                            <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Billing Address</p>
+                            <p className="text-xs tracking-[0.08em] uppercase font-medium text-muted-foreground mb-1">Billing Address</p>
                             <p>{billing.first_name || ""} {billing.last_name || ""}</p>
                             <p className="text-muted-foreground">{billing.address_line1}, {billing.city} {billing.state} {billing.postcode}</p>
                           </div>
                         )}
 
-                        <Button onClick={() => downloadInvoice(order)} variant="outline" className="text-xs tracking-[0.1em] uppercase h-9">
-                          <Download className="h-3 w-3 mr-1.5" /> Download Invoice
+                        <Button onClick={() => downloadInvoice(order)} variant="outline" className="text-sm font-medium tracking-[0.08em] uppercase h-10 px-5">
+                          <Download className="h-3.5 w-3.5 mr-2" /> Download Invoice
                         </Button>
                       </div>
                       );
@@ -548,8 +548,8 @@ const Account = () => {
             {/* Addresses Tab */}
             <TabsContent value="addresses" className="space-y-4">
               <div className="flex justify-end">
-                <button onClick={startAddAddress} className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground hover:text-foreground flex items-center gap-1">
-                  <Plus className="h-3 w-3" /> Add Address
+                <button onClick={startAddAddress} className="text-xs sm:text-sm tracking-[0.08em] uppercase font-medium text-foreground hover:opacity-70 flex items-center gap-1.5 transition-opacity">
+                  <Plus className="h-3.5 w-3.5" /> Add Address
                 </button>
               </div>
 
@@ -568,9 +568,9 @@ const Account = () => {
                   ) : (
                     <div key={addr.id} className="border border-border p-4 flex items-start justify-between">
                       <div className="text-sm space-y-0.5">
-                        <p className="font-medium text-xs tracking-[0.08em] uppercase">
+                        <p className="font-semibold text-sm tracking-[0.08em] uppercase">
                           {addr.label || "Address"}
-                          {addr.is_default && <span className="ml-2 text-[9px] text-muted-foreground">(Default)</span>}
+                          {addr.is_default && <span className="ml-2 text-xs text-muted-foreground font-normal">(Default)</span>}
                         </p>
                         <p>{addr.first_name} {addr.last_name}</p>
                         <p className="text-muted-foreground">{addr.address_line1}</p>
@@ -580,8 +580,8 @@ const Account = () => {
                         {addr.phone && <p className="text-muted-foreground">{addr.phone}</p>}
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => startEditAddress(addr)} className="text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                        <button onClick={() => deleteAddress.mutate(addr.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                        <button onClick={() => startEditAddress(addr)} className="text-muted-foreground hover:text-foreground p-1"><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => deleteAddress.mutate(addr.id)} className="text-muted-foreground hover:text-destructive p-1"><Trash2 className="h-4 w-4" /></button>
                       </div>
                     </div>
                   )
@@ -595,23 +595,23 @@ const Account = () => {
                 {editingProfile ? (
                   <div className="space-y-3">
                     <div>
-                      <Label className="text-[10px] uppercase tracking-[0.1em]">Full Name</Label>
-                      <Input value={profileForm.full_name} onChange={e => setProfileForm({ ...profileForm, full_name: e.target.value })} className="h-9 text-sm" />
+                      <Label className="text-xs uppercase tracking-[0.08em] font-medium">Full Name</Label>
+                      <Input value={profileForm.full_name} onChange={e => setProfileForm({ ...profileForm, full_name: e.target.value })} className="h-10 text-sm" />
                     </div>
                     <div>
-                      <Label className="text-[10px] uppercase tracking-[0.1em]">Email</Label>
-                      <Input value={profileForm.email} onChange={e => setProfileForm({ ...profileForm, email: e.target.value })} className="h-9 text-sm" />
+                      <Label className="text-xs uppercase tracking-[0.08em] font-medium">Email</Label>
+                      <Input value={profileForm.email} onChange={e => setProfileForm({ ...profileForm, email: e.target.value })} className="h-10 text-sm" />
                     </div>
                     <div>
-                      <Label className="text-[10px] uppercase tracking-[0.1em]">Phone</Label>
-                      <Input value={profileForm.phone} onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })} placeholder="+61 400 000 000" className="h-9 text-sm" />
+                      <Label className="text-xs uppercase tracking-[0.08em] font-medium">Phone</Label>
+                      <Input value={profileForm.phone} onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })} placeholder="+61 400 000 000" className="h-10 text-sm" />
                     </div>
                     <div className="flex gap-2 pt-1">
-                      <Button onClick={() => updateProfile.mutate(profileForm)} disabled={updateProfile.isPending} className="h-9 text-[10px] tracking-[0.1em] uppercase bg-foreground text-background hover:bg-foreground/90">
-                        <Check className="h-3 w-3 mr-1" /> Save
+                      <Button onClick={() => updateProfile.mutate(profileForm)} disabled={updateProfile.isPending} className="h-10 text-xs sm:text-sm font-medium tracking-[0.08em] uppercase px-5 bg-foreground text-background hover:bg-foreground/90">
+                        <Check className="h-3.5 w-3.5 mr-1.5" /> Save
                       </Button>
-                      <Button onClick={() => setEditingProfile(false)} variant="outline" className="h-9 text-[10px] tracking-[0.1em] uppercase">
-                        <X className="h-3 w-3 mr-1" /> Cancel
+                      <Button onClick={() => setEditingProfile(false)} variant="outline" className="h-10 text-xs sm:text-sm font-medium tracking-[0.08em] uppercase px-5">
+                        <X className="h-3.5 w-3.5 mr-1.5" /> Cancel
                       </Button>
                     </div>
                   </div>
@@ -622,15 +622,15 @@ const Account = () => {
                       <p className="text-sm"><span className="text-muted-foreground">Email: </span>{profile?.email || user?.email}</p>
                       <p className="text-sm"><span className="text-muted-foreground">Phone: </span>{profile?.phone || "—"}</p>
                     </div>
-                    <Button onClick={startEditProfile} variant="outline" className="text-xs tracking-[0.1em] uppercase h-9">
-                      <Pencil className="h-3 w-3 mr-1.5" /> Edit Profile
+                    <Button onClick={startEditProfile} variant="outline" className="text-sm font-medium tracking-[0.08em] uppercase h-10 px-5">
+                      <Pencil className="h-3.5 w-3.5 mr-1.5" /> Edit Profile
                     </Button>
                   </div>
                 )}
               </div>
 
               <div className="pt-6 border-t border-border">
-                <Button onClick={handleSignOut} variant="outline" className="text-xs tracking-[0.1em] uppercase border-foreground">
+                <Button onClick={handleSignOut} variant="outline" className="text-sm font-medium tracking-[0.08em] uppercase border-foreground h-10 px-6">
                   Sign Out
                 </Button>
               </div>
@@ -641,8 +641,8 @@ const Account = () => {
               {recentlyViewedProducts.length === 0 ? (
                 <div className="text-center py-16 space-y-4">
                   <Eye className="h-12 w-12 mx-auto text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">No recently viewed products</p>
-                  <Button asChild variant="outline" className="text-xs tracking-[0.1em] uppercase">
+                  <p className="text-base text-muted-foreground">No recently viewed products</p>
+                  <Button asChild variant="outline" className="text-sm font-medium tracking-[0.08em] uppercase h-11 px-6">
                     <Link to="/shop">Browse Products</Link>
                   </Button>
                 </div>

@@ -261,7 +261,7 @@ const AdminSettings = () => {
         </div>
 
         <div className="pt-2">
-          <Button type="submit" disabled={saving} className="bg-foreground text-background hover:bg-foreground/90 text-xs h-10 w-full sm:w-auto px-8 rounded-none">
+          <Button type="submit" disabled={saving} className="bg-foreground text-background hover:bg-foreground/90 text-sm font-medium h-11 w-full sm:w-auto px-8 rounded-none">
             {saving ? "Saving Changes..." : "Save Business Configurations"}
           </Button>
         </div>
@@ -270,13 +270,13 @@ const AdminSettings = () => {
 
       {/* Data Export */}
       <div className="border border-border p-6 space-y-4">
-        <h2 className="text-xs tracking-[0.15em] uppercase font-semibold text-foreground">Data Export</h2>
+        <h2 className="text-sm tracking-[0.1em] uppercase font-semibold text-foreground">Data Export</h2>
         <p className="text-xs text-muted-foreground">Download store transactional and inventory logs as CSV reports.</p>
         <div className="flex gap-3">
-          <Button onClick={exportOrders} disabled={exporting} className="bg-foreground text-background hover:bg-foreground/90 text-xs h-9 rounded-none">
+          <Button onClick={exportOrders} disabled={exporting} className="bg-foreground text-background hover:bg-foreground/90 text-sm font-medium h-10 px-5 rounded-none">
             Export Orders
           </Button>
-          <Button onClick={exportProducts} disabled={exporting} className="bg-foreground text-background hover:bg-foreground/90 text-xs h-9 rounded-none">
+          <Button onClick={exportProducts} disabled={exporting} className="bg-foreground text-background hover:bg-foreground/90 text-sm font-medium h-10 px-5 rounded-none">
             Export Products
           </Button>
         </div>
@@ -284,9 +284,9 @@ const AdminSettings = () => {
 
       {/* Policies */}
       <div className="border border-border p-6 space-y-4">
-        <h2 className="text-xs tracking-[0.15em] uppercase font-semibold text-foreground">Live Store Pages</h2>
+        <h2 className="text-sm tracking-[0.1em] uppercase font-semibold text-foreground">Live Store Pages</h2>
         <p className="text-xs text-muted-foreground">Quick access links to verify updated storefront contents:</p>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
           {[
             { label: "Privacy Policy", path: "/privacy-policy" },
             { label: "Terms of Service", path: "/terms-of-service" },
@@ -306,7 +306,7 @@ const AdminSettings = () => {
       {/* Shiprocket Catalog Sync */}
       <div className="border border-amber-200 bg-amber-50/50 p-6 space-y-4">
         <div>
-          <h2 className="text-xs tracking-[0.15em] uppercase font-semibold text-foreground">Shiprocket Catalog Sync</h2>
+          <h2 className="text-sm tracking-[0.1em] uppercase font-semibold text-foreground">Shiprocket Catalog Sync</h2>
           <p className="text-xs text-muted-foreground mt-1">
             Force-push all active India products to Shiprocket's checkout catalog. Run this if a new product is not showing in Shiprocket checkout, or after the initial integration setup.
           </p>
@@ -316,7 +316,7 @@ const AdminSettings = () => {
             type="button"
             onClick={handleCatalogResync}
             disabled={resyncing}
-            className="w-fit text-xs tracking-[0.08em] uppercase bg-amber-600 hover:bg-amber-700 text-white"
+            className="w-fit text-sm font-medium tracking-[0.06em] uppercase bg-amber-600 hover:bg-amber-700 text-white h-10 px-5"
           >
             {resyncing ? "Syncing Products to Shiprocket..." : "🔄 Force Catalog Resync"}
           </Button>

@@ -56,12 +56,12 @@ const Shop = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10 pb-6 border-b border-border">
           <div className="flex gap-6 overflow-x-auto whitespace-nowrap scrollbar-none pb-2 sm:pb-0 max-w-full w-full sm:w-auto">
             {categories.map((cat) => (
-              <button key={cat} onClick={() => setActiveCategory(cat)} className={`text-xs tracking-[0.12em] uppercase transition-opacity shrink-0 ${activeCategory === cat ? "opacity-100" : "opacity-40 hover:opacity-70"}`}>
+              <button key={cat} onClick={() => setActiveCategory(cat)} className={`text-sm font-medium tracking-[0.08em] uppercase transition-all shrink-0 pb-1 border-b-2 ${activeCategory === cat ? "border-foreground text-foreground opacity-100 font-semibold" : "border-transparent text-muted-foreground opacity-60 hover:opacity-100"}`}>
                 {cat}
               </button>
             ))}
           </div>
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="text-xs tracking-[0.08em] uppercase bg-transparent border border-border px-3 py-2 outline-none">
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="text-xs sm:text-sm font-medium tracking-[0.06em] uppercase bg-transparent border border-border px-4 py-2.5 outline-none cursor-pointer">
             <option value="default">Sort By</option>
             <option value="price-low">Price: Low to High</option>
             <option value="price-high">Price: High to Low</option>

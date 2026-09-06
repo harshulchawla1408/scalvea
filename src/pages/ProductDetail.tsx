@@ -22,6 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import IngredientShowcase from "@/components/products/IngredientShowcase";
 
 /* ─── Scroll-reveal hook ─── */
 function useReveal() {
@@ -306,6 +307,7 @@ const ProductDetail = () => {
   const [reviewName, setReviewName] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewSort, setReviewSort] = useState<"newest" | "highest" | "helpful">("newest");
+  const [visibleReviewsCount, setVisibleReviewsCount] = useState(5);
 
   useEffect(() => {
     if (product?.id) addRecentlyViewed(product.id);
@@ -548,7 +550,7 @@ const ProductDetail = () => {
 
         {/* ── Breadcrumb ── */}
         <div className="px-6 lg:px-12 pt-6 pb-2">
-          <nav className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground flex items-center gap-2">
+          <nav className="text-xs sm:text-[13px] font-medium tracking-[0.06em] uppercase text-muted-foreground flex items-center gap-2">
             <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
             <span>/</span>
             <Link to="/shop" className="hover:text-foreground transition-colors">Shop</Link>
@@ -702,7 +704,7 @@ const ProductDetail = () => {
                     id="product-add-to-cart"
                     onClick={handleAddToCart}
                     disabled={!inStock}
-                    className="flex-1 h-13 bg-black text-white hover:bg-black/90 text-xs tracking-[0.14em] uppercase rounded-xl pd-ripple h-[52px]"
+                    className="flex-1 bg-black text-white hover:bg-black/90 text-sm font-semibold tracking-[0.08em] uppercase rounded-xl pd-ripple h-[52px]"
                   >
                     <ShoppingBag className="h-4 w-4 mr-2" />Add to Bag
                   </Button>
@@ -729,7 +731,7 @@ const ProductDetail = () => {
                   onClick={handleBuyNow}
                   disabled={!inStock}
                   variant="outline"
-                  className="w-full h-[52px] border-black text-xs tracking-[0.14em] uppercase rounded-xl hover:bg-neutral-50"
+                  className="w-full h-[52px] border-black text-sm font-semibold tracking-[0.08em] uppercase rounded-xl hover:bg-neutral-50"
                 >
                   Buy Now
                 </Button>
@@ -738,11 +740,11 @@ const ProductDetail = () => {
               {/* Mini trust row */}
               <div className="flex flex-wrap gap-3 pt-1">
                 {[
-                  { icon: <Lock className="h-3 w-3" />, label: "Secure Checkout" },
-                  { icon: <Truck className="h-3 w-3" />, label: "Fast Shipping" },
-                  { icon: <Leaf className="h-3 w-3" />, label: "Cruelty-Free" },
+                  { icon: <Lock className="h-3.5 w-3.5" />, label: "Secure Checkout" },
+                  { icon: <Truck className="h-3.5 w-3.5" />, label: "Fast Shipping" },
+                  { icon: <Leaf className="h-3.5 w-3.5" />, label: "Cruelty-Free" },
                 ].map(({ icon, label }) => (
-                  <div key={label} className="flex items-center gap-1.5 text-[10px] text-muted-foreground tracking-wide">
+                  <div key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground tracking-wide">
                     {icon}<span>{label}</span>
                   </div>
                 ))}
@@ -752,238 +754,10 @@ const ProductDetail = () => {
         </section>
 
         {/* ══════════════════════════════════════════
-            SECTION 2 — WHY YOU'LL LOVE IT
+            SECTION — INGREDIENT SHOWCASE
         ══════════════════════════════════════════ */}
-        {/*
-        <section className="px-6 lg:px-12 py-16 bg-[#fafafa]">
-          <RevealSection className="max-w-5xl mx-auto">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground text-center mb-3">Benefits</p>
-            <h2 className="text-2xl md:text-3xl font-light text-center tracking-tight mb-10">Why You'll Love It</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-              {[
-                { icon: "✓", text: "Clinically inspired ingredients" },
-                { icon: "✓", text: "Lightweight & non-greasy" },
-                { icon: "✓", text: "Suitable for men & women" },
-                { icon: "✓", text: "Visible hair density support" },
-                { icon: "✓", text: "Everyday scalp nourishment" },
-              ].map(({ icon, text }, i) => (
-                <div key={text} className={`pd-glass-card p-5 text-center pd-reveal pd-reveal-delay-${i + 1}`}>
-                  <div className="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center mx-auto mb-3 text-black font-semibold text-lg">
-                    {icon}
-                  </div>
-                  <p className="text-sm font-light leading-snug text-foreground">{text}</p>
-                </div>
-              ))}
-            </div>
-          </RevealSection>
-        </section>
+        <IngredientShowcase product={product} />
 
-        SECTION 3 — WHAT MAKES IT DIFFERENT
-        <section className="px-6 lg:px-12 py-16">
-          <RevealSection className="max-w-4xl mx-auto">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground text-center mb-3">The Difference</p>
-            <h2 className="text-2xl md:text-3xl font-light text-center tracking-tight mb-12">What Makes {product.name.split(" ").slice(0, 2).join(" ")} Different?</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {[
-                { title: "Targets Hair at the Root", desc: "Powered by Redensyl and Procapil to help strengthen weak follicles from within.", icon: <Sparkles className="h-6 w-6" /> },
-                { title: "Nourishes Your Scalp", desc: "Supports healthier scalp conditions for stronger-looking, more resilient hair.", icon: <Leaf className="h-6 w-6" /> },
-                { title: "Lightweight Formula", desc: "Absorbs in seconds — no residue, no grease, no compromises on your style.", icon: <Droplets className="h-6 w-6" /> },
-                { title: "Built for Daily Use", desc: "Easy to include in your morning or evening routine without any disruption.", icon: <Clock className="h-6 w-6" /> },
-              ].map(({ title, desc, icon }, i) => (
-                <div key={title} className={`pd-glass-card p-6 flex gap-5 items-start pd-reveal pd-reveal-delay-${(i % 2) + 1}`}>
-                  <div className="w-12 h-12 rounded-xl bg-neutral-100 flex items-center justify-center flex-shrink-0 text-neutral-700">
-                    {icon}
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-sm mb-1.5 tracking-wide">{title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </RevealSection>
-        </section>
-
-        SECTION 4 — INGREDIENT SHOWCASE
-        {ingredientCards.length > 0 && (
-          <section className="px-6 lg:px-12 py-16 bg-[#fafafa]">
-            <RevealSection className="max-w-5xl mx-auto">
-              <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground text-center mb-3">What's Inside</p>
-              <h2 className="text-2xl md:text-3xl font-light text-center tracking-tight mb-12">Ingredient Showcase</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                {ingredientCards.map(({ name, pct, benefit, icon, color }, i) => (
-                  <div
-                    key={name}
-                    className={`pd-ingredient-card p-5 text-center flex flex-col items-center gap-3 pd-reveal pd-reveal-delay-${Math.min(i + 1, 4)}`}
-                  >
-                    <div
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: `${color}15`, color }}
-                    >
-                      {icon}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm tracking-wide mb-0.5">{name}</p>
-                      {pct && (
-                        <p className="text-xs font-mono text-muted-foreground mb-1">{pct}</p>
-                      )}
-                      <p className="text-[11px] text-muted-foreground leading-snug">{benefit}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {product.ingredients && (
-                <p className="text-center text-xs text-muted-foreground mt-8 max-w-2xl mx-auto leading-relaxed">{product.ingredients.slice(0, 300)}{product.ingredients.length > 300 ? "…" : ""}</p>
-              )}
-            </RevealSection>
-          </section>
-        )}
-
-        SECTION 5 — HOW IT WORKS
-        {product.how_to_use && (
-          <section className="px-6 lg:px-12 py-16">
-            <RevealSection className="max-w-2xl mx-auto">
-              <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground text-center mb-3">Application</p>
-              <h2 className="text-2xl md:text-3xl font-light text-center tracking-tight mb-10">How To Use</h2>
-              <div className="pd-glass-card p-6 md:p-8">
-                <RichDescription text={product.how_to_use} />
-              </div>
-            </RevealSection>
-          </section>
-        )}
-
-        SECTION 6 — SCIENCE BEHIND SCALVEA
-        <section className="px-6 lg:px-12 py-20 pd-science-bg">
-          <RevealSection className="max-w-4xl mx-auto text-center">
-            Decorative molecule SVG
-            <div className="flex justify-center mb-8 opacity-40">
-              <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="40" cy="40" r="8" fill="white" opacity="0.9"/>
-                <circle cx="16" cy="24" r="5" fill="white" opacity="0.6"/>
-                <circle cx="64" cy="24" r="5" fill="white" opacity="0.6"/>
-                <circle cx="16" cy="56" r="5" fill="white" opacity="0.6"/>
-                <circle cx="64" cy="56" r="5" fill="white" opacity="0.6"/>
-                <circle cx="40" cy="8" r="4" fill="white" opacity="0.4"/>
-                <circle cx="40" cy="72" r="4" fill="white" opacity="0.4"/>
-                <line x1="40" y1="32" x2="20" y2="26" stroke="white" strokeWidth="1" opacity="0.3"/>
-                <line x1="40" y1="32" x2="60" y2="26" stroke="white" strokeWidth="1" opacity="0.3"/>
-                <line x1="40" y1="48" x2="20" y2="54" stroke="white" strokeWidth="1" opacity="0.3"/>
-                <line x1="40" y1="48" x2="60" y2="54" stroke="white" strokeWidth="1" opacity="0.3"/>
-                <line x1="40" y1="32" x2="40" y2="12" stroke="white" strokeWidth="1" opacity="0.3"/>
-                <line x1="40" y1="48" x2="40" y2="68" stroke="white" strokeWidth="1" opacity="0.3"/>
-              </svg>
-            </div>
-            <p className="text-[10px] tracking-[0.25em] uppercase text-white/50 mb-4">The Science</p>
-            <h2 className="text-3xl md:text-4xl font-light text-white mb-6 leading-tight tracking-tight">
-              Backed by Science.<br />Designed for Results.
-            </h2>
-            <p className="text-white/60 text-sm leading-relaxed max-w-2xl mx-auto mb-10">
-              Every ingredient in our formula is selected based on peer-reviewed research. We combine advanced bioactive actives with a lightweight delivery system that ensures maximum absorption at the follicle level — where it matters most.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
-              {[
-                { label: "Active Ingredients", value: `${product.key_ingredients.length}+` },
-                { label: "Research-Backed", value: "100%" },
-                { label: "Formulated By", value: "Experts" },
-              ].map(({ label, value }) => (
-                <div key={label} className="border border-white/10 rounded-xl p-5 text-center bg-white/5">
-                  <p className="text-white text-2xl font-light mb-1">{value}</p>
-                  <p className="text-white/40 text-[10px] tracking-widest uppercase">{label}</p>
-                </div>
-              ))}
-            </div>
-          </RevealSection>
-        </section>
-
-        SECTION 7 — RESULTS TIMELINE
-        <section className="px-6 lg:px-12 py-16 bg-[#fafafa]">
-          <RevealSection className="max-w-4xl mx-auto">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground text-center mb-3">What to Expect</p>
-            <h2 className="text-2xl md:text-3xl font-light text-center tracking-tight mb-12">Your Results Timeline</h2>
-            <div className="relative">
-              Connecting line
-              <div className="absolute top-5 left-0 right-0 h-px bg-neutral-200 hidden md:block" style={{ left: "12.5%", right: "12.5%" }} />
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {[
-                  { week: "Week 2", milestone: "Scalp feels nourished & balanced", icon: "🌿" },
-                  { week: "Week 4", milestone: "Reduced hair shedding*", icon: "✨" },
-                  { week: "Week 8", milestone: "Healthier-looking hair strands", icon: "💫" },
-                  { week: "Week 12", milestone: "Visible improvement in density*", icon: "🌟" },
-                ].map(({ week, milestone, icon }, i) => (
-                  <div key={week} className={`text-center pd-reveal pd-reveal-delay-${i + 1}`}>
-                    <div className="relative flex justify-center mb-4">
-                      <div className="w-10 h-10 rounded-full bg-white border-2 border-neutral-200 flex items-center justify-center text-lg shadow-sm z-10">
-                        {icon}
-                      </div>
-                    </div>
-                    <p className="text-xs font-semibold tracking-widest uppercase text-black mb-2">{week}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{milestone}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <p className="text-center text-[10px] text-muted-foreground mt-8">*Individual results may vary. Consistent daily use recommended.</p>
-          </RevealSection>
-        </section>
-
-        SECTION 8 — BEFORE & AFTER
-        <section className="px-6 lg:px-12 py-16">
-          <RevealSection className="max-w-2xl mx-auto">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-muted-foreground text-center mb-3">Transformation</p>
-            <h2 className="text-2xl md:text-3xl font-light text-center tracking-tight mb-10">See the Difference</h2>
-            <BeforeAfterSlider />
-          </RevealSection>
-        </section>
-
-        SECTION 9 — TRUST BADGES
-        <section className="px-6 lg:px-12 py-14 bg-[#fafafa]">
-          <RevealSection className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-              {[
-                { icon: <Truck className="h-6 w-6" />, title: "Fast Shipping", desc: "Quick & reliable delivery" },
-                { icon: <Lock className="h-6 w-6" />, title: "Secure Checkout", desc: "256-bit SSL encryption" },
-                { icon: <FlaskConical className="h-6 w-6" />, title: "Clinically Inspired", desc: "Science-backed formula" },
-                { icon: <MessageCircle className="h-6 w-6" />, title: "Expert Support", desc: "Responsive customer care" },
-                { icon: <Leaf className="h-6 w-6" />, title: "Cruelty-Free", desc: "100% vegan & ethical" },
-              ].map(({ icon, title, desc }, i) => (
-                <div key={title} className={`pd-glass-card p-5 text-center pd-reveal pd-reveal-delay-${Math.min(i+1,4)}`}>
-                  <div className="w-12 h-12 rounded-xl bg-black/5 flex items-center justify-center mx-auto mb-3 text-black">
-                    {icon}
-                  </div>
-                  <p className="text-xs font-semibold mb-1 tracking-wide">{title}</p>
-                  <p className="text-[10px] text-muted-foreground leading-snug">{desc}</p>
-                </div>
-              ))}
-            </div>
-          </RevealSection>
-        </section>
-
-        SECTION 10 — SOCIAL PROOF COUNTERS
-        <section className="px-6 lg:px-12 py-16 bg-black">
-          <RevealSection className="max-w-3xl mx-auto text-center">
-            <div className="flex items-center justify-center gap-1 mb-4">
-              {[1,2,3,4,5].map((s) => <Star key={s} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
-            </div>
-            <p className="text-white text-xs tracking-[0.2em] uppercase mb-10 opacity-60">Trusted by a growing community</p>
-            <div className="grid grid-cols-3 gap-8">
-              {[
-                { target: 2400, suffix: "+", label: "Orders Placed" },
-                { target: reviews.length > 0 ? reviews.length : 150, suffix: "+", label: "Reviews" },
-                { target: 2, suffix: " Countries", label: "Available In" },
-              ].map(({ target, suffix, label }) => (
-                <div key={label} className="text-center">
-                  <p className="text-3xl md:text-4xl font-light text-white mb-1">
-                    <AnimatedCounter target={target} suffix={suffix} />
-                  </p>
-                  <p className="text-[10px] tracking-widest uppercase text-white/40">{label}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-white/40 text-xs mt-8 italic">"Helping customers build healthier hair routines."</p>
-          </RevealSection>
-        </section>
-
-        */}
         {/* ══════════════════════════════════════════
             SECTION 11 — PREMIUM REVIEWS
         ══════════════════════════════════════════ */}
@@ -1031,7 +805,10 @@ const ProductDetail = () => {
                 {(["newest", "highest", "helpful"] as const).map((s) => (
                   <button
                     key={s}
-                    onClick={() => setReviewSort(s)}
+                    onClick={() => {
+                      setReviewSort(s);
+                      setVisibleReviewsCount(5);
+                    }}
                     id={`review-sort-${s}`}
                     className={`text-[10px] tracking-[0.1em] uppercase px-4 py-2 rounded-full border transition-colors ${reviewSort === s ? "bg-black text-white border-black" : "border-neutral-200 text-muted-foreground hover:border-black"}`}
                   >
@@ -1045,35 +822,51 @@ const ProductDetail = () => {
             {reviews.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">No reviews yet. Be the first to share your experience.</p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                {sortedReviews.map((review: any) => (
-                  <div key={review.id} className="pd-glass-card p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-neutral-100 flex items-center justify-center text-sm font-medium text-neutral-600">
-                          {(review.reviewer_name || "A")[0].toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{review.reviewer_name || "Anonymous"}</p>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <Check className="h-3 w-3 text-emerald-500" />
-                            <span className="text-[10px] text-emerald-600 tracking-wide">Verified Purchase</span>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  {sortedReviews.slice(0, visibleReviewsCount).map((review: any) => (
+                    <div key={review.id} className="pd-glass-card p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-neutral-100 flex items-center justify-center text-sm font-medium text-neutral-600">
+                            {(review.reviewer_name || "A")[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">{review.reviewer_name || "Anonymous"}</p>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <Check className="h-3 w-3 text-emerald-500" />
+                              <span className="text-[10px] text-emerald-600 tracking-wide">Verified Purchase</span>
+                            </div>
                           </div>
                         </div>
+                        <span className="text-[10px] text-muted-foreground">{new Date(review.created_at).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}</span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground">{new Date(review.created_at).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}</span>
+                      <div className="flex gap-0.5 mb-3">
+                        {[1,2,3,4,5].map((s) => (
+                          <Star key={s} className={`h-3.5 w-3.5 ${s <= review.rating ? "fill-amber-400 text-amber-400" : "text-gray-200"}`} />
+                        ))}
+                      </div>
+                      {review.comment && (
+                        <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
+                      )}
                     </div>
-                    <div className="flex gap-0.5 mb-3">
-                      {[1,2,3,4,5].map((s) => (
-                        <Star key={s} className={`h-3.5 w-3.5 ${s <= review.rating ? "fill-amber-400 text-amber-400" : "text-gray-200"}`} />
-                      ))}
-                    </div>
-                    {review.comment && (
-                      <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
-                    )}
+                  ))}
+                </div>
+
+                {/* See More Button */}
+                {sortedReviews.length > visibleReviewsCount && (
+                  <div className="flex justify-center mb-8">
+                    <Button
+                      id="see-more-reviews-btn"
+                      variant="outline"
+                      onClick={() => setVisibleReviewsCount((prev) => prev + 5)}
+                      className="h-11 px-8 rounded-full border-neutral-300 hover:border-black text-xs font-semibold tracking-[0.1em] uppercase transition-all shadow-xs hover:bg-neutral-50"
+                    >
+                      See More
+                    </Button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
 
             {/* Write / Edit a review */}
@@ -1093,7 +886,7 @@ const ProductDetail = () => {
                     <Button
                       id="review-login-redirect-btn"
                       onClick={() => handleRequireAuth()}
-                      className="h-11 bg-black text-white hover:bg-black/90 text-xs tracking-[0.1em] uppercase rounded-xl px-8"
+                      className="h-11 bg-black text-white hover:bg-black/90 text-sm font-semibold tracking-[0.08em] uppercase rounded-xl px-8"
                     >
                       Sign In to Leave a Review
                     </Button>
@@ -1161,7 +954,7 @@ const ProductDetail = () => {
 
                   <div className="space-y-4">
                     <div>
-                      <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground block mb-1.5">
+                      <label className="text-xs font-medium tracking-[0.08em] uppercase text-muted-foreground block mb-1.5">
                         {existingUserReview ? "Update Rating" : "Your Rating"} <span className="text-red-500">*</span>
                       </label>
                       <div className="flex gap-1">
@@ -1173,11 +966,11 @@ const ProductDetail = () => {
                       </div>
                     </div>
                     <div>
-                      <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground block mb-1.5">Name (optional)</label>
+                      <label className="text-xs font-medium tracking-[0.08em] uppercase text-muted-foreground block mb-1.5">Name (optional)</label>
                       <Input id="review-name-input" value={reviewName} onChange={(e) => setReviewName(e.target.value)} placeholder="Your name (optional)" className="h-10 text-sm rounded-xl" />
                     </div>
                     <div>
-                      <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground block mb-1.5">
+                      <label className="text-xs font-medium tracking-[0.08em] uppercase text-muted-foreground block mb-1.5">
                         {existingUserReview ? "Update your experience (optional)" : "Share your experience (optional)"}
                       </label>
                       <Textarea
@@ -1192,7 +985,7 @@ const ProductDetail = () => {
                       id="review-submit-btn"
                       onClick={handleSubmitReview}
                       disabled={submittingReview}
-                      className="h-11 bg-black text-white hover:bg-black/90 text-xs tracking-[0.1em] uppercase rounded-xl w-full"
+                      className="h-11 bg-black text-white hover:bg-black/90 text-sm font-semibold tracking-[0.08em] uppercase rounded-xl w-full"
                     >
                       {submittingReview ? "Saving…" : existingUserReview ? "Update Review" : "Submit Rating"}
                     </Button>
@@ -1325,7 +1118,7 @@ const ProductDetail = () => {
               <Button
                 id="mobile-add-to-cart"
                 onClick={handleAddToCart}
-                className="flex-1 h-11 bg-black text-white hover:bg-black/90 text-[10px] tracking-[0.18em] uppercase rounded-xl font-medium pd-ripple"
+                className="flex-1 h-11 bg-black text-white hover:bg-black/90 text-xs sm:text-sm tracking-[0.08em] uppercase rounded-xl font-semibold pd-ripple"
               >
                 <ShoppingBag className="h-3.5 w-3.5 mr-2" />Add to Bag
               </Button>
@@ -1333,7 +1126,7 @@ const ProductDetail = () => {
                 id="mobile-buy-now"
                 onClick={handleBuyNow}
                 variant="outline"
-                className="flex-1 h-11 border-black text-[10px] tracking-[0.18em] uppercase rounded-xl font-medium"
+                className="flex-1 h-11 border-black text-xs sm:text-sm tracking-[0.08em] uppercase rounded-xl font-semibold"
               >
                 Buy Now
               </Button>

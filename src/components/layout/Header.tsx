@@ -153,8 +153,8 @@ const Header = () => {
                 <motion.div key={item.label} variants={navItemVariants}>
                   <Link
                     to={item.path}
-                    className={`relative py-2 text-[13px] font-semibold tracking-[0.15em] uppercase text-[#111111] hover:text-black transition-colors duration-250
-                      after:absolute after:bottom-0 after:left-0 after:h-[1px] after:bg-[#111111] after:transition-all after:duration-250
+                    className={`relative py-2 text-[15px] font-semibold tracking-[0.12em] uppercase text-[#111111] hover:text-black transition-colors duration-250
+                      after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:bg-[#111111] after:transition-all after:duration-250
                       ${isActive ? "after:w-full" : "after:w-0 hover:after:w-full"}
                     `}
                   >
@@ -174,36 +174,36 @@ const Header = () => {
             <motion.div variants={iconItemVariants} className="relative">
               <button 
                 onClick={() => setIsCountryOpen(!isCountryOpen)} 
-                className="hover:opacity-60 transition-all flex items-center gap-1 sm:gap-1.5 border border-neutral-250 px-1.5 sm:px-2.5 py-1 text-[9px] sm:text-[10px] tracking-[0.08em] uppercase font-light text-[#111111] bg-white"
+                className="hover:opacity-60 transition-all flex items-center gap-1.5 border border-neutral-250 px-2 sm:px-3 py-1.5 text-xs tracking-[0.06em] uppercase font-medium text-[#111111] bg-white"
                 aria-label="Choose country"
               >
                 <span className="flex items-center gap-1.5">
-                  <img src={country === "India" ? "https://flagcdn.com/w20/in.png" : "https://flagcdn.com/w20/au.png"} alt={country} className="w-3.5 h-auto rounded-[1px] shadow-[0_0_2px_rgba(0,0,0,0.1)]" />
+                  <img src={country === "India" ? "https://flagcdn.com/w20/in.png" : "https://flagcdn.com/w20/au.png"} alt={country} className="w-4 h-auto rounded-[1px] shadow-[0_0_2px_rgba(0,0,0,0.1)]" />
                   <span>{country === "India" ? "INR" : "AUD"}</span>
                 </span>
-                <span className="text-[7px] sm:text-[8px] opacity-60">▼</span>
+                <span className="text-[9px] opacity-60">▼</span>
               </button>
               {isCountryOpen && (
-                <div className="absolute right-0 top-full mt-2 bg-white border border-neutral-200 shadow-lg z-[60] w-[200px] md:w-[220px] animate-fade-in text-neutral-800">
+                <div className="absolute right-0 top-full mt-2 bg-white border border-neutral-200 shadow-lg z-[60] w-[210px] md:w-[230px] animate-fade-in text-neutral-800">
                   <button
                     onClick={() => { setCountry("India"); setIsCountryOpen(false); }}
-                    className={`w-full flex items-center justify-between px-5 py-3.5 text-[10px] tracking-[0.08em] uppercase hover:bg-neutral-50 transition-colors duration-200 whitespace-nowrap ${country === "India" ? "bg-neutral-50 font-semibold text-black" : "text-neutral-600 font-light"}`}
+                    className={`w-full flex items-center justify-between px-5 py-3.5 text-xs tracking-[0.06em] uppercase hover:bg-neutral-50 transition-colors duration-200 whitespace-nowrap ${country === "India" ? "bg-neutral-50 font-semibold text-black" : "text-neutral-600 font-medium"}`}
                   >
                     <span className="flex items-center gap-2.5">
                       <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-4 h-auto rounded-sm shadow-sm" />
                       <span className="text-neutral-800 font-medium">India</span>
                     </span>
-                    <span className="text-muted-foreground font-mono text-[9px]">₹ INR</span>
+                    <span className="text-muted-foreground font-mono text-xs">₹ INR</span>
                   </button>
                   <button
                     onClick={() => { setCountry("Australia"); setIsCountryOpen(false); }}
-                    className={`w-full flex items-center justify-between px-5 py-3.5 text-[10px] tracking-[0.08em] uppercase hover:bg-neutral-50 transition-colors duration-200 whitespace-nowrap ${country === "Australia" ? "bg-neutral-50 font-semibold text-black" : "text-neutral-600 font-light"}`}
+                    className={`w-full flex items-center justify-between px-5 py-3.5 text-xs tracking-[0.06em] uppercase hover:bg-neutral-50 transition-colors duration-200 whitespace-nowrap ${country === "Australia" ? "bg-neutral-50 font-semibold text-black" : "text-neutral-600 font-medium"}`}
                   >
                     <span className="flex items-center gap-2.5">
                       <img src="https://flagcdn.com/w20/au.png" alt="Australia" className="w-4 h-auto rounded-sm shadow-sm" />
                       <span className="text-neutral-800 font-medium">Australia</span>
                     </span>
-                    <span className="text-muted-foreground font-mono text-[9px]">A$ AUD</span>
+                    <span className="text-muted-foreground font-mono text-xs">A$ AUD</span>
                   </button>
                 </div>
               )}
@@ -274,9 +274,9 @@ const Header = () => {
         </nav>
 
         {/* HIGHLIGHTED SHIPPING BANNER */}
-        <div className="bg-black text-white border-t border-neutral-800/80 py-1.5 px-2 text-center select-none relative lg:absolute lg:top-full lg:left-0 lg:right-0 z-30 shadow-sm lg:bg-black/90 lg:backdrop-blur-md overflow-hidden">
-          <div className="max-w-7xl mx-auto flex items-center justify-center text-[9.5px] sm:text-[11px] md:text-xs font-medium tracking-wide whitespace-nowrap">
-            <span className="text-neutral-200 flex items-center justify-center gap-1 sm:gap-1.5">
+        <div className="bg-black text-white border-t border-neutral-800/80 py-2 px-2 text-center select-none relative lg:absolute lg:top-full lg:left-0 lg:right-0 z-30 shadow-sm lg:bg-black/90 lg:backdrop-blur-md overflow-hidden">
+          <div className="max-w-7xl mx-auto flex items-center justify-center text-xs sm:text-[13px] md:text-sm font-medium tracking-wide whitespace-nowrap">
+            <span className="text-neutral-200 flex items-center justify-center gap-1 sm:gap-2">
               <span className="font-semibold text-white">Free Delivery</span> in India 
               <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-3.5 sm:w-4 h-auto ml-0.5 rounded-sm shadow-sm" /> 
               <span className="mx-0.5 sm:mx-1.5 text-neutral-600">|</span> 
@@ -329,10 +329,10 @@ const Header = () => {
                     <Search className="size-[16px] text-neutral-400 mr-2" />
                     <input 
                       type="text" 
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      value={searchQuery} 
+                      onChange={(e) => setSearchQuery(e.target.value)} 
                       placeholder="Search products..." 
-                      className="w-full bg-transparent text-xs outline-none placeholder:text-neutral-400 text-neutral-800" 
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400 text-neutral-800" 
                     />
                   </form>
                 </div>
@@ -349,7 +349,7 @@ const Header = () => {
                       key={item.label}
                       to={item.path}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="text-base font-light tracking-[0.2em] uppercase py-2 border-b border-neutral-100 text-[#111111] transition-all hover:pl-2"
+                      className="text-lg font-normal tracking-[0.15em] uppercase py-2.5 border-b border-neutral-100 text-[#111111] transition-all hover:pl-2"
                     >
                       {item.label}
                     </Link>
@@ -361,24 +361,24 @@ const Header = () => {
                   <Link
                     to="/account"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 text-xs tracking-[0.15em] uppercase text-neutral-600 hover:text-black transition-colors"
+                    className="flex items-center gap-3 text-sm font-medium tracking-[0.1em] uppercase text-neutral-700 hover:text-black transition-colors"
                   >
-                    <User className="size-[18px]" />
+                    <User className="size-[20px]" />
                     <span>My Account</span>
                   </Link>
                   <Link
                     to="/wishlist"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 text-xs tracking-[0.15em] uppercase text-neutral-600 hover:text-black transition-colors"
+                    className="flex items-center gap-3 text-sm font-medium tracking-[0.1em] uppercase text-neutral-700 hover:text-black transition-colors"
                   >
-                    <Heart className="size-[18px]" />
+                    <Heart className="size-[20px]" />
                     <span>My Wishlist ({wishlistCount})</span>
                   </Link>
                   <button
                     onClick={() => { setIsMobileMenuOpen(false); setIsCartOpen(true); }}
-                    className="flex items-center gap-3 text-xs tracking-[0.15em] uppercase text-neutral-600 hover:text-black transition-colors text-left"
+                    className="flex items-center gap-3 text-sm font-medium tracking-[0.1em] uppercase text-neutral-700 hover:text-black transition-colors text-left"
                   >
-                    <ShoppingBag className="size-[18px]" />
+                    <ShoppingBag className="size-[20px]" />
                     <span>Shopping Cart ({itemCount})</span>
                   </button>
                 </div>
@@ -386,30 +386,30 @@ const Header = () => {
 
               {/* Country & Currency Selectors at bottom */}
               <div className="p-6 border-t border-neutral-100 bg-neutral-50/50">
-                <p className="text-[10px] tracking-[0.2em] uppercase text-neutral-400 mb-3 font-semibold">Select Region & Currency</p>
+                <p className="text-xs tracking-[0.15em] uppercase text-neutral-500 mb-3 font-semibold">Select Region & Currency</p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => { setCountry("India"); setIsMobileMenuOpen(false); }}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 border text-[10px] tracking-[0.1em] uppercase transition-all duration-200 ${
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 border text-xs tracking-[0.08em] uppercase transition-all duration-200 ${
                       country === "India" 
                         ? "border-[#111111] bg-black text-white font-medium" 
-                        : "border-neutral-200 text-neutral-500 hover:border-neutral-400 bg-white"
+                        : "border-neutral-200 text-neutral-600 hover:border-neutral-400 bg-white"
                     }`}
                   >
                     🇮🇳 INR (₹)
                   </button>
                   <button
                     onClick={() => { setCountry("Australia"); setIsMobileMenuOpen(false); }}
-                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 border text-[10px] tracking-[0.1em] uppercase transition-all duration-200 ${
+                    className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 border text-xs tracking-[0.08em] uppercase transition-all duration-200 ${
                       country === "Australia" 
                         ? "border-[#111111] bg-black text-white font-medium" 
-                        : "border-neutral-200 text-neutral-500 hover:border-neutral-400 bg-white"
+                        : "border-neutral-200 text-neutral-600 hover:border-neutral-400 bg-white"
                     }`}
                   >
                     🇦🇺 AUD (A$)
                   </button>
-                </div>
               </div>
+            </div>
             </div>
           </SheetContent>
         </Sheet>

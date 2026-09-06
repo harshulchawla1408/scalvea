@@ -114,7 +114,7 @@ const Footer = () => {
               onClick={() => toggleAccordion("shop")}
               className="w-full flex items-center justify-between lg:pointer-events-none text-left focus:outline-none"
             >
-              <h4 className="text-xs md:text-[13px] tracking-[0.2em] uppercase font-semibold text-white mb-0 lg:mb-5">
+              <h4 className="text-sm md:text-[14px] tracking-[0.16em] uppercase font-semibold text-white mb-0 lg:mb-5">
                 Shop
               </h4>
               <span className="lg:hidden text-neutral-500">
@@ -122,7 +122,7 @@ const Footer = () => {
               </span>
             </button>
             <div className={`mt-4 lg:mt-0 ${activeAccordion === "shop" ? "block" : "hidden lg:block"}`}>
-              <ul className="space-y-3.5 text-sm text-neutral-400 font-light">
+              <ul className="space-y-3.5 text-[15px] text-neutral-300 font-normal">
                 <FooterLink to="/shop">All Products</FooterLink>
                 <FooterLink to="/product/follicle-8-hair-growth-serum">Hair Growth Serum</FooterLink>
                 <FooterLink to="/shop?category=Serums">Anti Dandruff Serum</FooterLink>
@@ -136,7 +136,7 @@ const Footer = () => {
               onClick={() => toggleAccordion("company")}
               className="w-full flex items-center justify-between lg:pointer-events-none text-left focus:outline-none"
             >
-              <h4 className="text-xs md:text-[13px] tracking-[0.2em] uppercase font-semibold text-white mb-0 lg:mb-5">
+              <h4 className="text-sm md:text-[14px] tracking-[0.16em] uppercase font-semibold text-white mb-0 lg:mb-5">
                 Company
               </h4>
               <span className="lg:hidden text-neutral-500">
@@ -144,7 +144,7 @@ const Footer = () => {
               </span>
             </button>
             <div className={`mt-4 lg:mt-0 ${activeAccordion === "company" ? "block" : "hidden lg:block"}`}>
-              <ul className="space-y-3.5 text-sm text-neutral-400 font-light">
+              <ul className="space-y-3.5 text-[15px] text-neutral-300 font-normal">
                 <FooterLink to="/about">About Us</FooterLink>
                 <FooterLink to="/blogs">Blog</FooterLink>
                 <FooterLink to="/faqs">FAQs</FooterLink>
@@ -159,7 +159,7 @@ const Footer = () => {
               onClick={() => toggleAccordion("support")}
               className="w-full flex items-center justify-between lg:pointer-events-none text-left focus:outline-none"
             >
-              <h4 className="text-xs md:text-[13px] tracking-[0.2em] uppercase font-semibold text-white mb-0 lg:mb-5">
+              <h4 className="text-sm md:text-[14px] tracking-[0.16em] uppercase font-semibold text-white mb-0 lg:mb-5">
                 Support
               </h4>
               <span className="lg:hidden text-neutral-500">
@@ -167,7 +167,7 @@ const Footer = () => {
               </span>
             </button>
             <div className={`mt-4 lg:mt-0 ${activeAccordion === "support" ? "block" : "hidden lg:block"}`}>
-              <ul className="space-y-3.5 text-sm text-neutral-400 font-light">
+              <ul className="space-y-3.5 text-[15px] text-neutral-300 font-normal">
                 <FooterLink to="/contact">Contact Us</FooterLink>
                 <FooterLink to="/shipping-policy">Shipping Policy</FooterLink>
                 <FooterLink to="/return-refund-policy">Return & Refund Policy</FooterLink>
@@ -182,7 +182,7 @@ const Footer = () => {
               onClick={() => toggleAccordion("locations")}
               className="w-full flex items-center justify-between lg:pointer-events-none text-left focus:outline-none"
             >
-              <h4 className="text-xs md:text-[13px] tracking-[0.2em] uppercase font-semibold text-white mb-0 lg:mb-5">
+              <h4 className="text-sm md:text-[14px] tracking-[0.16em] uppercase font-semibold text-white mb-0 lg:mb-5">
                 Locations
               </h4>
               <span className="lg:hidden text-neutral-500">
@@ -192,18 +192,18 @@ const Footer = () => {
             <div className={`mt-4 lg:mt-0 ${activeAccordion === "locations" ? "block" : "hidden lg:block"}`}>
               <div className="space-y-5 text-sm text-neutral-400 font-light">
                 <div>
-                  <p className="text-neutral-300 font-semibold tracking-wider text-[11px] uppercase mb-1.5">
+                  <p className="text-neutral-200 font-semibold tracking-wider text-xs uppercase mb-1.5">
                     🇦🇺 Australia
                   </p>
-                  <p className="leading-relaxed text-neutral-400">Craigieburn, Victoria</p>
-                  <p className="leading-relaxed text-neutral-500 text-xs">Australia</p>
+                  <p className="leading-relaxed text-neutral-300 text-sm">Craigieburn, Victoria</p>
+                  <p className="leading-relaxed text-neutral-400 text-xs">Australia</p>
                 </div>
                 <div>
-                  <p className="text-neutral-300 font-semibold tracking-wider text-[11px] uppercase mb-1.5">
+                  <p className="text-neutral-200 font-semibold tracking-wider text-xs uppercase mb-1.5">
                     🇮🇳 India
                   </p>
-                  <p className="leading-relaxed text-neutral-400">Patiala, Punjab</p>
-                  <p className="leading-relaxed text-neutral-500 text-xs">India</p>
+                  <p className="leading-relaxed text-neutral-300 text-sm">Patiala, Punjab</p>
+                  <p className="leading-relaxed text-neutral-400 text-xs">India</p>
                 </div>
               </div>
             </div>
@@ -212,11 +212,11 @@ const Footer = () => {
         </div>
 
         {/* FOOTER BOTTOM SECTION */}
-        <div className="border-t border-neutral-900 mt-20 pt-8 relative flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] tracking-[0.18em] text-neutral-500 uppercase font-light w-full">
+        <div className="border-t border-neutral-900 mt-20 pt-8 relative flex flex-col md:flex-row justify-between items-center gap-4 text-xs tracking-[0.14em] text-neutral-400 uppercase font-light w-full">
           <div className="w-full md:w-auto text-center md:text-left">
             © 2026 SCALVEA. ALL RIGHTS RESERVED.
           </div>
-          <div className="md:absolute md:left-1/2 md:-translate-x-1/2 font-semibold text-neutral-400 text-center w-full md:w-auto py-2 md:py-0">
+          <div className="md:absolute md:left-1/2 md:-translate-x-1/2 font-semibold text-neutral-300 text-center w-full md:w-auto py-2 md:py-0">
             CARE YOU DESERVE.
           </div>
           <div className="w-full md:w-auto text-center md:text-right">

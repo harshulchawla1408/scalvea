@@ -123,7 +123,7 @@ const BlogList = () => {
                 
                 <Link 
                   to={`/blogs/${featuredBlog.meta.slug}`}
-                  className="inline-flex items-center justify-center gap-3 bg-black text-white px-8 py-4 rounded-xl text-[10px] uppercase tracking-[0.2em] font-semibold hover:bg-neutral-800 transition-all duration-300 w-fit"
+                  className="inline-flex items-center justify-center gap-3 bg-black text-white px-8 py-3.5 rounded-xl text-xs sm:text-sm uppercase tracking-[0.1em] font-semibold hover:bg-neutral-800 transition-all duration-300 w-fit"
                 >
                   Read Article
                 </Link>
@@ -154,10 +154,10 @@ const BlogList = () => {
                 <button
                   key={cat}
                   onClick={() => handleCategoryClick(cat)}
-                  className={`px-5 py-2.5 rounded-full text-[10px] uppercase tracking-[0.15em] font-medium transition-all duration-300 ${
+                  className={`px-5 py-2.5 rounded-full text-xs sm:text-sm uppercase tracking-[0.08em] font-medium transition-all duration-300 ${
                     activeCategory === cat 
                       ? "bg-black text-white" 
-                      : "bg-white text-neutral-500 border border-neutral-200 hover:border-black hover:text-black"
+                      : "bg-white text-neutral-600 border border-neutral-200 hover:border-black hover:text-black"
                   }`}
                 >
                   {cat}

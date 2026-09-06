@@ -341,7 +341,7 @@ const Checkout = () => {
         <Header />
         <div className="text-center py-32 space-y-4">
           <p className="text-sm text-muted-foreground">Your bag is empty</p>
-          <Button asChild variant="outline" className="text-xs tracking-[0.1em] uppercase"><Link to="/shop">Continue Shopping</Link></Button>
+          <Button asChild variant="outline" className="text-sm font-medium tracking-[0.08em] uppercase h-11 px-6"><Link to="/shop">Continue Shopping</Link></Button>
         </div>
         <Footer />
       </div>
@@ -371,13 +371,13 @@ const Checkout = () => {
               {isIndia ? (
                 <div className="space-y-6 pt-4">
                   <div>
-                    <h2 className="text-xs tracking-[0.15em] uppercase mb-4">
+                    <h2 className="text-sm font-semibold tracking-[0.1em] uppercase mb-4">
                       Secure Checkout
                     </h2>
-                    <p className="text-xs text-muted-foreground font-light mb-6">
+                    <p className="text-sm text-muted-foreground font-light mb-6">
                       Complete your order securely using your preferred payment method.
                     </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-4 text-[11px] uppercase tracking-[0.05em] text-muted-foreground">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-4 text-xs uppercase tracking-[0.05em] text-muted-foreground">
                       <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-foreground" /> UPI</div>
                       <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-foreground" /> Credit & Debit Cards</div>
                       <div className="flex items-center gap-2"><CheckCircle2 className="w-3 h-3 text-foreground" /> Net Banking & Wallets</div>
@@ -390,30 +390,30 @@ const Checkout = () => {
                 <>
                   {!user?.email && (
                     <div>
-                      <h2 className="text-xs tracking-[0.15em] uppercase mb-6">Contact</h2>
+                      <h2 className="text-sm font-semibold tracking-[0.1em] uppercase mb-6">Contact</h2>
                       <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Email address" className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
                     </div>
                   )}
 
                   <div>
-                    <h2 className="text-xs tracking-[0.15em] uppercase mb-6">
+                    <h2 className="text-sm font-semibold tracking-[0.1em] uppercase mb-6">
                       🇦🇺 Shipping Details
                     </h2>
                     
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">First Name *</label>
+                          <label className="text-xs font-medium tracking-[0.08em] uppercase text-muted-foreground">First Name *</label>
                           <input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder="First name" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Last Name *</label>
+                          <label className="text-xs font-medium tracking-[0.08em] uppercase text-muted-foreground">Last Name *</label>
                           <input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder="Last name" required className="w-full h-11 px-4 text-sm bg-transparent border border-border outline-none focus:border-foreground transition-colors" />
                         </div>
                       </div>
                       
                       <div className="space-y-1">
-                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Mobile Number *</label>
+                        <label className="text-xs font-medium tracking-[0.08em] uppercase text-muted-foreground">Mobile Number *</label>
                         <input 
                           value={form.phone} 
                           onChange={(e) => setForm({ ...form, phone: e.target.value })} 
@@ -428,7 +428,7 @@ const Checkout = () => {
 
                   <div className="space-y-4 pt-4 border-t border-border">
                     <div className="space-y-1">
-                      <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Street Address *</label>
+                      <label className="text-xs font-medium tracking-[0.08em] uppercase text-muted-foreground">Street Address *</label>
                       <input
                         value={form.address}
                         onChange={(e) => setForm({ ...form, address: e.target.value })}
@@ -438,7 +438,7 @@ const Checkout = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Apartment, Suite, Unit (optional)</label>
+                      <label className="text-xs font-medium tracking-[0.08em] uppercase text-muted-foreground">Apartment, Suite, Unit (optional)</label>
                       <input
                         value={form.address_line2}
                         onChange={(e) => setForm({ ...form, address_line2: e.target.value })}
@@ -448,7 +448,7 @@ const Checkout = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">City / Suburb *</label>
+                        <label className="text-xs font-medium tracking-[0.08em] uppercase text-muted-foreground">City / Suburb *</label>
                         <input
                           value={form.city}
                           onChange={(e) => setForm({ ...form, city: e.target.value })}
@@ -458,7 +458,7 @@ const Checkout = () => {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Postcode *</label>
+                        <label className="text-xs font-medium tracking-[0.08em] uppercase text-muted-foreground">Postcode *</label>
                         <input
                           value={form.postcode}
                           onChange={(e) => setForm({ ...form, postcode: e.target.value })}
@@ -472,7 +472,7 @@ const Checkout = () => {
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">State / Territory *</label>
+                      <label className="text-xs font-medium tracking-[0.08em] uppercase text-muted-foreground">State / Territory *</label>
                       <select
                         value={form.state}
                         onChange={(e) => setForm({ ...form, state: e.target.value })}
@@ -485,7 +485,7 @@ const Checkout = () => {
                       </select>
                     </div>
                     <div>
-                      <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground mb-1">Shipping Destination</p>
+                      <p className="text-xs font-medium tracking-[0.08em] uppercase text-muted-foreground mb-1">Shipping Destination</p>
                       <div className="w-full h-11 px-4 text-sm bg-secondary border border-border flex items-center text-muted-foreground cursor-not-allowed">
                         🇦🇺 Australia
                       </div>
@@ -493,22 +493,22 @@ const Checkout = () => {
                   </div>
 
                   <div className="pt-4">
-                    <h2 className="text-xs tracking-[0.15em] uppercase mb-4">Secure Payment</h2>
-                    <p className="text-xs text-muted-foreground font-light mb-6">
+                    <h2 className="text-sm font-semibold tracking-[0.1em] uppercase mb-4">Secure Payment</h2>
+                    <p className="text-sm text-muted-foreground font-light mb-6">
                       Pay securely using your preferred payment method.
                     </p>
                     <div className="p-5 border border-border/60 bg-transparent flex flex-col gap-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-light block">Credit / Debit Card, Apple Pay, Google Pay</span>
-                        <div className="flex gap-1.5 text-[9px] tracking-wider font-mono text-muted-foreground uppercase">
+                        <div className="flex gap-1.5 text-[10px] tracking-wider font-mono text-muted-foreground uppercase">
                           <span>Visa</span> · <span>MC</span> · <span>Amex</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] tracking-[0.05em] uppercase text-muted-foreground mt-1">
-                        <Lock className="w-3 h-3" /> Secure encrypted payment
+                      <div className="flex items-center gap-2 text-xs tracking-[0.05em] uppercase text-muted-foreground mt-1">
+                        <Lock className="w-3.5 h-3.5" /> Secure encrypted payment
                       </div>
                     </div>
-                    <p className="text-[9px] text-muted-foreground font-light text-right mt-2 uppercase tracking-[0.05em]">
+                    <p className="text-xs text-muted-foreground font-light text-right mt-2 uppercase tracking-[0.05em]">
                       Secure payments powered by Stripe
                     </p>
                   </div>
@@ -518,7 +518,7 @@ const Checkout = () => {
 
             <div className="lg:sticky lg:top-32 lg:h-fit">
               <div className="bg-secondary p-8 space-y-6">
-                <h2 className="text-xs tracking-[0.15em] uppercase">Order Summary</h2>
+                <h2 className="text-sm font-semibold tracking-[0.1em] uppercase">Order Summary</h2>
                 <div className="space-y-4 max-h-[300px] overflow-y-auto">
                   {items.map((item) => (
                     <div key={item.productId} className="flex gap-4">
@@ -538,13 +538,13 @@ const Checkout = () => {
                 {/* Coupon Code Selection */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-[10px] tracking-[0.1em] uppercase text-muted-foreground">Promo / Discount Code</p>
+                    <p className="text-xs font-medium tracking-[0.08em] uppercase text-muted-foreground">Promo / Discount Code</p>
 
                   </div>
                   {appliedCoupon ? (
                     <div className="flex items-center justify-between bg-background border border-border px-4 py-2 animate-fade-in">
-                      <span className="text-xs font-mono font-medium">{appliedCoupon.code} — {appliedCoupon.discount_percentage}% off</span>
-                      <button type="button" onClick={removeCoupon} className="text-xs text-red-500 hover:underline">Remove</button>
+                      <span className="text-sm font-mono font-medium">{appliedCoupon.code} — {appliedCoupon.discount_percentage}% off</span>
+                      <button type="button" onClick={removeCoupon} className="text-sm text-red-500 hover:underline">Remove</button>
                     </div>
                   ) : (
                     <div className="flex gap-2">
@@ -552,9 +552,9 @@ const Checkout = () => {
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                         placeholder="Enter code"
-                        className="flex-1 h-10 px-3 text-xs bg-transparent border border-border outline-none focus:border-foreground uppercase tracking-wider font-mono"
+                        className="flex-1 h-11 px-3 text-sm bg-transparent border border-border outline-none focus:border-foreground uppercase tracking-wider font-mono"
                       />
-                      <Button type="button" onClick={() => applyCoupon()} disabled={applyingCoupon} variant="outline" className="h-10 text-xs tracking-[0.1em] uppercase">
+                      <Button type="button" onClick={() => applyCoupon()} disabled={applyingCoupon} variant="outline" className="h-11 text-sm font-medium tracking-[0.08em] px-5 uppercase">
                         {applyingCoupon ? "..." : "Apply"}
                       </Button>
                     </div>
@@ -581,11 +581,11 @@ const Checkout = () => {
                     <span>Total Due</span>
                     <div className="text-right font-mono">
                       <span className="block font-medium text-base">{formatVal(grandTotal)}</span>
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5 font-body">Inclusive of all taxes</span>
+                      <span className="text-xs text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5 font-body">Inclusive of all taxes</span>
                     </div>
                   </div>
                 </div>
-                {settings && <p className="text-[10px] text-muted-foreground text-center pt-2">Estimated Delivery Time: {settings.delivery_time}</p>}
+                {settings && <p className="text-xs text-muted-foreground text-center pt-2">Estimated Delivery Time: {settings.delivery_time}</p>}
 
                 <div className="pt-4">
                   {isIndia ? (
@@ -593,7 +593,7 @@ const Checkout = () => {
                       type="button" 
                       onClick={(e) => handleShiprocketCheckout(e)} 
                       disabled={placing} 
-                      className="w-full h-14 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase shadow-lg shadow-black/5"
+                      className="w-full h-14 bg-foreground text-background hover:bg-foreground/90 text-sm sm:text-base font-semibold tracking-[0.08em] uppercase shadow-lg shadow-black/5"
                     >
                       {placing ? "Loading..." : "Continue to Secure Checkout"}
                     </Button>
@@ -601,15 +601,15 @@ const Checkout = () => {
                     <Button 
                       type="submit" 
                       disabled={placing} 
-                      className="w-full h-14 bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase shadow-lg shadow-black/5"
+                      className="w-full h-14 bg-foreground text-background hover:bg-foreground/90 text-sm sm:text-base font-semibold tracking-[0.08em] uppercase shadow-lg shadow-black/5"
                     >
                       {placing ? "Processing..." : `Continue to Payment — ${formatVal(grandTotal)}`}
                     </Button>
                   )}
-                  <div className="flex items-center justify-center gap-6 mt-6 text-[10px] uppercase tracking-[0.05em] text-muted-foreground">
-                    <div className="flex items-center gap-1.5"><Lock className="w-3 h-3" /> Secure Checkout</div>
-                    <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3" /> Safe Payments</div>
-                    <div className="flex items-center gap-1.5"><ShieldCheck className="w-3 h-3" /> Order Protection</div>
+                  <div className="flex items-center justify-center gap-6 mt-6 text-xs uppercase tracking-[0.05em] text-muted-foreground">
+                    <div className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Secure Checkout</div>
+                    <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> Safe Payments</div>
+                    <div className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Order Protection</div>
                   </div>
                 </div>
               </div>

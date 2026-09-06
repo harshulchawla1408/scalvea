@@ -20,7 +20,7 @@ export const BlogCard = ({ post, index = 0 }: { post: BlogPost; index?: number }
           loading="lazy"
         />
         <div className="absolute top-4 left-4">
-          <span className="bg-white/90 backdrop-blur-sm text-neutral-800 text-[9px] uppercase tracking-[0.2em] font-medium px-3 py-1.5 rounded-full shadow-sm">
+          <span className="bg-white/90 backdrop-blur-sm text-neutral-800 text-[10px] sm:text-xs uppercase tracking-[0.1em] font-medium px-3.5 py-1.5 rounded-full shadow-sm">
             {post.meta.category}
           </span>
         </div>
@@ -45,10 +45,10 @@ export const BlogCard = ({ post, index = 0 }: { post: BlogPost; index?: number }
         
         <Link 
           to={`/blogs/${post.meta.slug}`}
-          className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.15em] font-medium text-neutral-900 group-hover:text-neutral-600 transition-colors mt-auto w-fit"
+          className="inline-flex items-center gap-2 text-xs sm:text-[13px] uppercase tracking-[0.08em] font-semibold text-neutral-900 group-hover:text-neutral-600 transition-colors mt-auto w-fit"
         >
           Read Article
-          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>
     </motion.article>

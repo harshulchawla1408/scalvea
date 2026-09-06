@@ -206,16 +206,16 @@ const AdminDashboard = () => {
       {/* Country Filter Selector */}
       <div className="flex justify-between items-center border-b border-border pb-4">
         <div>
-          <h2 className="text-xs uppercase tracking-[0.2em] font-medium">Dashboard Overview</h2>
-          <p className="text-[10px] text-muted-foreground mt-0.5">Real-time metrics for Scalvea dual-country store.</p>
+          <h2 className="text-sm uppercase tracking-[0.15em] font-semibold">Dashboard Overview</h2>
+          <p className="text-xs text-muted-foreground mt-1">Real-time metrics for Scalvea dual-country store.</p>
         </div>
         <div className="flex border border-border">
           {(["All", "Australia", "India"] as const).map((country) => (
             <button
               key={country}
               onClick={() => setSelectedCountry(country)}
-              className={`px-3 py-1.5 text-[10px] uppercase tracking-[0.1em] transition-colors border-r last:border-r-0 border-border ${
-                selectedCountry === country ? "bg-foreground text-background font-medium" : "text-muted-foreground hover:bg-secondary/40"
+              className={`px-4 py-2 text-xs sm:text-sm uppercase tracking-[0.06em] transition-colors border-r last:border-r-0 border-border ${
+                selectedCountry === country ? "bg-foreground text-background font-semibold" : "text-muted-foreground hover:bg-secondary/40 font-medium"
               }`}
             >
               {country === "All" ? "All Regions" : country}
@@ -229,11 +229,11 @@ const AdminDashboard = () => {
         {cards.map((card) => (
           <div key={card.label} className="border border-border p-5 space-y-1.5 bg-background">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] tracking-[0.12em] uppercase text-muted-foreground">{card.label}</p>
+              <p className="text-xs tracking-[0.08em] uppercase text-muted-foreground font-medium">{card.label}</p>
               <card.icon className="h-4 w-4 text-muted-foreground/80" />
             </div>
             <p className="text-lg font-mono font-medium tracking-tight whitespace-nowrap">{card.value}</p>
-            <p className="text-[10px] text-muted-foreground/80">{card.sub}</p>
+            <p className="text-xs text-muted-foreground/80">{card.sub}</p>
           </div>
         ))}
       </div>
@@ -241,7 +241,7 @@ const AdminDashboard = () => {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="border border-border p-6 bg-background">
-          <h2 className="text-xs tracking-[0.15em] uppercase mb-6">Revenue (Last 6 Months)</h2>
+          <h2 className="text-sm tracking-[0.1em] uppercase font-semibold mb-6">Revenue (Last 6 Months)</h2>
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={revenueByMonth}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -259,7 +259,7 @@ const AdminDashboard = () => {
         </div>
 
         <div className="border border-border p-6 bg-background">
-          <h2 className="text-xs tracking-[0.15em] uppercase mb-6">Orders (Last 6 Months)</h2>
+          <h2 className="text-sm tracking-[0.1em] uppercase font-semibold mb-6">Orders (Last 6 Months)</h2>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={ordersByMonth}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -275,7 +275,7 @@ const AdminDashboard = () => {
       {/* Sales by Country + Inventory */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="border border-border p-6 bg-background">
-          <h2 className="text-xs tracking-[0.15em] uppercase mb-6">Sales Distribution</h2>
+          <h2 className="text-sm tracking-[0.1em] uppercase font-semibold mb-6">Sales Distribution</h2>
           {salesByCountry.length === 0 ? (
             <p className="text-sm text-muted-foreground py-12 text-center">No orders recorded</p>
           ) : (
@@ -299,7 +299,7 @@ const AdminDashboard = () => {
         </div>
 
         <div className="border border-border p-6 bg-background">
-          <h2 className="text-xs tracking-[0.15em] uppercase mb-6">Inventory Stock Levels</h2>
+          <h2 className="text-sm tracking-[0.1em] uppercase font-semibold mb-6">Inventory Stock Levels</h2>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={inventoryData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -316,7 +316,7 @@ const AdminDashboard = () => {
       {/* Top Products + Low Stock */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="border border-border p-6 bg-background">
-          <h2 className="text-xs tracking-[0.15em] uppercase mb-4">Top Selling Products</h2>
+          <h2 className="text-sm tracking-[0.1em] uppercase font-semibold mb-4">Top Selling Products</h2>
           {topProducts.length === 0 ? (
             <p className="text-sm text-muted-foreground">No sales data recorded.</p>
           ) : (
@@ -337,7 +337,7 @@ const AdminDashboard = () => {
         </div>
 
         <div className="border border-border p-6 bg-background">
-          <h2 className="text-xs tracking-[0.15em] uppercase mb-4 flex items-center gap-2">
+          <h2 className="text-sm tracking-[0.1em] uppercase font-semibold mb-4 flex items-center gap-2">
             <AlertTriangle className="h-3.5 w-3.5 text-red-500" /> Low Stock Products
           </h2>
           {lowStockProducts.length === 0 ? (
@@ -357,7 +357,7 @@ const AdminDashboard = () => {
 
       {/* Recent Orders */}
       <div className="bg-background">
-        <h2 className="text-xs tracking-[0.15em] uppercase mb-4">Recent Orders</h2>
+        <h2 className="text-sm tracking-[0.1em] uppercase font-semibold mb-4">Recent Orders</h2>
         {recentOrders.length === 0 ? (
           <p className="text-sm text-muted-foreground">No orders recorded.</p>
         ) : (

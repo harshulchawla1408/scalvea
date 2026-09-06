@@ -43,7 +43,7 @@ const AdminUsers = () => {
               {u.is_blocked && <span className="text-[10px] uppercase tracking-[0.1em] text-red-500">Blocked</span>}
               <button
                 onClick={() => toggleBlock(u.id, u.is_blocked)}
-                className={`text-xs px-3 py-1 border transition-colors ${u.is_blocked ? "border-green-500 text-green-500 hover:bg-green-50" : "border-red-500 text-red-500 hover:bg-red-50"}`}
+                className={`text-xs sm:text-sm font-medium px-4 py-1.5 border transition-colors ${u.is_blocked ? "border-green-500 text-green-500 hover:bg-green-50" : "border-red-500 text-red-500 hover:bg-red-50"}`}
               >
                 {u.is_blocked ? "Unblock" : "Block"}
               </button>

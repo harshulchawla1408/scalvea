@@ -11,7 +11,6 @@ import { CartProvider } from "./contexts/CartContext";
 import { WishlistProvider } from "./contexts/WishlistContext";
 import { CountryProvider } from "./contexts/CountryContext";
 import { PageLoader } from "./components/ui/page-loader";
-import FloatingWhatsApp from "./components/FloatingWhatsApp";
 
 const Index = lazy(() => import("./pages/Index"));
 const Shop = lazy(() => import("./pages/Shop"));
@@ -92,7 +91,6 @@ const App = () => (
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
-              <FloatingWhatsApp />
               <BottomNav />
             </BrowserRouter>
           </WishlistProvider>

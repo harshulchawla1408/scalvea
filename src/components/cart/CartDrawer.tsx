@@ -31,8 +31,8 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
         
         {/* HIGHLIGHTED SHIPPING BANNER */}
         <div className="bg-black text-white py-2 px-2 text-center select-none shadow-sm -mx-6 mb-2 overflow-hidden">
-          <div className="flex items-center justify-center text-[9.5px] sm:text-[11px] md:text-xs font-medium tracking-wide whitespace-nowrap">
-            <span className="text-neutral-200 flex items-center justify-center gap-1 sm:gap-1.5">
+          <div className="flex items-center justify-center text-xs sm:text-[13px] md:text-sm font-medium tracking-wide whitespace-nowrap">
+            <span className="text-neutral-200 flex items-center justify-center gap-1 sm:gap-2">
               <span className="font-semibold text-white">Free Delivery</span> in India 
               <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-3.5 sm:w-4 h-auto ml-0.5 rounded-sm shadow-sm" /> 
               <span className="mx-0.5 sm:mx-1.5 text-neutral-600">|</span> 
@@ -44,8 +44,8 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
         {items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <ShoppingBag className="h-12 w-12 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Your bag is empty</p>
-            <Button asChild variant="outline" className="text-xs tracking-[0.1em] uppercase" onClick={onClose}><Link to="/shop">Continue Shopping</Link></Button>
+            <p className="text-base text-muted-foreground">Your bag is empty</p>
+            <Button asChild variant="outline" className="text-sm font-medium tracking-[0.08em] uppercase h-11 px-6" onClick={onClose}><Link to="/shop">Continue Shopping</Link></Button>
           </div>
         ) : (
           <>
@@ -69,15 +69,15 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
             </div>
             <div className="border-t border-border pt-4 space-y-4">
               <div className="flex justify-between text-sm">
-                <span className="tracking-[0.08em] uppercase">Subtotal</span>
+                <span className="tracking-[0.08em] uppercase font-medium">Subtotal</span>
                 <div className="text-right">
-                  <span className="block font-medium">{formatVal(total)} {currencyCode}</span>
+                  <span className="block font-semibold text-base">{formatVal(total)} {currencyCode}</span>
                   <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light tracking-wide block mt-0.5">Inclusive of all taxes</span>
                 </div>
               </div>
-              <p className="text-[10px] text-muted-foreground">Shipping & taxes calculated at checkout</p>
-              <Button asChild className="w-full bg-foreground text-background hover:bg-foreground/90 text-xs tracking-[0.12em] uppercase h-12"><Link to="/checkout" onClick={onClose}>Checkout</Link></Button>
-              <button onClick={onClose} className="w-full text-center text-xs tracking-[0.08em] uppercase text-muted-foreground hover:text-foreground transition-colors py-2">Continue Shopping</button>
+              <p className="text-xs text-muted-foreground">Shipping & taxes calculated at checkout</p>
+              <Button asChild className="w-full bg-foreground text-background hover:bg-foreground/90 text-sm font-semibold tracking-[0.1em] uppercase h-12"><Link to="/checkout" onClick={onClose}>Checkout</Link></Button>
+              <button onClick={onClose} className="w-full text-center text-sm font-medium tracking-[0.08em] uppercase text-muted-foreground hover:text-foreground transition-colors py-2">Continue Shopping</button>
             </div>
           </>
         )}

@@ -510,7 +510,7 @@ const Auth = () => {
                         whileTap={{ scale: 0.995 }}
                         onClick={handleGoogleLogin}
                         type="button"
-                        className="w-full h-[52px] bg-white border border-neutral-200 hover:border-neutral-900 transition-all duration-300 text-[10px] tracking-[0.15em] uppercase font-light flex items-center justify-center relative px-6 text-neutral-800 rounded-none"
+                        className="w-full h-[52px] bg-white border border-neutral-200 hover:border-neutral-900 transition-all duration-300 text-xs sm:text-sm tracking-[0.08em] uppercase font-medium flex items-center justify-center relative px-6 text-neutral-800 rounded-none"
                       >
                         <div className="absolute left-6 text-neutral-700">
                           <GoogleIcon />
@@ -520,7 +520,7 @@ const Auth = () => {
 
                       <div className="flex items-center justify-center gap-4 py-1 w-full select-none">
                         <div className="h-[1px] bg-neutral-200/80 flex-1" />
-                        <span className="text-[8px] tracking-[0.2em] uppercase text-neutral-400 font-light whitespace-nowrap">
+                        <span className="text-[10px] sm:text-xs tracking-[0.1em] uppercase text-neutral-400 font-normal whitespace-nowrap">
                           or continue with email
                         </span>
                         <div className="h-[1px] bg-neutral-200/80 flex-1" />
@@ -556,14 +556,14 @@ const Auth = () => {
                               onChange={(e) => setRememberMe(e.target.checked)}
                               className="w-3.5 h-3.5 border border-neutral-300 bg-transparent rounded-none appearance-none checked:bg-black checked:border-black relative flex items-center justify-center cursor-pointer transition-colors focus:ring-0 focus:outline-none after:content-[''] after:w-1 after:h-2 after:border-r-[1.5px] after:border-b-[1.5px] after:border-white after:rotate-45 after:-translate-y-[0.5px] after:opacity-0 checked:after:opacity-100"
                             />
-                            <span className="text-[9px] tracking-[0.1em] uppercase text-neutral-400 font-light">
+                            <span className="text-xs tracking-[0.05em] uppercase text-neutral-500 font-normal">
                               Remember email
                             </span>
                           </label>
                           <button
                             type="button"
                             onClick={() => setView("forgot")}
-                            className="text-[9px] tracking-[0.1em] uppercase text-neutral-400 hover:text-neutral-800 transition-colors font-light underline underline-offset-2"
+                            className="text-xs tracking-[0.05em] uppercase text-neutral-500 hover:text-neutral-900 transition-colors font-medium underline underline-offset-2"
                           >
                             Forgot Password?
                           </button>
@@ -575,7 +575,7 @@ const Auth = () => {
                         whileTap={{ scale: 0.995 }}
                         type="submit"
                         disabled={loading}
-                        className="w-full h-[52px] bg-black text-white transition-all duration-300 text-[10px] tracking-[0.2em] uppercase font-light flex items-center justify-center select-none rounded-none"
+                        className="w-full h-[52px] bg-black text-white transition-all duration-300 text-sm sm:text-base tracking-[0.12em] uppercase font-semibold flex items-center justify-center select-none rounded-none"
                       >
                         {loading ? "Processing..." : "Sign In"}
                       </motion.button>
@@ -584,7 +584,7 @@ const Auth = () => {
                     <div className="text-center pt-2 select-none">
                       <button
                         onClick={() => setView("signup")}
-                        className="text-[10px] tracking-[0.12em] uppercase text-neutral-400 hover:text-neutral-800 transition-colors font-light relative group inline-block"
+                        className="text-xs sm:text-[13px] tracking-[0.08em] uppercase text-neutral-500 hover:text-neutral-900 transition-colors font-medium relative group inline-block"
                       >
                         Don't have an account? Create one
                         <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-neutral-800 transition-all duration-300 group-hover:w-full" />
@@ -619,7 +619,7 @@ const Auth = () => {
                         whileTap={{ scale: 0.995 }}
                         onClick={handleGoogleLogin}
                         type="button"
-                        className="w-full h-[52px] bg-white border border-neutral-200 hover:border-neutral-900 transition-all duration-300 text-[10px] tracking-[0.15em] uppercase font-light flex items-center justify-center relative px-6 text-neutral-800 rounded-none"
+                        className="w-full h-[52px] bg-white border border-neutral-200 hover:border-neutral-900 transition-all duration-300 text-xs sm:text-sm tracking-[0.08em] uppercase font-medium flex items-center justify-center relative px-6 text-neutral-800 rounded-none"
                       >
                         <div className="absolute left-6 text-neutral-700">
                           <GoogleIcon />
@@ -629,7 +629,7 @@ const Auth = () => {
 
                       <div className="flex items-center justify-center gap-4 py-1 w-full select-none">
                         <div className="h-[1px] bg-neutral-200/80 flex-1" />
-                        <span className="text-[8px] tracking-[0.2em] uppercase text-neutral-400 font-light whitespace-nowrap">
+                        <span className="text-[10px] sm:text-xs tracking-[0.1em] uppercase text-neutral-400 font-normal whitespace-nowrap">
                           or continue with email
                         </span>
                         <div className="h-[1px] bg-neutral-200/80 flex-1" />
@@ -681,7 +681,7 @@ const Auth = () => {
                         whileTap={{ scale: 0.995 }}
                         type="submit"
                         disabled={loading}
-                        className="w-full h-[52px] bg-black text-white transition-all duration-300 text-[10px] tracking-[0.2em] uppercase font-light flex items-center justify-center select-none rounded-none"
+                        className="w-full h-[52px] bg-black text-white transition-all duration-300 text-sm sm:text-base tracking-[0.12em] uppercase font-semibold flex items-center justify-center select-none rounded-none"
                       >
                         {loading ? "Creating..." : "Create Account"}
                       </motion.button>
@@ -690,7 +690,7 @@ const Auth = () => {
                     <div className="text-center pt-2 select-none">
                       <button
                         onClick={() => setView("signin")}
-                        className="text-[10px] tracking-[0.12em] uppercase text-neutral-400 hover:text-neutral-800 transition-colors font-light relative group inline-block"
+                        className="text-xs sm:text-[13px] tracking-[0.08em] uppercase text-neutral-500 hover:text-neutral-900 transition-colors font-medium relative group inline-block"
                       >
                         Already have an account? Sign in
                         <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-neutral-800 transition-all duration-300 group-hover:w-full" />
@@ -733,7 +733,7 @@ const Auth = () => {
                         whileTap={{ scale: 0.995 }}
                         type="submit"
                         disabled={loading}
-                        className="w-full h-[52px] bg-black text-white transition-all duration-300 text-[10px] tracking-[0.2em] uppercase font-light flex items-center justify-center select-none rounded-none"
+                        className="w-full h-[52px] bg-black text-white transition-all duration-300 text-sm sm:text-base tracking-[0.12em] uppercase font-semibold flex items-center justify-center select-none rounded-none"
                       >
                         {loading ? "Sending..." : "Send Reset Link"}
                       </motion.button>
@@ -742,9 +742,9 @@ const Auth = () => {
                     <div className="text-center pt-2 select-none">
                       <button
                         onClick={() => setView("signin")}
-                        className="text-[10px] tracking-[0.12em] uppercase text-neutral-400 hover:text-neutral-800 transition-colors font-light flex items-center justify-center gap-1.5 mx-auto hover:underline underline-offset-2"
+                        className="text-xs sm:text-[13px] tracking-[0.08em] uppercase text-neutral-500 hover:text-neutral-900 transition-colors font-medium flex items-center justify-center gap-1.5 mx-auto hover:underline underline-offset-2"
                       >
-                        <ArrowLeft className="h-3 w-3" />
+                        <ArrowLeft className="h-3.5 w-3.5" />
                         <span>Back to Sign In</span>
                       </button>
                     </div>
@@ -798,7 +798,7 @@ const Auth = () => {
                         whileTap={{ scale: 0.995 }}
                         type="submit"
                         disabled={loading}
-                        className="w-full h-[52px] bg-black text-white transition-all duration-300 text-[10px] tracking-[0.2em] uppercase font-light flex items-center justify-center select-none rounded-none"
+                        className="w-full h-[52px] bg-black text-white transition-all duration-300 text-sm sm:text-base tracking-[0.12em] uppercase font-semibold flex items-center justify-center select-none rounded-none"
                       >
                         {loading ? "Updating..." : "Update Password"}
                       </motion.button>
@@ -812,7 +812,7 @@ const Auth = () => {
 
         {/* BOTTOM FOOTER: Legal terms */}
         <div className="w-full text-center z-10 relative pt-8 md:pt-0 select-none">
-          <div className="flex justify-center gap-4 text-[9px] tracking-[0.2em] text-neutral-400 uppercase font-light">
+          <div className="flex justify-center gap-4 text-xs tracking-[0.15em] text-neutral-400 uppercase font-normal">
             <Link to="/privacy-policy" className="hover:text-neutral-700 transition-colors">Privacy</Link>
             <span>·</span>
             <Link to="/terms-of-service" className="hover:text-neutral-700 transition-colors">Terms</Link>

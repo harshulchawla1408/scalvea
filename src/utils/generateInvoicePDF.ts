@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { supabase } from "@/integrations/supabase/client";
-import logoUrl from "@/assets/logo1.webp";
+import logoUrl from "@/assets/logo.webp";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -70,12 +70,11 @@ const COLOR = {
   white: [255, 255, 255] as [number, number, number],
 };
 
-const MARGIN = 15;
+const MARGIN = 14;
 const PAGE_WIDTH = 210;
 const PAGE_HEIGHT = 297;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
-const LINE_HEIGHT = 4.5;
-const FOOTER_RESERVE = 30; // mm reserved for footer at bottom
+const LINE_HEIGHT = 4.2;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -153,39 +152,21 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
     }
   }
 
-  // Pre-load the logo and flatten transparency to white
-  let logoDataUrl: string | null = null;
+  // Simply load logo.webp directly without offscreen canvas white background processing
+  let logoImg: HTMLImageElement | null = null;
   try {
-    const logoImg = await loadImage(logoUrl);
-    // Draw on an offscreen canvas with white background so transparent
-    // regions (common in webp) don't render as black in the PDF.
-    const canvas = document.createElement("canvas");
-    canvas.width = logoImg.naturalWidth;
-    canvas.height = logoImg.naturalHeight;
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(logoImg, 0, 0);
-    logoDataUrl = canvas.toDataURL("image/png");
+    logoImg = await loadImage(logoUrl);
   } catch (e) {
     console.error("Could not load logo for invoice", e);
   }
 
+  // Create single page A4 document
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   let y = MARGIN;
 
-  // ── Layout Engine Helpers ──
-
-  const checkPageBreak = (neededHeight: number) => {
-    if (y + neededHeight > PAGE_HEIGHT - FOOTER_RESERVE) {
-      doc.addPage();
-      y = MARGIN;
-    }
-  };
-
   const drawLabelValue = (label: string, value: string, x: number, startY: number, valueOffsetX: number, maxWidth: number) => {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
     doc.setTextColor(...COLOR.darkGray);
     doc.text(label, x, startY);
     
@@ -200,84 +181,71 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
   // ── Header Section ───────────────────────────────────────────────────
 
   let leftY = y;
-  // Left: Logo and Tagline
-  if (logoDataUrl) {
-    // Load the flattened data URL to get dimensions for aspect ratio
-    const flatImg = await loadImage(logoDataUrl);
-    const imgWidth = 45;
-    const imgHeight = (flatImg.height / flatImg.width) * imgWidth;
-    doc.addImage(logoDataUrl, "PNG", MARGIN, leftY, imgWidth, imgHeight);
-    leftY += imgHeight + 4;
+  // Left: Logo directly from logo.webp
+  if (logoImg) {
+    const imgWidth = 46;
+    const imgHeight = (logoImg.naturalHeight / logoImg.naturalWidth) * imgWidth;
+    doc.addImage(logoImg, "WEBP", MARGIN, leftY, imgWidth, imgHeight);
+    leftY += imgHeight + 2;
   } else {
-    doc.setFontSize(26);
+    doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...COLOR.black);
-    doc.text("Scalvea", MARGIN, leftY + 8);
-    leftY += 14;
+    doc.text("Scalvea", MARGIN, leftY + 7);
+    leftY += 12;
   }
 
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...COLOR.medGray);
-  doc.text("CARE YOU DESERVE", MARGIN, leftY);
-  leftY += LINE_HEIGHT;
-
-  // Right: TAX INVOICE and details
-  let rightY = y + 4;
-  doc.setFontSize(20);
+  // Right: TAX INVOICE and metadata
+  let rightY = y + 2;
+  doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...COLOR.black);
   const title = isAus ? "TAX INVOICE" : "INVOICE";
   doc.text(title, PAGE_WIDTH - MARGIN, rightY, { align: "right" });
-  rightY += 10;
+  rightY += 8;
   
   const metaDetails = [
     { label: "Invoice Number", value: invoiceNumber },
     { label: "Order Number", value: order.order_number || "—" },
     { label: "Invoice Date", value: fmtDate(new Date().toISOString()) },
     { label: "Order Date", value: fmtDate(order.created_at) },
-    { label: "Payment Status", value: String(order.payment_status || "—").replace(/_/g, " ") },
-    { label: "Payment Method", value: String(order.payment_method || "—").replace(/_/g, " ") },
+    { label: "Payment Status", value: String(order.payment_status || "—").replace(/_/g, " ").toUpperCase() },
+    { label: "Payment Method", value: String(order.payment_method || "—").replace(/_/g, " ").toUpperCase() },
   ];
 
-  const metaBoxWidth = 85;
+  const metaBoxWidth = 84;
   const metaX = PAGE_WIDTH - MARGIN - metaBoxWidth;
-  const labelWidth = 32;
+  const labelWidth = 30;
 
   for (const item of metaDetails) {
     const h = drawLabelValue(item.label, item.value, metaX, rightY, labelWidth, metaBoxWidth);
     rightY += h;
   }
 
-  y = Math.max(leftY, rightY) + 8;
+  y = Math.max(leftY, rightY) + 4;
 
-  // ── Thick Separator Line ─────────────────────────────────────────────
+  // ── Separator Line ───────────────────────────────────────────────────
   
   doc.setDrawColor(...COLOR.lightGray);
-  doc.setLineWidth(0.5);
+  doc.setLineWidth(0.4);
   doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
-  y += 8;
+  y += 6;
 
-  // ── FROM / BILL TO Section ─────────────────────────────────────────────
+  // ── FROM / BILL TO Section (Compact side-by-side) ─────────────────────
 
-  checkPageBreak(50); // Need roughly 50mm for the addresses
+  const colWidth = CONTENT_WIDTH / 2 - 4;
 
-  const colWidth = CONTENT_WIDTH / 2 - 5;
-
-  const drawAddressColumn = (title: string, lines: {text: string, bold?: boolean}[], startX: number, startY: number) => {
-    doc.setFontSize(10);
+  const drawAddressColumn = (sectionTitle: string, lines: { text: string; bold?: boolean }[], startX: number, startY: number) => {
+    doc.setFontSize(9.5);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...COLOR.black);
-    doc.text(title, startX, startY);
+    doc.text(sectionTitle, startX, startY);
     
-    let currentY = startY + 8;
+    let currentY = startY + 6;
     for (const line of lines) {
-      if (!line.text) {
-        currentY += LINE_HEIGHT;
-        continue;
-      }
+      if (!line.text) continue;
       doc.setFont("helvetica", line.bold ? "bold" : "normal");
-      doc.setFontSize(9);
+      doc.setFontSize(8.5);
       doc.setTextColor(...(line.bold ? COLOR.black : COLOR.darkGray));
       const split = doc.splitTextToSize(line.text, colWidth);
       doc.text(split, startX, currentY);
@@ -288,19 +256,10 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
 
   const fromLines = [
     { text: SCALVEA_FROM.name, bold: true },
-    { text: `Operating As: ${SCALVEA_FROM.operating_as}` },
-    { text: `ABN: ${SCALVEA_FROM.abn}` },
-    { text: "" },
-    { text: SCALVEA_FROM.address },
-    { text: `${SCALVEA_FROM.city}` },
-    { text: SCALVEA_FROM.country },
-    { text: "" },
-    { text: "Returns & RTO Address:", bold: true },
-    { text: SCALVEA_FROM.return_address },
-    { text: `${SCALVEA_FROM.return_city}, ${SCALVEA_FROM.return_country}` },
-    { text: "" },
-    { text: SCALVEA_FROM.email },
-    { text: SCALVEA_FROM.website },
+    { text: `Operating As: ${SCALVEA_FROM.operating_as}  |  ABN: ${SCALVEA_FROM.abn}` },
+    { text: `${SCALVEA_FROM.address}, ${SCALVEA_FROM.city}, ${SCALVEA_FROM.country}` },
+    { text: `Returns: ${SCALVEA_FROM.return_address}, ${SCALVEA_FROM.return_city}` },
+    { text: `Email: ${SCALVEA_FROM.email}  |  Web: ${SCALVEA_FROM.website}` },
   ];
 
   const customerName = order.customer_name
@@ -309,39 +268,36 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
   const customerEmail = order.customer_email || billing.email || addr.email || "";
   const customerPhone = order.customer_phone || billing.phone || addr.phone || "";
 
-  const billLines: { text: string, bold?: boolean }[] = [];
-  if (customerName) billLines.push({ text: customerName, bold: true });
-  if (customerEmail) billLines.push({ text: `Email: ${customerEmail}` });
-  if (customerPhone) billLines.push({ text: `Phone: ${customerPhone}` });
-  billLines.push({ text: "" });
-
-  const addrLine1 = billing.address_line1 || billing.address || addr.address_line1 || addr.address;
-  if (addrLine1) billLines.push({ text: addrLine1 });
-  const addrLine2 = billing.address_line2 || addr.address_line2;
-  if (addrLine2) billLines.push({ text: addrLine2 });
+  const addrLine1 = billing.address_line1 || billing.address || addr.address_line1 || addr.address || "";
+  const addrLine2 = billing.address_line2 || addr.address_line2 || "";
   const cityStateZip = `${billing.city || addr.city || ""} ${billing.state || addr.state || ""} ${billing.postcode || addr.postcode || ""}`.trim();
-  if (cityStateZip) billLines.push({ text: cityStateZip });
-  const country = billing.country || addr.country || order.country;
-  if (country) billLines.push({ text: country });
+  const country = billing.country || addr.country || order.country || "";
+
+  const billLines: { text: string; bold?: boolean }[] = [
+    { text: customerName, bold: true },
+    ...(customerEmail ? [{ text: `Email: ${customerEmail}` }] : []),
+    ...(customerPhone ? [{ text: `Phone: ${customerPhone}` }] : []),
+    ...(addrLine1 ? [{ text: addrLine1 + (addrLine2 ? `, ${addrLine2}` : "") }] : []),
+    ...(cityStateZip ? [{ text: `${cityStateZip}${country ? `, ${country}` : ""}` }] : []),
+  ];
 
   const fromEndY = drawAddressColumn("FROM", fromLines, MARGIN, y);
-  const billEndY = drawAddressColumn("BILL TO", billLines, MARGIN + CONTENT_WIDTH / 2 + 5, y);
+  const billEndY = drawAddressColumn("BILL TO", billLines, MARGIN + CONTENT_WIDTH / 2 + 4, y);
 
-  y = Math.max(fromEndY, billEndY) + 12;
+  y = Math.max(fromEndY, billEndY) + 8;
 
   // ── Product Table ──────────────────────────────────────────────────────
   
   const curSymbol = isAus ? "A$" : "₹";
 
   const tableHead = [
-    ["#", "PRODUCT", "QTY", `MRP\n(${curSymbol})`, `UNIT PRICE\n(${curSymbol})`, `DISCOUNT\n(${curSymbol})`, `AMOUNT\n(${curSymbol})`],
+    ["#", "PRODUCT", "QTY", `MRP (${curSymbol})`, `UNIT PRICE (${curSymbol})`, `DISCOUNT (${curSymbol})`, `AMOUNT (${curSymbol})`],
   ];
 
   const tableBody = items.map((item, index) => {
     const qty = item.quantity || 1;
     const unitPrice = item.price || 0;
     
-    // Resolve MRP: prefer DB mrpMap, then item.original_price, fallback to unitPrice
     let mrp = unitPrice;
     if (item.product_id && mrpMap[item.product_id]) {
       mrp = mrpMap[item.product_id];
@@ -349,7 +305,6 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
       mrp = item.original_price;
     }
     
-    // If MRP is somehow lower than unit price, don't show negative discount. Just adjust MRP.
     if (mrp < unitPrice) mrp = unitPrice;
 
     const discount = (mrp - unitPrice) * qty;
@@ -374,10 +329,11 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
     startY: y,
     head: tableHead,
     body: tableBody,
-    margin: { left: MARGIN, right: MARGIN, bottom: FOOTER_RESERVE },
+    margin: { left: MARGIN, right: MARGIN },
+    pageBreak: 'avoid',
     styles: {
-      fontSize: 8.5,
-      cellPadding: 5,
+      fontSize: 8,
+      cellPadding: 3.5,
       textColor: COLOR.black,
       lineColor: COLOR.lightGray,
       lineWidth: 0.1,
@@ -387,68 +343,86 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
       fillColor: COLOR.black,
       textColor: COLOR.white,
       fontStyle: "bold",
-      fontSize: 8,
+      fontSize: 7.5,
       halign: "center",
       valign: "middle",
     },
     columnStyles: {
       0: { halign: "center", cellWidth: 10 },
       1: { halign: "left", cellWidth: "auto" },
-      2: { halign: "center", cellWidth: 15 },
-      3: { halign: "right", cellWidth: 25 },
-      4: { halign: "right", cellWidth: 25 },
-      5: { halign: "right", cellWidth: 25 },
-      6: { halign: "right", cellWidth: 25 },
+      2: { halign: "center", cellWidth: 14 },
+      3: { halign: "right", cellWidth: 24 },
+      4: { halign: "right", cellWidth: 26 },
+      5: { halign: "right", cellWidth: 24 },
+      6: { halign: "right", cellWidth: 26 },
     },
     theme: "grid",
-    showHead: 'everyPage', // ensure headers repeat
   });
 
-  y = (doc as any).lastAutoTable.finalY + 12;
+  y = (doc as any).lastAutoTable.finalY + 8;
 
-  // ── Financial Summary & Thank You ──────────────────────────────────────
+  // ── Financial Summary & Payment Details (Side-by-side, single page fit) ──
 
   const subtotal = Number(order.subtotal || 0);
   const shipping = Number(order.shipping_amount || 0);
   const total = Number(order.total_amount || 0);
   const tax = Number(order.gst_amount || order.tax_amount || 0);
 
-  const summaryWidth = 75;
+  const summaryWidth = 76;
   const summaryXOffset = PAGE_WIDTH - MARGIN - summaryWidth;
-  const summaryRowHeight = 9;
+  const summaryRowHeight = 7.5;
 
-  // Calculate total height of summary block to check page break
-  const summaryRows = 4 + (tax > 0 ? 1 : 0); // Subtotal, Shipping, (Tax), Total, Amount Paid
-  const summaryHeight = summaryRows * summaryRowHeight + 10;
-  
-  checkPageBreak(Math.max(summaryHeight, 30));
+  // Left column: Thank you & Payment details box
+  const leftColWidth = CONTENT_WIDTH - summaryWidth - 8;
+  let leftInfoY = y;
 
-  // Left side: Thank you text (drawn at the same Y as the summary)
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...COLOR.black);
-  doc.text("Thank you for your order!", MARGIN, y + 4);
+  doc.text("Thank you for your order!", MARGIN, leftInfoY + 4);
   
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...COLOR.darkGray);
-  doc.text("We appreciate your trust in Scalvea.", MARGIN, y + 12);
-  doc.text("If you have any questions about your order,", MARGIN, y + 20);
-  doc.text("please contact us at info@scalvea.com", MARGIN, y + 26);
+  doc.text("We appreciate your trust in Scalvea.", MARGIN, leftInfoY + 9);
+  doc.text("For any enquiries, contact us at info@scalvea.com", MARGIN, leftInfoY + 14);
 
-  // Right side: Box for totals
-  let sumY = y;
-  
+  // Payment box on left
+  const payBoxY = leftInfoY + 20;
+  const payBoxHeight = 24;
   doc.setDrawColor(...COLOR.lightGray);
   doc.setLineWidth(0.1);
-  
+  doc.rect(MARGIN, payBoxY, leftColWidth, payBoxHeight);
+
+  doc.setFontSize(8.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...COLOR.black);
+  doc.text("PAYMENT DETAILS", MARGIN + 3, payBoxY + 5.5);
+
+  const payItems = [
+    { l: "Method", v: String(order.payment_method || "—").replace(/_/g, " ").toUpperCase() },
+    { l: "Status", v: String(order.payment_status || "—").replace(/_/g, " ").toUpperCase() },
+    { l: "Transaction ID", v: getTransactionId(order) },
+  ];
+
+  let currentPayY = payBoxY + 11;
+  for (const pi of payItems) {
+    drawLabelValue(pi.l, pi.v, MARGIN + 3, currentPayY, 26, leftColWidth - 6);
+    currentPayY += 4.5;
+  }
+
+  // Right column: Financial Summary
+  let sumY = y;
+  doc.setDrawColor(...COLOR.lightGray);
+  doc.setLineWidth(0.1);
+
   const drawSummaryRow = (label: string, value: string, isBold = false) => {
     doc.rect(summaryXOffset, sumY, summaryWidth, summaryRowHeight);
     doc.setFont("helvetica", isBold ? "bold" : "normal");
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
     doc.setTextColor(...COLOR.black);
-    doc.text(label, summaryXOffset + 4, sumY + 6);
-    doc.text(value, summaryXOffset + summaryWidth - 4, sumY + 6, { align: "right" });
+    doc.text(label, summaryXOffset + 3.5, sumY + 5.2);
+    doc.text(value, summaryXOffset + summaryWidth - 3.5, sumY + 5.2, { align: "right" });
     sumY += summaryRowHeight;
   };
 
@@ -470,75 +444,29 @@ export async function generateInvoicePDF(order: OrderData): Promise<void> {
   }
   drawSummaryRow("Amount Paid", fmtCurrency(amountPaid, cur), false);
 
-  y = Math.max(y + 35, sumY) + 12;
+  // ── Footer (Single Page Only) ──────────────────────────────────────────
 
-  // ── Payment Information Box ────────────────────────────────────────────
-
-  const paymentDetails = [
-    { l: "Payment Method", v: String(order.payment_method || "—").replace(/_/g, " ") },
-    { l: "Payment Status", v: String(order.payment_status || "—").replace(/_/g, " ") },
-    { l: "Transaction ID", v: getTransactionId(order) },
-  ];
-  
-  // Calculate height needed
-  doc.setFontSize(9);
-  let paymentBoxHeight = 12; // padding top + title
-  const pLabelWidth = 32;
-  const pMaxWidth = CONTENT_WIDTH - 8;
-  
-  for (const p of paymentDetails) {
-    const lines = doc.splitTextToSize(p.v || "—", pMaxWidth - pLabelWidth);
-    paymentBoxHeight += lines.length * LINE_HEIGHT;
+  // Guarantee single page: delete any second or subsequent page
+  while (doc.internal.getNumberOfPages() > 1) {
+    doc.deletePage(2);
   }
-  paymentBoxHeight += 4; // padding bottom
 
-  checkPageBreak(paymentBoxHeight + 10);
+  doc.setPage(1);
+  const footerY = PAGE_HEIGHT - 18;
 
   doc.setDrawColor(...COLOR.lightGray);
-  doc.rect(MARGIN, y, CONTENT_WIDTH, paymentBoxHeight);
-  
-  doc.setFontSize(10);
+  doc.setLineWidth(0.4);
+  doc.line(MARGIN, footerY - 4, PAGE_WIDTH - MARGIN, footerY - 4);
+
+  doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...COLOR.black);
-  doc.text("PAYMENT INFORMATION", MARGIN + 4, y + 7);
-  
-  let py = y + 14;
-  for (const p of paymentDetails) {
-    const h = drawLabelValue(p.l, p.v, MARGIN + 4, py, pLabelWidth, pMaxWidth);
-    py += h;
-  }
+  doc.text("Scalvea", PAGE_WIDTH / 2, footerY + 2, { align: "center" });
 
-  y += paymentBoxHeight + 10;
-
-  // ── Footer ─────────────────────────────────────────────────────────────
-
-  const pageCount = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    const footerY = PAGE_HEIGHT - 22;
-
-    doc.setDrawColor(...COLOR.lightGray);
-    doc.setLineWidth(0.5);
-    doc.line(MARGIN, footerY - 5, PAGE_WIDTH - MARGIN, footerY - 5);
-
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...COLOR.black);
-    doc.text("Scalvea", PAGE_WIDTH / 2, footerY + 1, { align: "center" });
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(...COLOR.darkGray);
-    doc.text("Care You Deserve", PAGE_WIDTH / 2, footerY + 5, { align: "center" });
-    doc.text("For any enquiries, please contact us at info@scalvea.com", PAGE_WIDTH / 2, footerY + 9, { align: "center" });
-    doc.text("www.scalvea.com", PAGE_WIDTH / 2, footerY + 13, { align: "center" });
-    
-    if (pageCount > 1) {
-      doc.setFontSize(7);
-      doc.setTextColor(...COLOR.lightGray);
-      doc.text(`Page ${i} of ${pageCount}`, PAGE_WIDTH - MARGIN, footerY + 13, { align: "right" });
-    }
-  }
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLOR.darkGray);
+  doc.text("Care You Deserve  ·  info@scalvea.com  ·  www.scalvea.com", PAGE_WIDTH / 2, footerY + 6.5, { align: "center" });
 
   // ── Save ───────────────────────────────────────────────────────────────
 

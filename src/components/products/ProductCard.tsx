@@ -174,25 +174,25 @@ const ProductCard = ({ product }: ProductCardProps) => {
                   e.stopPropagation(); 
                   setIsQuickViewOpen(true); 
                 }}
-                className="flex-1 bg-neutral-900 text-white hover:bg-black transition-colors text-[9px] tracking-[0.15em] uppercase h-9 flex items-center justify-center font-medium"
+                className="flex-1 bg-neutral-900 text-white hover:bg-black transition-colors text-xs tracking-[0.1em] uppercase h-10 flex items-center justify-center font-medium"
               >
                 Quick View
               </button>
               <button
                 onClick={handleAddToCart}
-                className="w-9 h-9 border border-neutral-200 text-neutral-800 hover:border-black hover:text-black flex items-center justify-center bg-white transition-colors"
+                className="w-10 h-10 border border-neutral-200 text-neutral-800 hover:border-black hover:text-black flex items-center justify-center bg-white transition-colors"
                 aria-label="Add to cart"
               >
-                <ShoppingBag className="h-3.5 w-3.5" />
+                <ShoppingBag className="h-4 w-4" />
               </button>
               <button
                 onClick={handleToggleWishlist}
-                className={`w-9 h-9 border flex items-center justify-center transition-colors bg-white ${
+                className={`w-10 h-10 border flex items-center justify-center transition-colors bg-white ${
                   isFavorited ? "border-black text-black" : "border-neutral-200 text-neutral-500 hover:border-black hover:text-black"
                 }`}
                 aria-label="Toggle wishlist"
               >
-                <Heart className={`h-3.5 w-3.5 ${isFavorited ? "fill-current" : ""}`} />
+                <Heart className={`h-4 w-4 ${isFavorited ? "fill-current" : ""}`} />
               </button>
             </div>
           )}
@@ -201,7 +201,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         {/* Info Details */}
         <div className="p-4 space-y-1.5 flex-1 flex flex-col justify-between">
           <div className="space-y-1">
-            <span className="text-[8px] tracking-[0.2em] uppercase text-neutral-400 font-body font-medium block">
+            <span className="text-[10px] tracking-[0.15em] uppercase text-neutral-400 font-body font-medium block">
               {"category" in product ? product.category : "Skincare"}
             </span>
             <h3 className="text-sm font-normal text-neutral-800 group-hover:text-black transition-colors font-heading leading-snug line-clamp-2 min-h-[2.5rem]">
@@ -256,11 +256,11 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <button
             onClick={handleAddToCart}
             disabled={product.inventory === 0}
-            className={`w-full text-white hover:bg-neutral-900 transition-colors text-[9px] tracking-[0.2em] uppercase h-9 flex items-center justify-center gap-2 font-medium shadow-sm ${
+            className={`w-full text-white hover:bg-neutral-900 transition-colors text-xs tracking-[0.12em] uppercase h-10 flex items-center justify-center gap-2 font-medium shadow-sm ${
               product.inventory === 0 ? "bg-neutral-300 cursor-not-allowed" : "bg-black"
             }`}
           >
-            <ShoppingBag className="h-3 w-3" />
+            <ShoppingBag className="h-3.5 w-3.5" />
             Add to Bag
           </button>
         </div>
@@ -334,15 +334,15 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     setIsQuickViewOpen(false);
                   }}
                   disabled={product.inventory === 0}
-                  className="w-full bg-black text-white hover:bg-neutral-950 transition-colors text-[10px] tracking-[0.2em] uppercase h-12 flex items-center justify-center gap-2.5 font-medium"
+                  className="w-full bg-black text-white hover:bg-neutral-950 transition-colors text-sm tracking-[0.12em] uppercase h-12 flex items-center justify-center gap-2.5 font-semibold"
                 >
-                  <ShoppingBag className="h-4 w-4" />
+                  <ShoppingBag className="h-4.5 w-4.5" />
                   {product.inventory === 0 ? "Out of Stock" : "Add to Bag"}
                 </button>
                 <Link
                   to={`/product/${product.slug}`}
                   onClick={() => setIsQuickViewOpen(false)}
-                  className="block text-center text-neutral-500 hover:text-black transition-colors text-[9px] tracking-[0.15em] uppercase font-medium pt-2 underline underline-offset-4"
+                  className="block text-center text-neutral-600 hover:text-black transition-colors text-xs sm:text-[13px] tracking-[0.1em] uppercase font-semibold pt-2 underline underline-offset-4"
                 >
                   View Details Page
                 </Link>
