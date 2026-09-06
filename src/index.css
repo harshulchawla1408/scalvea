@@ -436,3 +436,23 @@
 .pd-rating-bar-fill.pd-visible {
   width: var(--bar-width) !important;
 }
+
+/* ============================================================
+   BLOG / PROSE MOBILE RESPONSIVENESS & SCROLLABLE TABLES
+   ============================================================ */
+.prose {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.prose table {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Smooth touch momentum scrolling for tables */
+.-webkit-overflow-scrolling-touch {
+  -webkit-overflow-scrolling: touch;
+}
+

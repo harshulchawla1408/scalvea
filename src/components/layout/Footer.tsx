@@ -192,18 +192,18 @@ const Footer = () => {
             <div className={`mt-4 lg:mt-0 ${activeAccordion === "locations" ? "block" : "hidden lg:block"}`}>
               <div className="space-y-5 text-sm text-neutral-400 font-light">
                 <div>
-                  <p className="text-neutral-200 font-semibold tracking-wider text-xs uppercase mb-1.5">
-                    🇦🇺 Australia
+                  <p className="text-neutral-200 font-semibold tracking-wider text-xs uppercase mb-1 flex items-center gap-1.5">
+                    <img src="https://flagcdn.com/w40/au.png" alt="Australia" className="w-3.5 h-auto rounded-[1.5px] shadow-sm" />
+                    <span>Australia</span>
                   </p>
-                  <p className="leading-relaxed text-neutral-300 text-sm">Craigieburn, Victoria</p>
-                  <p className="leading-relaxed text-neutral-400 text-xs">Australia</p>
+                  <p className="leading-relaxed text-neutral-300 text-sm">Victoria</p>
                 </div>
                 <div>
-                  <p className="text-neutral-200 font-semibold tracking-wider text-xs uppercase mb-1.5">
-                    🇮🇳 India
+                  <p className="text-neutral-200 font-semibold tracking-wider text-xs uppercase mb-1 flex items-center gap-1.5">
+                    <img src="https://flagcdn.com/w40/in.png" alt="India" className="w-3.5 h-auto rounded-[1.5px] shadow-sm" />
+                    <span>India</span>
                   </p>
-                  <p className="leading-relaxed text-neutral-300 text-sm">Patiala, Punjab</p>
-                  <p className="leading-relaxed text-neutral-400 text-xs">India</p>
+                  <p className="leading-relaxed text-neutral-300 text-sm">Punjab</p>
                 </div>
               </div>
             </div>

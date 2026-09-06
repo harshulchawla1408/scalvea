@@ -10,17 +10,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import Lenis from "lenis";
 import { useSEO } from "@/hooks/useSEO";
 import ScalveaInMotion from "@/components/sections/ScalveaInMotion";
-
-// Asset imports
-const follicle8Serum = hero2;
-const follicle8Black = scalpPng;
+import ProductInDemand from "@/components/sections/ProductInDemand";
 
 import lap1 from "@/assets/lap1.webp";
 import lap2 from "@/assets/lap2.webp";
 import lap3 from "@/assets/lap3.webp";
+import lap4 from "@/assets/lap4.webp";
 import mob1 from "@/assets/mob1.webp";
 import mob2 from "@/assets/mob2.webp";
 import mob3 from "@/assets/mob3.webp";
+import mob4 from "@/assets/mob4.webp";
 import hero2 from "@/assets/hero2.webp";
 import hero3 from "@/assets/hero3.webp";
 import scalpPng from "@/assets/scalp.webp";
@@ -30,6 +29,10 @@ import dropperIcon from "@/assets/dropper.svg";
 import hairFollicleIcon from "@/assets/hair.svg";
 import microscopeIcon from "@/assets/microscope.svg";
 import shieldCheckIcon from "@/assets/shield-check.svg";
+
+// Asset aliases
+const follicle8Serum = hero2;
+const follicle8Black = scalpPng;
 
 
 // Helper CountUp Component
@@ -62,8 +65,9 @@ const CountUp = ({ value, duration = 1.8 }: { value: number; duration?: number }
 
 const SLIDES = [
   { lap: lap1, mob: mob1, alt: "Scalvea Scientific Haircare Banner 1" },
-  { lap: lap2, mob: mob2, alt: "Scalvea Scientific Haircare Banner 2" },
-  { lap: lap3, mob: mob3, alt: "Scalvea Scientific Haircare Banner 3" },
+  { lap: lap4, mob: mob4, alt: "Scalvea Scientific Haircare Banner 2" },
+  { lap: lap2, mob: mob2, alt: "Scalvea Scientific Haircare Banner 3" },
+  { lap: lap3, mob: mob3, alt: "Scalvea Scientific Haircare Banner 4" },
 ];
 
 const TRUST_ITEMS = [
@@ -158,17 +162,17 @@ const Index = () => {
   useEffect(() => {
     if (isHovered) return;
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % 3);
+      setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
     }, 4000);
     return () => clearInterval(interval);
   }, [isHovered]);
 
   const handlePrev = () => {
-    setCurrentSlide((prev) => (prev - 1 + 3) % 3);
+    setCurrentSlide((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
   };
 
   const handleNext = () => {
-    setCurrentSlide((prev) => (prev + 1) % 3);
+    setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
   };
 
   // Keyboard navigation
@@ -454,6 +458,9 @@ const Index = () => {
         </div>
       </section>
 
+      {/* PRODUCT IN DEMAND SECTION */}
+      <ProductInDemand />
+
       {/* 4. SCALPA-5 PREMIUM SHOWCASE SECTION */}
       <section className="bg-white py-6 md:py-8 lg:py-10 overflow-hidden border-t border-border/30 relative select-none">
         <div className="max-w-7xl mx-auto px-6 lg:px-16 relative z-10">
@@ -629,8 +636,8 @@ const Index = () => {
               },
               {
                 icon: shieldCheckIcon,
-                title: "Dermatologically Tested",
-                desc: "Carefully formulated for daily use with lightweight, non-greasy performance suitable for all hair types."
+                title: "Purposefully Formulated",
+                desc: "Thoughtfully developed with focused ingredients and lightweight textures for everyday use."
               }
             ].map((card, idx) => (
               <motion.div 

@@ -22,6 +22,12 @@ const socialVideos: SocialVideo[] = [
     description: "A closer look at Scalvea hair care products in action.",
   },
   {
+    id: "reel-4",
+    src: `${SUPABASE_VIDEOS_BASE}/Reel4.mp4`,
+    title: "Scalp-5 Anti-Dandruff Serum",
+    description: "Lightweight anti-dandruff care for everyday use.",
+  },
+  {
     id: "reel-2",
     src: `${SUPABASE_VIDEOS_BASE}/Reel2.mp4`,
     title: "Follicle 8 Hair Growth Serum",
@@ -32,12 +38,6 @@ const socialVideos: SocialVideo[] = [
     src: `${SUPABASE_VIDEOS_BASE}/Reel3.mp4`,
     title: "Scalp Care Routine",
     description: "A real scalp care routine with Scalvea products.",
-  },
-  {
-    id: "reel-4",
-    src: `${SUPABASE_VIDEOS_BASE}/Reel4.mp4`,
-    title: "Scalp-5 Anti-Dandruff Serum",
-    description: "Lightweight anti-dandruff care for everyday use.",
   },
   {
     id: "reel-5",

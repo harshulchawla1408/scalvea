@@ -136,8 +136,18 @@ const Contact = () => {
             {/* Location info cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 max-w-xl mx-auto">
               {[
-                { flag: "🇦🇺", label: "Australian Headquarters", city: "Craigieburn, Victoria", country: "Australia" },
-                { flag: "🇮🇳", label: "India Operations", city: "Patiala, Punjab", country: "India" },
+                { 
+                  flagUrl: "https://flagcdn.com/w40/au.png", 
+                  label: "Australian Headquarters", 
+                  state: "Victoria", 
+                  country: "Australia" 
+                },
+                { 
+                  flagUrl: "https://flagcdn.com/w40/in.png", 
+                  label: "India Operations", 
+                  state: "Punjab", 
+                  country: "India" 
+                },
               ].map((loc, i) => (
                 <motion.div
                   key={i}
@@ -145,12 +155,14 @@ const Contact = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.7, delay: i * 0.15 }}
-                  className="flex items-start gap-4 bg-white border border-neutral-100 rounded-2xl px-5 py-4 shadow-[0_2px_16px_rgba(0,0,0,0.04)]"
+                  className="flex items-center gap-4 bg-white border border-neutral-150 rounded-2xl px-5 py-4 shadow-[0_2px_16px_rgba(0,0,0,0.04)]"
                 >
-                  <span className="text-2xl mt-0.5 select-none">{loc.flag}</span>
+                  <div className="w-9 h-6.5 rounded overflow-hidden shadow-sm flex items-center justify-center shrink-0 border border-neutral-100">
+                    <img src={loc.flagUrl} alt={loc.country} className="w-full h-full object-cover" />
+                  </div>
                   <div>
-                    <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-1">{loc.label}</p>
-                    <p className="text-sm font-heading text-neutral-900">{loc.city}</p>
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-0.5">{loc.label}</p>
+                    <p className="text-sm font-heading text-neutral-900">{loc.state}</p>
                     <p className="text-[11px] text-neutral-500 font-body font-light">{loc.country}</p>
                   </div>
                 </motion.div>
