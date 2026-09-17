@@ -9,6 +9,7 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import { useCountry } from "@/contexts/CountryContext";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useAuth } from "@/hooks/useAuth";
+import { trackViewContent, trackAddToCart } from "@/lib/metaPixel";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -97,6 +98,22 @@ const COMPARISON_FEATURES = [
   { feature: "Safe for Colour-Treated Hair", scalvea: true, ordinary: null },
   { feature: "Cruelty-Free & Vegan", scalvea: true, ordinary: null },
 ];
+
+/* ─── SEO Metadata Mapping ─── */
+const PRODUCT_SEO_CONFIG: Record<string, { title: string; description: string; h1: string; imageAlt: string }> = {
+  "scalp-5-anti-dandruff-hair-serum": {
+    title: "Scalp-5 Anti-Dandruff Serum – Dandruff Control | Scalvea",
+    description: "Soothe itchy, flaky scalps with our anti-dandruff hair serum. Formulated with Salicylic Acid, Rosemary Oil & Piroctone Olamine. Fast shipping available.",
+    h1: "Scalp-5 Anti-Dandruff Hair Serum & Scalp Treatment",
+    imageAlt: "Scalvea Scalp-5 anti-dandruff hair serum bottle on white background",
+  },
+  "follicle-8-hair-growth-serum": {
+    title: "Follicle 8 Hair Growth Serum – Hair Density Serum | Scalvea",
+    description: "Support thicker, healthier-looking hair with Follicle 8 hair growth serum. Powered by Redensyl, Procapil, Baicapil & Anagain to help reduce hair fall.",
+    h1: "Follicle 8 Hair Growth Serum & Density Support",
+    imageAlt: "Scalvea Follicle 8 hair growth serum bottle on white background",
+  }
+};
 
 /* ─── Rich Description Renderer ─── */
 // Preserves newlines, paragraphs, bullet lists, and numbered lists
@@ -309,9 +326,42 @@ const ProductDetail = () => {
   const [reviewSort, setReviewSort] = useState<"newest" | "highest" | "helpful">("newest");
   const [visibleReviewsCount, setVisibleReviewsCount] = useState(5);
 
+  const mainPurchaseRef = useRef<HTMLDivElement>(null);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+
+  useEffect(() => {
+    const el = mainPurchaseRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShowStickyBar(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     if (product?.id) addRecentlyViewed(product.id);
   }, [product?.id, addRecentlyViewed]);
+
+  // ── Meta Pixel: ViewContent ───────────────────────────────────────────────
+  // Fire once per product load. Guard with ref so re-renders don't duplicate.
+  const viewContentFiredForId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!product?.id) return;
+    if (viewContentFiredForId.current === product.id) return;
+    viewContentFiredForId.current = product.id;
+    trackViewContent({
+      id: product.id,
+      name: product.name,
+      price: selectedCountry === "india" ? product.price_inr : product.price_aud,
+      currency: selectedCountry === "india" ? "INR" : "AUD",
+    });
+  }, [product?.id, product?.name, product?.price_inr, product?.price_aud, selectedCountry]);
 
   const { data: reviews = [], refetch: refetchReviews } = useQuery({
     queryKey: ["reviews", product?.id],
@@ -352,7 +402,7 @@ const ProductDetail = () => {
           "@type": "Product",
           "name": product.name,
           "image": product.images || [],
-          "description": product.description || "",
+          "description": product.slug && PRODUCT_SEO_CONFIG[product.slug] ? PRODUCT_SEO_CONFIG[product.slug].description : (product.description || ""),
           "sku": product.sku_australia || product.sku_india || product.id,
           "mpn": product.id,
           "brand": { "@type": "Brand", "name": "Scalvea" },
@@ -396,10 +446,23 @@ const ProductDetail = () => {
     };
   }, [product, selectedCountry, reviews, avgRating]);
 
+  // Sanitize description: strip bullet chars, extra whitespace, and truncate for meta
+  const sanitizedDescription = product
+    ? (product.description || "")
+        .replace(/^[\u2022\-\*\u25cf\u25e6\d+\.]\s*/gm, "")
+        .replace(/\n+/g, " ")
+        .trim()
+        .slice(0, 152)
+    : "";
+
   useSEO({
-    title: product ? product.name : "Product Detail",
-    description: product ? (product.description || "").slice(0, 155) : "View product details for Scalvea hair growth treatments.",
-    image: product && product.images?.[0] ? product.images[0] : "https://scalvea.com/og-image.jpg",
+    title: product && PRODUCT_SEO_CONFIG[product.slug] 
+      ? PRODUCT_SEO_CONFIG[product.slug].title 
+      : product ? `${product.name} – Hair Serum` : "Product Detail",
+    description: product && PRODUCT_SEO_CONFIG[product.slug]
+      ? PRODUCT_SEO_CONFIG[product.slug].description
+      : product ? sanitizedDescription || `Shop ${product.name} by Scalvea. Science-backed hair care with clinically researched ingredients.` : "View product details for Scalvea hair growth treatments.",
+    image: product && product.images?.[0] ? product.images[0] : "https://scalvea.com/og-image.webp",
     canonical: product ? `https://scalvea.com/product/${product.slug}` : undefined,
     schema,
   });
@@ -481,6 +544,9 @@ const ProductDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
+        {productId && PRODUCT_SEO_CONFIG[productId] && (
+          <h1 className="sr-only">{PRODUCT_SEO_CONFIG[productId].h1}</h1>
+        )}
         <div className="px-6 lg:px-12 py-8 grid grid-cols-1 lg:grid-cols-2 gap-16">
           <Skeleton className="aspect-square max-h-[500px]" />
           <div className="space-y-4">
@@ -516,9 +582,23 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     addItem({ productId: product.id, name: product.name, image: product.images[0], price_aud: product.price_aud, price_inr: product.price_inr, price_usd: product.price_usd }, quantity);
+    // Fire AddToCart after addItem() completes (synchronous local-state update)
+    trackAddToCart({
+      id: product.id,
+      name: product.name,
+      price: selectedCountry === "india" ? product.price_inr : product.price_aud,
+      currency: selectedCountry === "india" ? "INR" : "AUD",
+    }, quantity);
   };
   const handleBuyNow = () => {
     addItem({ productId: product.id, name: product.name, image: product.images[0], price_aud: product.price_aud, price_inr: product.price_inr, price_usd: product.price_usd }, quantity);
+    // Fire AddToCart for Buy Now as well — the item is being added to cart
+    trackAddToCart({
+      id: product.id,
+      name: product.name,
+      price: selectedCountry === "india" ? product.price_inr : product.price_aud,
+      currency: selectedCountry === "india" ? "INR" : "AUD",
+    }, quantity);
     navigate("/checkout");
   };
 
@@ -570,7 +650,7 @@ const ProductDetail = () => {
               <div className="relative aspect-square max-h-[560px] bg-[#f9f9f9] rounded-2xl overflow-hidden group">
                 <img
                   src={product.images[selectedImage]}
-                  alt={product.name}
+                  alt={product.slug && PRODUCT_SEO_CONFIG[product.slug] ? PRODUCT_SEO_CONFIG[product.slug].imageAlt : product.name}
                   loading="eager"
                   fetchPriority="high"
                   className="w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.03]"
@@ -590,7 +670,7 @@ const ProductDetail = () => {
                       id={`product-image-thumb-${i}`}
                       className={`flex-shrink-0 w-16 h-16 rounded-xl bg-[#f9f9f9] overflow-hidden border-2 transition-all duration-200 ${selectedImage === i ? "border-black" : "border-transparent opacity-60 hover:opacity-100"}`}
                     >
-                      <img src={img} alt={`${product.name} thumbnail ${i + 1}`} className="w-full h-full object-cover" />
+                      <img src={img} alt={product.slug && PRODUCT_SEO_CONFIG[product.slug] ? `${PRODUCT_SEO_CONFIG[product.slug].imageAlt} thumbnail ${i + 1}` : `${product.name} thumbnail ${i + 1}`} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
@@ -601,7 +681,9 @@ const ProductDetail = () => {
             <div className="lg:sticky lg:top-28 space-y-5">
               <div>
                 <p className="text-[10px] tracking-[0.18em] uppercase text-muted-foreground mb-2">{product.category}</p>
-                <h1 className="text-3xl md:text-4xl font-light tracking-tight mb-3 leading-tight">{product.name}</h1>
+                <h1 className="text-3xl md:text-4xl font-light tracking-tight mb-3 leading-tight">
+                  {product.slug && PRODUCT_SEO_CONFIG[product.slug] ? PRODUCT_SEO_CONFIG[product.slug].h1 : product.name}
+                </h1>
 
                 {/* Rating row */}
                 {reviews.length > 0 && (
@@ -651,9 +733,85 @@ const ProductDetail = () => {
                 </div>
               </div>
 
+              {/* Quantity + CTA + Trust Badges (Main Purchase Block) */}
+              <div ref={mainPurchaseRef} className="space-y-4 pt-1">
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs tracking-[0.1em] uppercase text-muted-foreground">Qty</span>
+                    <div className="flex items-center border border-border rounded-xl overflow-hidden">
+                      <button
+                        id="product-qty-minus"
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="h-11 w-11 flex items-center justify-center hover:bg-neutral-50 transition-colors"
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="h-11 w-12 flex items-center justify-center text-sm font-medium border-x border-border">{quantity}</span>
+                      <button
+                        id="product-qty-plus"
+                        onClick={() => setQuantity(quantity + 1)}
+                        className="h-11 w-11 flex items-center justify-center hover:bg-neutral-50 transition-colors"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2.5">
+                    <Button
+                      id="product-add-to-cart"
+                      onClick={handleAddToCart}
+                      disabled={!inStock}
+                      className="flex-1 bg-black text-white hover:bg-black/90 text-sm font-semibold tracking-[0.08em] uppercase rounded-xl pd-ripple h-[52px]"
+                    >
+                      <ShoppingBag className="h-4 w-4 mr-2" />Add to Bag
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => toggleItem(product.id)}
+                      id="product-wishlist"
+                      className="h-[52px] w-[52px] border-black rounded-xl p-0 hover:bg-neutral-50"
+                    >
+                      <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-black" : ""}`} />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleShare}
+                      id="product-share"
+                      className="h-[52px] w-[52px] border-black rounded-xl p-0 hover:bg-neutral-50"
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <Button
+                    id="product-buy-now"
+                    onClick={handleBuyNow}
+                    disabled={!inStock}
+                    variant="outline"
+                    className="w-full h-[52px] border-black text-sm font-semibold tracking-[0.08em] uppercase rounded-xl hover:bg-neutral-50"
+                  >
+                    Buy Now
+                  </Button>
+                </div>
+
+                {/* Mini trust row */}
+                <div className="flex flex-wrap gap-3 pt-1">
+                  {[
+                    { icon: <Lock className="h-3.5 w-3.5" />, label: "Secure Checkout" },
+                    { icon: <Truck className="h-3.5 w-3.5" />, label: "Fast Shipping" },
+                    { icon: <Leaf className="h-3.5 w-3.5" />, label: "Cruelty-Free" },
+                  ].map(({ icon, label }) => (
+                    <div key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground tracking-wide">
+                      {icon}<span>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Key Ingredient Pills */}
               {product.key_ingredients.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5 pt-1">
                   {product.key_ingredients.map((ing) => (
                     <span key={ing} className="text-[10px] tracking-[0.08em] border border-neutral-200 px-3 py-1 rounded-full bg-neutral-50 text-neutral-600">
                       {ing}
@@ -675,80 +833,6 @@ const ProductDetail = () => {
                   <span>Estimated delivery: {settings.delivery_time}</span>
                 </div>
               )}
-
-              {/* Quantity + CTA */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-4">
-                  <span className="text-xs tracking-[0.1em] uppercase text-muted-foreground">Qty</span>
-                  <div className="flex items-center border border-border rounded-xl overflow-hidden">
-                    <button
-                      id="product-qty-minus"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="h-11 w-11 flex items-center justify-center hover:bg-neutral-50 transition-colors"
-                    >
-                      <Minus className="h-3.5 w-3.5" />
-                    </button>
-                    <span className="h-11 w-12 flex items-center justify-center text-sm font-medium border-x border-border">{quantity}</span>
-                    <button
-                      id="product-qty-plus"
-                      onClick={() => setQuantity(quantity + 1)}
-                      className="h-11 w-11 flex items-center justify-center hover:bg-neutral-50 transition-colors"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex gap-2.5">
-                  <Button
-                    id="product-add-to-cart"
-                    onClick={handleAddToCart}
-                    disabled={!inStock}
-                    className="flex-1 bg-black text-white hover:bg-black/90 text-sm font-semibold tracking-[0.08em] uppercase rounded-xl pd-ripple h-[52px]"
-                  >
-                    <ShoppingBag className="h-4 w-4 mr-2" />Add to Bag
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => toggleItem(product.id)}
-                    id="product-wishlist"
-                    className="h-[52px] w-[52px] border-black rounded-xl p-0 hover:bg-neutral-50"
-                  >
-                    <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-black" : ""}`} />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleShare}
-                    id="product-share"
-                    className="h-[52px] w-[52px] border-black rounded-xl p-0 hover:bg-neutral-50"
-                  >
-                    <Share2 className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <Button
-                  id="product-buy-now"
-                  onClick={handleBuyNow}
-                  disabled={!inStock}
-                  variant="outline"
-                  className="w-full h-[52px] border-black text-sm font-semibold tracking-[0.08em] uppercase rounded-xl hover:bg-neutral-50"
-                >
-                  Buy Now
-                </Button>
-              </div>
-
-              {/* Mini trust row */}
-              <div className="flex flex-wrap gap-3 pt-1">
-                {[
-                  { icon: <Lock className="h-3.5 w-3.5" />, label: "Secure Checkout" },
-                  { icon: <Truck className="h-3.5 w-3.5" />, label: "Fast Shipping" },
-                  { icon: <Leaf className="h-3.5 w-3.5" />, label: "Cruelty-Free" },
-                ].map(({ icon, label }) => (
-                  <div key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground tracking-wide">
-                    {icon}<span>{label}</span>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </section>
@@ -1085,52 +1169,33 @@ const ProductDetail = () => {
       </main>
 
       {/* ══════════════════════════════════════════
-          SECTION 15 — STICKY MOBILE CTA
+          COMPACT STICKY MOBILE CTA ON SCROLL
       ══════════════════════════════════════════ */}
-      {inStock && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-xl border-t border-neutral-100 shadow-2xl animate-fade-in">
-          <div className="px-4 pt-3 pb-safe pb-4">
-            <div className="flex items-center gap-2 mb-2.5">
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] tracking-wider text-muted-foreground uppercase truncate">{product.name}</p>
-                <p className="text-sm font-semibold mt-0.5">{formatPrice(product.price_aud, product.price_inr, product.price_usd)}</p>
-              </div>
-              {/* Inline qty stepper */}
-              <div className="flex items-center border border-neutral-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  id="mobile-qty-minus"
-                  className="h-9 w-9 flex items-center justify-center text-neutral-600"
-                >
-                  <Minus className="h-3 w-3" />
-                </button>
-                <span className="h-9 w-8 flex items-center justify-center text-sm border-x border-neutral-200">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  id="mobile-qty-plus"
-                  className="h-9 w-9 flex items-center justify-center text-neutral-600"
-                >
-                  <Plus className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                id="mobile-add-to-cart"
-                onClick={handleAddToCart}
-                className="flex-1 h-11 bg-black text-white hover:bg-black/90 text-xs sm:text-sm tracking-[0.08em] uppercase rounded-xl font-semibold pd-ripple"
-              >
-                <ShoppingBag className="h-3.5 w-3.5 mr-2" />Add to Bag
-              </Button>
-              <Button
-                id="mobile-buy-now"
-                onClick={handleBuyNow}
-                variant="outline"
-                className="flex-1 h-11 border-black text-xs sm:text-sm tracking-[0.08em] uppercase rounded-xl font-semibold"
-              >
-                Buy Now
-              </Button>
-            </div>
+      {product && (
+        <div
+          className={`fixed bottom-[60px] left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-neutral-200/80 px-4 py-2.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] transition-all duration-300 ease-in-out lg:hidden ${
+            showStickyBar ? "translate-y-0 opacity-100 pointer-events-auto" : "translate-y-full opacity-0 pointer-events-none"
+          }`}
+        >
+          <div className="max-w-md mx-auto flex gap-2.5 items-center">
+            <Button
+              id="product-sticky-add-to-cart"
+              onClick={handleAddToCart}
+              disabled={!inStock}
+              className="flex-1 bg-black text-white hover:bg-black/90 text-xs font-semibold tracking-[0.08em] uppercase rounded-xl h-11 pd-ripple"
+            >
+              <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
+              Add to Bag
+            </Button>
+            <Button
+              id="product-sticky-buy-now"
+              onClick={handleBuyNow}
+              disabled={!inStock}
+              variant="outline"
+              className="flex-1 bg-white text-black border-black hover:bg-neutral-50 text-xs font-semibold tracking-[0.08em] uppercase rounded-xl h-11"
+            >
+              Buy Now
+            </Button>
           </div>
         </div>
       )}

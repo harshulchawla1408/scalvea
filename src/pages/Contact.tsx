@@ -42,7 +42,13 @@ const Contact = () => {
         "name": "Scalvea",
         "url": "https://scalvea.com",
         "logo": "https://scalvea.com/scalvea-logo.webp",
-        "email": "info@scalvea.com"
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "Customer Support",
+          "email": "info@scalvea.com",
+          "availableLanguage": "English",
+          "areaServed": ["AU", "IN"]
+        }
       }
     }
   });

@@ -13,30 +13,43 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Scalvea | Care You Deserve</title>
+  <!-- ── Primary SEO ──────────────────────────────────────────────────────── -->
+  <title>Science-Backed Hair &amp; Scalp Care | Scalvea</title>
   <meta name="description"
-    content="Science-backed hair care powered by clinically researched ingredients for healthier scalp and stronger hair. Discover transparent formulations designed for everyday results. Care You Deserve." />
+    content="Science-backed hair growth serums &amp; scalp treatments formulated with clinically researched ingredients. Shop Follicle 8 &amp; Scalp-5. Fast shipping to Australia &amp; India." />
   <meta name="author" content="Scalvea" />
-  <meta name="robots" content="index, follow, max-image-preview:none" />
+  <!-- max-image-preview:large enables rich image previews in Google Search & Discover -->
+  <meta name="robots" content="index, follow, max-image-preview:large" />
   <meta name="theme-color" content="#000000" />
   <link rel="canonical" href="https://scalvea.com/" />
   <meta name="google-site-verification" content="483zE_Q471P6D2BFQ_9j7RWVfpNP5VyB3TtR5jq6h6o" />
 
-  <!-- Open Graph -->
+  <!-- ── hreflang (AU primary, IN secondary) ──────────────────────────────── -->
+  <link rel="alternate" hreflang="en-AU" href="https://scalvea.com/" />
+  <link rel="alternate" hreflang="en-IN" href="https://scalvea.com/" />
+  <link rel="alternate" hreflang="x-default" href="https://scalvea.com/" />
+
+  <!-- ── Open Graph ───────────────────────────────────────────────────────── -->
   <meta property="og:site_name" content="Scalvea" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://scalvea.com/" />
-  <meta property="og:title" content="Scalvea | Care You Deserve" />
+  <meta property="og:title" content="Science-Backed Hair &amp; Scalp Care | Scalvea" />
   <meta property="og:description"
-    content="Science-backed hair care powered by clinically researched ingredients for healthier scalp and stronger hair. Discover transparent formulations designed for everyday results. Care You Deserve." />
+    content="Science-backed hair growth serums &amp; scalp treatments formulated with clinically researched ingredients. Shop Follicle 8 &amp; Scalp-5. Fast shipping to Australia &amp; India." />
   <meta property="og:image" content="https://scalvea.com/og-image.webp" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Scalvea — Care You Deserve" />
+  <meta property="og:image:alt" content="Scalvea — Science-Backed Hair &amp; Scalp Care" />
+  <!-- AU as primary market with IN as alternate -->
   <meta property="og:locale" content="en_AU" />
   <meta property="og:locale:alternate" content="en_IN" />
-  
-  <!-- Meta Pixel Code -->
+
+  <!-- ── Facebook Domain Verification ─────────────────────────────────────── -->
+  <meta name="facebook-domain-verification" content="40rzd2ctw8ovw5mc9ybc35v4mm53e0" />
+
+  <!-- ── Meta Pixel Code ──────────────────────────────────────────────────── -->
+  <!-- Pixel is initialized once here on first page load. -->
+  <!-- SPA route-change PageViews are fired by MetaPixelRouteTracker component. -->
   <script>
     !function (f, b, e, v, n, t, s) {
       if (f.fbq) return; n = f.fbq = function () {
@@ -54,28 +67,29 @@
   </script>
   <!-- End Meta Pixel Code -->
 
-  <!-- Twitter -->
+  <!-- ── Twitter ──────────────────────────────────────────────────────────── -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Scalvea | Care You Deserve" />
+  <meta name="twitter:title" content="Science-Backed Hair &amp; Scalp Care | Scalvea" />
   <meta name="twitter:description"
-    content="Science-backed hair care powered by clinically researched ingredients for healthier scalp and stronger hair. Care You Deserve." />
+    content="Science-backed hair growth serums &amp; scalp treatments with clinically researched ingredients. Care You Deserve." />
   <meta name="twitter:image" content="https://scalvea.com/og-image.webp" />
-  <meta name="twitter:image:alt" content="Scalvea — Care You Deserve" />
+  <meta name="twitter:image:alt" content="Scalvea — Science-Backed Hair &amp; Scalp Care" />
 
-  <!-- Icons -->
+  <!-- ── Icons ────────────────────────────────────────────────────────────── -->
   <link rel="icon" type="image/webp" href="/favicon.webp" />
   <link rel="apple-touch-icon" href="/favicon.webp" />
   <link rel="manifest" href="/site.webmanifest" />
 
-  <!-- Supabase -->
+  <!-- ── Preconnects ──────────────────────────────────────────────────────── -->
   <link rel="preconnect" href="https://dtehgajreecaonqalxlf.supabase.co" />
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
 
-  <!-- Fontshare -->
+  <!-- ── Fonts ────────────────────────────────────────────────────────────── -->
   <link
     href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700&f[]=clash-display@300,400,500,600&display=swap"
     rel="stylesheet" />
 
-  <!-- JSON-LD -->
+  <!-- ── JSON-LD: Organization + WebSite (static, always present in HTML) ── -->
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -136,13 +150,25 @@
         bottom: 75px !important;
       }
     }
+
+    /* Hide Chatbase widget on restricted pages */
+    body.hide-chatbase #chatbase-bubble-button,
+    body.hide-chatbase #chatbase-bubble-window,
+    body.hide-chatbase iframe[id^="chatbase"],
+    body.hide-chatbase div[id^="chatbase"],
+    body.hide-chatbase [id*="chatbase"] {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
   </style>
 </head>
 
 <body>
   <noscript><img height="1" width="1" style="display:none"
       src="https://www.facebook.com/tr?id=1990336078340761&ev=PageView&noscript=1" /></noscript>
-  <div id="root"></div>
+  <div id="root"><!--ssr-outlet--></div>
   <script type="module" src="/src/main.tsx"></script>
   <script>
     (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="5YmHxlguIfWpgyslf2NF-";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();

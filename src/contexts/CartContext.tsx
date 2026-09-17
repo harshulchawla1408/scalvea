@@ -42,6 +42,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const { getPrice } = useCountry();
 
   const [storedItems, setStoredItems] = useState<StoredCartItem[]>(() => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem("scalvea-cart");
     if (!stored) return [];
     try {
@@ -63,7 +64,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem("scalvea-cart", JSON.stringify(storedItems));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("scalvea-cart", JSON.stringify(storedItems));
+    }
   }, [storedItems]);
 
   // Derive items with current country price

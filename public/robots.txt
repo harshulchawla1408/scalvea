@@ -1,21 +1,24 @@
-# Production robots.txt for Scalvea (Vite + React SPA)
+# Production robots.txt for Scalvea (Vite + React SPA with SSG pre-rendering)
 # https://scalvea.com
 
 User-agent: *
 
-# ── Allow public pages ────────────────────────────────────────────────────────
+# ── Allow canonical public pages ──────────────────────────────────────────────
+# Only canonical URLs are listed. Non-canonical aliases (/faqs, /terms-conditions,
+# /return-refund-policy) are NOT listed here — they 301-redirect to canonicals,
+# so crawlers follow the redirect automatically.
 Allow: /
 Allow: /shop
 Allow: /about
 Allow: /contact
 Allow: /blogs
 Allow: /blogs/
-Allow: /faqs
 Allow: /faq
 Allow: /privacy-policy
-Allow: /terms-conditions
-Allow: /return-refund-policy
+Allow: /terms-of-service
+Allow: /returns-policy
 Allow: /shipping-policy
+Allow: /cancellation-policy
 Allow: /payment-policy
 Allow: /product/
 

@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/generate-sitemap.cjs",
-    "build:dev": "vite build --mode development && node scripts/generate-sitemap.cjs",
+    "build:client": "vite build",
+    "build:ssr": "vite build --ssr src/entry-server.tsx",
+    "prerender": "node scripts/vite-prerender.mjs",
+    "build": "npm run build:client && npm run build:ssr && node scripts/vite-prerender.mjs && node scripts/generate-sitemap.cjs",
+    "build:dev": "vite build --mode development && vite build --ssr src/entry-server.tsx --mode development && node scripts/vite-prerender.mjs && node scripts/generate-sitemap.cjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

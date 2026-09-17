@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { useCart } from "@/contexts/CartContext";
+import { trackPurchase } from "@/lib/metaPixel";
 
 // ─── OrderSuccess Page ────────────────────────────────────────────────────────
 // Handles three entry points:
@@ -36,6 +37,8 @@ const OrderSuccess = () => {
   const [error,   setError]     = useState<string | null>(null);
   const { clearCart }           = useCart();
   const hasExecuted             = useRef(false);
+  // Prevent Purchase from firing more than once per page mount
+  const purchaseTracked         = useRef(false);
 
   useEffect(() => {
     if (hasExecuted.current) return;
@@ -56,6 +59,14 @@ const OrderSuccess = () => {
           if (data) {
             setOrder(data);
             clearCart();
+            // ── Meta Pixel: Purchase ──────────────────────────────────────────────
+            // Only fires after a real confirmed order is loaded from Supabase.
+            // purchaseTracked ref prevents double-fire on re-renders.
+            // trackPurchase() itself uses sessionStorage to prevent re-fire on refresh.
+            if (!purchaseTracked.current) {
+              purchaseTracked.current = true;
+              trackPurchase(data);
+            }
           } else {
             // Order not found — redirect to failed page
             navigate("/order-failed?reason=failed");
@@ -87,6 +98,11 @@ const OrderSuccess = () => {
           setOrder(data);
           setLoading(false);
           clearCart();
+          // ── Meta Pixel: Purchase (Shiprocket polling path) ────────────────
+          if (!purchaseTracked.current) {
+            purchaseTracked.current = true;
+            trackPurchase(data);
+          }
           return;
         }
       } catch (err: any) {

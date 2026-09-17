@@ -26,8 +26,9 @@ const BlogList = () => {
   const featuredBlog = useMemo(() => blogs.find(b => b.meta.featured) || blogs[0], [blogs]);
 
   useSEO({
-    title: "Hair Care Journal",
-    description: "Science-backed hair care education, ingredient guides, scalp health articles, routines and research from the Scalvea team.",
+    title: "Hair Care Blog – Scalp Health & Ingredient Guides",
+    description: "Science-backed hair care articles, ingredient guides, scalp health tips, and hair growth research from the Scalvea team.",
+    canonical: "https://scalvea.com/blogs",
   });
 
   // Filter blogs based on search and category
@@ -178,35 +179,48 @@ const BlogList = () => {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-2 mt-16">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-200 text-neutral-500 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-neutral-100 transition-colors"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
+                  {currentPage > 1 ? (
+                    <Link
+                      to={`/blogs?${new URLSearchParams({...Object.fromEntries(searchParams.entries()), page: String(currentPage - 1)}).toString()}`}
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-200 text-neutral-500 hover:bg-neutral-100 transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Link>
+                  ) : (
+                    <button disabled className="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-200 text-neutral-500 opacity-30 cursor-not-allowed">
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                  )}
                   
                   {Array.from({ length: totalPages }).map((_, i) => (
-                    <button
+                    <Link
                       key={i}
+                      to={`/blogs?${new URLSearchParams({...Object.fromEntries(searchParams.entries()), page: String(i + 1)}).toString()}`}
                       onClick={() => setCurrentPage(i + 1)}
                       className={`w-10 h-10 flex items-center justify-center rounded-full text-xs font-medium transition-colors ${
                         currentPage === i + 1 
                           ? "bg-black text-white" 
-                          : "text-neutral-500 hover:bg-neutral-100"
+                          : "text-neutral-500 hover:bg-neutral-100 border border-transparent"
                       }`}
                     >
                       {i + 1}
-                    </button>
+                    </Link>
                   ))}
                   
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-200 text-neutral-500 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-neutral-100 transition-colors"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                  {currentPage < totalPages ? (
+                    <Link
+                      to={`/blogs?${new URLSearchParams({...Object.fromEntries(searchParams.entries()), page: String(currentPage + 1)}).toString()}`}
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-200 text-neutral-500 hover:bg-neutral-100 transition-colors"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Link>
+                  ) : (
+                    <button disabled className="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-200 text-neutral-500 opacity-30 cursor-not-allowed">
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               )}
             </>

@@ -14,8 +14,8 @@ const Shop = () => {
   const searchQuery = searchParams.get("search");
 
   useSEO({
-    title: "Hair Care Products",
-    description: "Shop Scalvea's science-backed hair growth serums, anti-dandruff treatments, and scalp care formulated with clinically researched ingredients. Free shipping available.",
+    title: "Shop Hair Care Serums & Scalp Treatments",
+    description: "Shop Scalvea's science-backed hair growth serums, anti-dandruff scalp treatments and hair care products. Clinically researched ingredients. Free shipping available in Australia & India.",
     canonical: "https://scalvea.com/shop"
   });
   const [sortBy, setSortBy] = useState("default");
@@ -46,9 +46,15 @@ const Shop = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="px-6 lg:px-12 py-12 lg:py-16">
+        {/* Breadcrumb */}
+        <nav aria-label="breadcrumb" className="text-xs text-muted-foreground mb-8 flex items-center gap-2">
+          <a href="/" className="hover:text-foreground transition-colors">Home</a>
+          <span>/</span>
+          <span className="text-foreground font-medium">Shop</span>
+        </nav>
         <div className="mb-12">
           <h1 className="text-3xl md:text-4xl font-light tracking-[0.04em] mb-2">
-            {searchQuery ? `Results for "${searchQuery}"` : "All Products"}
+            {searchQuery ? `Results for "${searchQuery}"` : "Hair Growth Serums & Scalp Care Products"}
           </h1>
           <p className="text-sm text-muted-foreground">{filtered.length} products</p>
         </div>

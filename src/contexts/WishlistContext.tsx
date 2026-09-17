@@ -11,12 +11,15 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 
 export const WishlistProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem("scalvea-wishlist");
     return stored ? JSON.parse(stored) : [];
   });
 
   useEffect(() => {
-    localStorage.setItem("scalvea-wishlist", JSON.stringify(items));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("scalvea-wishlist", JSON.stringify(items));
+    }
   }, [items]);
 
   const toggleItem = (productId: string) => {

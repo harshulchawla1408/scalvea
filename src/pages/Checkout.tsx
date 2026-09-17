@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSEO } from "@/hooks/useSEO";
 import { Lock, CheckCircle2, ShieldCheck } from "lucide-react";
+import { trackInitiateCheckout } from "@/lib/metaPixel";
 
 const AUSTRALIA_STATES = [
   "New South Wales (NSW)",
@@ -187,6 +188,10 @@ const Checkout = () => {
 
       const token = data.token;
 
+      // ── Meta Pixel: InitiateCheckout ───────────────────────────────────
+      // Token obtained = checkout truly initiated for India/Shiprocket market.
+      trackInitiateCheckout(items, grandTotal, currencyCode);
+
       // 2. Launch Official Shiprocket Headless Checkout via SDK.
       // The SDK opens the Shiprocket iframe using HeadlessCheckout.addToCart(event, token, options).
       // The capturedNativeEvent is required by the SDK to correctly position the iframe.
@@ -265,6 +270,10 @@ const Checkout = () => {
 
       const sessionId = data.sessionId;
       const checkoutUrl = data.checkoutUrl;
+
+      // ── Meta Pixel: InitiateCheckout ───────────────────────────────────
+      // Session created = checkout truly initiated for Australia/Stripe market.
+      trackInitiateCheckout(items, grandTotal, currencyCode);
 
       // 3. Dynamically import and redirect using @stripe/stripe-js
       const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;

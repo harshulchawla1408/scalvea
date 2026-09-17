@@ -57,18 +57,24 @@ const fadeUp = {
 // ─── Component ────────────────────────────────────────────────────────────────
 const About = () => {
   useSEO({
-    title: "About Scalvea | Care You Deserve",
+    title: "Our Story – Science-Backed Hair Care Brand",
     description: "Scalvea was built on one belief: that hair care should be honest, transparent, and clinically grounded. Read the story behind the brand.",
+    canonical: "https://scalvea.com/about",
     schema: {
       "@context": "https://schema.org",
       "@type": "AboutPage",
-      "name": "About Scalvea | Care You Deserve",
+      "name": "Our Story – Scalvea",
       "description": "Scalvea was built on one belief: that hair care should be honest, transparent, and clinically grounded.",
       "mainEntity": {
         "@type": "Organization",
         "name": "Scalvea",
         "url": "https://scalvea.com",
-        "logo": "https://scalvea.com/scalvea-logo.webp"
+        "logo": "https://scalvea.com/scalvea-logo.webp",
+        "founder": {
+          "@type": "Person",
+          "name": "Puneet"
+        },
+        "foundingDate": "2023"
       }
     }
   });
@@ -132,9 +138,12 @@ const About = () => {
               <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-body font-light block mb-5">
                 THE FOUNDER'S STORY
               </span>
-              <h2 className="text-3xl md:text-5xl lg:text-[56px] font-heading text-neutral-900 leading-tight tracking-tight max-w-xl">
-                Why I Started Scalvea?
-              </h2>
+              <h1 className="text-3xl md:text-5xl lg:text-[56px] font-heading text-neutral-900 leading-tight tracking-tight max-w-xl mb-6">
+                About Scalvea: Our Story
+              </h1>
+              <p className="text-sm md:text-base text-neutral-500 font-body font-light leading-relaxed max-w-2xl">
+                Scalvea is a premium hair and scalp care brand formulated with clinically researched active ingredients. We partner with expert chemists to develop advanced formulations, maintaining strict quality standards throughout manufacturing. We believe in complete transparency—no hidden proprietary blends, just effective concentrations of the ingredients your scalp actually needs.
+              </p>
             </motion.div>
 
             {/* Story blocks */}

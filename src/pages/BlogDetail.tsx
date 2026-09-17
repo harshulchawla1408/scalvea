@@ -173,7 +173,7 @@ const BlogDetail = () => {
               
               {/* Share & TOC (Desktop Left Sidebar) */}
               <div className="hidden lg:flex lg:w-64 flex-col gap-10 shrink-0 sticky top-24">
-                <ShareButtons url={window.location.href} title={post.meta.title} />
+                <ShareButtons url={typeof window !== "undefined" ? window.location.href : `https://scalvea.com/blogs/${post.meta.slug}`} title={post.meta.title} />
                 <TableOfContents content={post.content} />
               </div>
               
@@ -200,7 +200,7 @@ const BlogDetail = () => {
                       ))}
                     </div>
                     <div className="lg:hidden">
-                      <ShareButtons url={window.location.href} title={post.meta.title} />
+                      <ShareButtons url={typeof window !== "undefined" ? window.location.href : `https://scalvea.com/blogs/${post.meta.slug}`} title={post.meta.title} />
                     </div>
                   </div>
                 </div>

@@ -125,7 +125,7 @@ const Footer = () => {
               <ul className="space-y-3.5 text-[15px] text-neutral-300 font-normal">
                 <FooterLink to="/shop">All Products</FooterLink>
                 <FooterLink to="/product/follicle-8-hair-growth-serum">Hair Growth Serum</FooterLink>
-                <FooterLink to="/shop?category=Serums">Anti Dandruff Serum</FooterLink>
+                <FooterLink to="/product/scalp-5-anti-dandruff-hair-serum">Anti Dandruff Serum</FooterLink>
               </ul>
             </div>
           </div>
@@ -147,8 +147,8 @@ const Footer = () => {
               <ul className="space-y-3.5 text-[15px] text-neutral-300 font-normal">
                 <FooterLink to="/about">About Us</FooterLink>
                 <FooterLink to="/blogs">Blog</FooterLink>
-                <FooterLink to="/faqs">FAQs</FooterLink>
-                <FooterLink to="/terms-conditions">Terms & Conditions</FooterLink>
+                <FooterLink to="/faq">FAQs</FooterLink>
+                <FooterLink to="/terms-of-service">Terms &amp; Conditions</FooterLink>
               </ul>
             </div>
           </div>
@@ -170,7 +170,7 @@ const Footer = () => {
               <ul className="space-y-3.5 text-[15px] text-neutral-300 font-normal">
                 <FooterLink to="/contact">Contact Us</FooterLink>
                 <FooterLink to="/shipping-policy">Shipping Policy</FooterLink>
-                <FooterLink to="/return-refund-policy">Return & Refund Policy</FooterLink>
+                <FooterLink to="/returns-policy">Return &amp; Refund Policy</FooterLink>
                 <FooterLink to="/privacy-policy">Privacy Policy</FooterLink>
               </ul>
             </div>

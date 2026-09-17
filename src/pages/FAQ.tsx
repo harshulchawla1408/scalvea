@@ -72,6 +72,10 @@ const faqs = [
         a: "Yes. Scalvea serums can be incorporated into most hair care routines. Apply them to a clean scalp and allow sufficient time for absorption before using styling products."
       },
       {
+        q: "Is Scalvea hair serum safe for color-treated hair?",
+        a: "Yes. Our serums are formulated without harsh sulfates or stripping agents, making them perfectly safe to use on color-treated and chemically processed hair."
+      },
+      {
         q: "Will the serum make my hair greasy?",
         a: "No. Our lightweight formulations are designed for everyday use and absorb quickly without leaving a heavy or greasy residue."
       }
@@ -83,7 +87,7 @@ const faqs = [
     items: [
       {
         q: "What makes Scalvea different?",
-        a: "Scalvea focuses on ingredient transparency and clinically researched formulations. Every product is developed using carefully selected active ingredients at effective concentrations without unnecessary fillers."
+        a: "Scalvea focuses on ingredient transparency and clinically researched formulations. Every product is developed using carefully selected active ingredients at effective concentrations without unnecessary proprietary blends."
       },
       {
         q: "Are the ingredients clinically researched?",
@@ -157,8 +161,8 @@ const faqs = [
 
 const FAQ = () => {
   useSEO({
-    title: "Frequently Asked Questions",
-    description: "Find answers to frequently asked questions about Scalvea products, order tracking, shipping rates, and our returns policy.",
+    title: "FAQ – Hair Care Questions Answered",
+    description: "Answers to common questions about Scalvea hair growth serums, anti-dandruff treatments, shipping, returns, and ingredients.",
     canonical: "https://scalvea.com/faq",
     schema: {
       "@context": "https://schema.org",

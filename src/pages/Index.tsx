@@ -90,57 +90,11 @@ const TRUST_ITEMS = [
 
 const Index = () => {
   useSEO({
-    noImagePreview: true,
-    description: "Science-backed hair care powered by clinically researched ingredients for healthier scalp and stronger hair. Discover transparent formulations designed for everyday results. Care You Deserve.",
+    title: "Science-Backed Hair & Scalp Care",
+    description: "Science-backed hair growth serums & scalp treatments formulated with clinically researched ingredients. Shop Follicle 8 & Scalp-5. Fast shipping to Australia & India.",
     image: "https://scalvea.com/og-image.webp",
-    schema: {
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": "Organization",
-          "@id": "https://scalvea.com/#organization",
-          "name": "Scalvea",
-          "alternateName": "Scalvea Hair Care",
-          "slogan": "Care You Deserve",
-          "description": "Science-backed hair care powered by clinically researched ingredients for healthier scalp and stronger-looking hair.",
-          "url": "https://scalvea.com",
-          "logo": {
-            "@type": "ImageObject",
-            "url": "https://scalvea.com/scalvea-logo.webp",
-            "width": 512,
-            "height": 512
-          },
-          "image": "https://scalvea.com/scalvea-logo.webp",
-          "email": "info@scalvea.com",
-          "contactPoint": {
-            "@type": "ContactPoint",
-            "email": "info@scalvea.com",
-            "contactType": "customer support",
-            "availableLanguage": ["English"]
-          },
-          "brand": {
-            "@type": "Brand",
-            "name": "Scalvea",
-            "slogan": "Care You Deserve"
-          },
-          "sameAs": [
-            "https://www.instagram.com/scalvea_/",
-            "https://www.tiktok.com/@scalvea/",
-            "https://www.linkedin.com/company/scalvea/"
-          ]
-        },
-        {
-          "@type": "WebSite",
-          "@id": "https://scalvea.com/#website",
-          "name": "Scalvea",
-          "alternateName": "Scalvea | Care You Deserve",
-          "url": "https://scalvea.com",
-          "description": "Science-backed hair care powered by clinically researched ingredients for healthier scalp and stronger-looking hair.",
-          "publisher": { "@id": "https://scalvea.com/#organization" },
-          "inLanguage": "en"
-        }
-      ]
-    }
+    canonical: "https://scalvea.com/",
+    // max-image-preview:large is now the default — important for hair care product imagery
   });
 
   const [email, setEmail] = useState("");
@@ -204,6 +158,11 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background overflow-hidden relative">
       <Header />
+
+      {/* SEO H1 — visually hidden but present in raw HTML for crawlers.
+          Screen readers also benefit. The hero imagery conveys the brand
+          visually; this H1 carries the primary keyword signal. */}
+      <h1 className="sr-only">Science-Backed Hair &amp; Scalp Care — Scalvea</h1>
 
       {/* Global Grain/Noise Overlay */}
       <div className="fixed inset-0 noise-bg pointer-events-none z-40 select-none opacity-[0.02]" />

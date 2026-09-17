@@ -103,6 +103,7 @@ const CountrySelectionModal = ({ onSelect }: { onSelect: (c: CountryType) => voi
 
 export const CountryProvider = ({ children }: { children: ReactNode }) => {
   const [selectedCountry, setSelectedCountryState] = useState<CountryType | null>(() => {
+    if (typeof window === 'undefined') return 'australia';
     const stored = localStorage.getItem("scalvea-country");
     if (!stored) return null;
     const cleaned = stored.toLowerCase();
@@ -157,8 +158,10 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
 
   const setSelectedCountry = (c: CountryType) => {
     setSelectedCountryState(c);
-    localStorage.setItem("scalvea-country", c);
-    localStorage.setItem("scalvea-market", c === "india" ? "IN" : "AU");
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("scalvea-country", c);
+      localStorage.setItem("scalvea-market", c === "india" ? "IN" : "AU");
+    }
   };
 
   // Backward compatibility helpers
@@ -217,7 +220,7 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
       }}
     >
       {children}
-      {selectedCountry === null && <CountrySelectionModal onSelect={setSelectedCountry} />}
+      {selectedCountry === null && typeof window !== 'undefined' && <CountrySelectionModal onSelect={setSelectedCountry} />}
     </CountryContext.Provider>
   );
 };
