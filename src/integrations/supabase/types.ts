@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_task_history: {
+        Row: {
+          id: string
+          task_id: string
+          action: string
+          old_value: string | null
+          new_value: string | null
+          performed_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          task_id: string
+          action: string
+          old_value?: string | null
+          new_value?: string | null
+          performed_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          task_id?: string
+          action?: string
+          old_value?: string | null
+          new_value?: string | null
+          performed_by?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_task_history_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "admin_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_tasks: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          priority: string
+          status: string
+          due_date: string | null
+          created_by: string
+          assigned_to: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          priority?: string
+          status?: string
+          due_date?: string | null
+          created_by: string
+          assigned_to?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          priority?: string
+          status?: string
+          due_date?: string | null
+          created_by?: string
+          assigned_to?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       addresses: {
         Row: {
           address_line1: string

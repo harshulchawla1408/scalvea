@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { LayoutDashboard, Package, ShoppingCart, Users, Globe, Tag, BarChart3, LogOut, Menu, X, Star, LineChart, Settings } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, Globe, Tag, BarChart3, LogOut, Menu, X, Star, LineChart, Settings, CheckSquare } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 
 import { lazy, Suspense } from "react";
@@ -18,6 +18,7 @@ const AdminInventory = lazy(() => import("@/components/admin/AdminInventory"));
 const AdminReviews = lazy(() => import("@/components/admin/AdminReviews"));
 const AdminAnalytics = lazy(() => import("@/components/admin/AdminAnalytics"));
 const AdminSettings = lazy(() => import("@/components/admin/AdminSettings"));
+const AdminTasks = lazy(() => import("@/components/admin/AdminTasks"));
 
 const adminPages = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -30,6 +31,7 @@ const adminPages = [
   { key: "reviews", label: "Reviews", icon: Star },
   { key: "analytics", label: "Analytics", icon: LineChart },
   { key: "settings", label: "Settings", icon: Settings },
+  { key: "tasks", label: "Tasks", icon: CheckSquare },
 ];
 
 const Admin = () => {
@@ -71,6 +73,7 @@ const Admin = () => {
       case "reviews": return <AdminReviews />;
       case "analytics": return <AdminAnalytics />;
       case "settings": return <AdminSettings />;
+      case "tasks": return <AdminTasks />;
       default: return <AdminDashboard />;
     }
   };

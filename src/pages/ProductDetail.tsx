@@ -16,6 +16,7 @@ import {
   Minus, Plus, Heart, Star, Share2, ShoppingBag, Check,
   ChevronDown, ChevronRight, Truck, Lock, FlaskConical, MessageCircle,
   Leaf, Award, Zap, Droplets, Sparkles, Shield, Clock, ChevronLeft,
+  Volume2, VolumeX, Play,
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { supabase } from "@/integrations/supabase/client";
@@ -317,14 +318,78 @@ const ProductDetail = () => {
   const { addItem: addRecentlyViewed } = useRecentlyViewed();
   const { user } = useAuth();
 
+  const PRODUCT_GALLERY_VIDEO = "https://dtehgajreecaonqalxlf.supabase.co/storage/v1/object/public/Videos/Reel4.mp4";
+
   const [quantity, setQuantity] = useState(1);
-  const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
+  const [isVideoMuted, setIsVideoMuted] = useState(true);
+  const galleryVideoRef = useRef<HTMLVideoElement>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewName, setReviewName] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewSort, setReviewSort] = useState<"newest" | "highest" | "helpful">("newest");
   const [visibleReviewsCount, setVisibleReviewsCount] = useState(5);
+
+  const mediaItems = useMemo(() => {
+    if (!product?.images || product.images.length === 0) return [];
+    const items: Array<{ type: "image" | "video"; url: string; alt?: string }> = [
+      {
+        type: "image",
+        url: product.images[0],
+        alt: product.slug && PRODUCT_SEO_CONFIG[product.slug] ? PRODUCT_SEO_CONFIG[product.slug].imageAlt : product.name,
+      },
+      {
+        type: "video",
+        url: PRODUCT_GALLERY_VIDEO,
+      },
+    ];
+    for (let i = 1; i < product.images.length; i++) {
+      items.push({
+        type: "image",
+        url: product.images[i],
+        alt: product.slug && PRODUCT_SEO_CONFIG[product.slug]
+          ? `${PRODUCT_SEO_CONFIG[product.slug].imageAlt} thumbnail ${i + 1}`
+          : `${product.name} thumbnail ${i + 1}`,
+      });
+    }
+    return items;
+  }, [product]);
+
+  // Reset selected media index on product change
+  useEffect(() => {
+    setSelectedMediaIndex(0);
+    setUserHasInteracted(false);
+  }, [product?.id]);
+
+  // Auto-slideshow timer: 3 sec on images, then video play completion
+  useEffect(() => {
+    if (userHasInteracted || mediaItems.length <= 1) return;
+
+    const currentMedia = mediaItems[selectedMediaIndex];
+    if (!currentMedia) return;
+
+    if (currentMedia.type === "image") {
+      const timer = setTimeout(() => {
+        setSelectedMediaIndex((prev) => (prev + 1) % mediaItems.length);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedMediaIndex, userHasInteracted, mediaItems]);
+
+  // Ensure video starts playing when selected
+  useEffect(() => {
+    if (mediaItems[selectedMediaIndex]?.type === "video" && galleryVideoRef.current) {
+      galleryVideoRef.current.play().catch(() => {});
+    }
+  }, [selectedMediaIndex, mediaItems]);
+
+  const handleVideoEnded = useCallback(() => {
+    if (!userHasInteracted) {
+      setSelectedMediaIndex((prev) => (prev + 1) % mediaItems.length);
+    }
+  }, [userHasInteracted, mediaItems.length]);
 
   const mainPurchaseRef = useRef<HTMLDivElement>(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -645,32 +710,75 @@ const ProductDetail = () => {
         <section className="px-6 lg:px-12 py-6 lg:py-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
 
-            {/* Image Gallery */}
+            {/* Image & Video Gallery */}
             <div className="space-y-3">
               <div className="relative aspect-square max-h-[560px] bg-[#f9f9f9] rounded-2xl overflow-hidden group">
-                <img
-                  src={product.images[selectedImage]}
-                  alt={product.slug && PRODUCT_SEO_CONFIG[product.slug] ? PRODUCT_SEO_CONFIG[product.slug].imageAlt : product.name}
-                  loading="eager"
-                  fetchPriority="high"
-                  className="w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.03]"
-                />
+                {mediaItems[selectedMediaIndex]?.type === "video" ? (
+                  <div className="relative w-full h-full bg-black">
+                    <video
+                      ref={galleryVideoRef}
+                      src={mediaItems[selectedMediaIndex].url}
+                      autoPlay
+                      playsInline
+                      muted={isVideoMuted}
+                      onEnded={handleVideoEnded}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsVideoMuted(!isVideoMuted);
+                      }}
+                      className="absolute bottom-4 right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
+                      aria-label={isVideoMuted ? "Unmute video" : "Mute video"}
+                    >
+                      {isVideoMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                    </button>
+                  </div>
+                ) : (
+                  <img
+                    src={mediaItems[selectedMediaIndex]?.url || product.images[0]}
+                    alt={mediaItems[selectedMediaIndex]?.alt || product.name}
+                    loading="eager"
+                    fetchPriority="high"
+                    className="w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.03]"
+                  />
+                )}
                 {product.badge && (
-                  <div className="absolute top-4 left-4 bg-black text-white text-[9px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-full">
+                  <div className="absolute top-4 left-4 z-10 bg-black text-white text-[9px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-full pointer-events-none">
                     {product.badge}
                   </div>
                 )}
               </div>
-              {product.images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto scrollbar-none">
-                  {product.images.map((img, i) => (
+              {mediaItems.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto scrollbar-none pt-1">
+                  {mediaItems.map((item, i) => (
                     <button
                       key={i}
-                      onClick={() => setSelectedImage(i)}
-                      id={`product-image-thumb-${i}`}
-                      className={`flex-shrink-0 w-16 h-16 rounded-xl bg-[#f9f9f9] overflow-hidden border-2 transition-all duration-200 ${selectedImage === i ? "border-black" : "border-transparent opacity-60 hover:opacity-100"}`}
+                      type="button"
+                      onClick={() => {
+                        setUserHasInteracted(true);
+                        setSelectedMediaIndex(i);
+                      }}
+                      id={`product-media-thumb-${i}`}
+                      className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all duration-200 relative ${
+                        item.type === "video" ? "bg-black" : "bg-[#f9f9f9]"
+                      } ${
+                        selectedMediaIndex === i ? "border-black" : "border-transparent opacity-60 hover:opacity-100"
+                      }`}
+                      aria-label={item.type === "video" ? "Play product video" : `View image ${i + 1}`}
                     >
-                      <img src={img} alt={product.slug && PRODUCT_SEO_CONFIG[product.slug] ? `${PRODUCT_SEO_CONFIG[product.slug].imageAlt} thumbnail ${i + 1}` : `${product.name} thumbnail ${i + 1}`} className="w-full h-full object-cover" />
+                      {item.type === "video" ? (
+                        <div className="relative w-full h-full flex items-center justify-center bg-neutral-900">
+                          <video src={item.url} className="w-full h-full object-cover opacity-60" muted playsInline />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                            <Play className="w-5 h-5 text-white fill-white" />
+                          </div>
+                        </div>
+                      ) : (
+                        <img src={item.url} alt={item.alt || `${product.name} thumbnail ${i + 1}`} className="w-full h-full object-cover" />
+                      )}
                     </button>
                   ))}
                 </div>
