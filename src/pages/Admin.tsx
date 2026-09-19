@@ -22,16 +22,16 @@ const AdminTasks = lazy(() => import("@/components/admin/AdminTasks"));
 
 const adminPages = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { key: "products", label: "Products", icon: Package },
   { key: "orders", label: "Orders", icon: ShoppingCart },
+  { key: "tasks", label: "Tasks", icon: CheckSquare },
+  { key: "analytics", label: "Analytics", icon: LineChart },
+  { key: "products", label: "Products", icon: Package },
   { key: "inventory", label: "Inventory", icon: BarChart3 },
   { key: "users", label: "Users", icon: Users },
   { key: "countries", label: "Country / Tax / Shipping", icon: Globe },
   { key: "coupons", label: "Coupons", icon: Tag },
   { key: "reviews", label: "Reviews", icon: Star },
-  { key: "analytics", label: "Analytics", icon: LineChart },
   { key: "settings", label: "Settings", icon: Settings },
-  { key: "tasks", label: "Tasks", icon: CheckSquare },
 ];
 
 const Admin = () => {

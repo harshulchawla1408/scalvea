@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useCountry } from "./CountryContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface CartItem {
   productId: string;
@@ -32,6 +33,8 @@ interface CartContextType {
   clearCart: () => void;
   itemCount: number;
   total: number;
+  rawTotal: number;
+  bundleDiscount: number;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
 }
@@ -39,7 +42,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const { getPrice } = useCountry();
+  const { getPrice, selectedCountry } = useCountry();
 
   const [storedItems, setStoredItems] = useState<StoredCartItem[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -68,6 +71,50 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem("scalvea-cart", JSON.stringify(storedItems));
     }
   }, [storedItems]);
+
+  // Sync stored cart items with official DB prices on load
+  useEffect(() => {
+    supabase
+      .from("products")
+      .select("id, name, slug, product_prices(*)")
+      .then(({ data }) => {
+        if (!data || data.length === 0) return;
+        setStoredItems((prev) => {
+          let hasChanges = false;
+          const updated = prev.map((item) => {
+            const lowerName = (item.name || "").toLowerCase();
+            const lowerId = (item.productId || "").toLowerCase();
+            const match = data.find(
+              (p: any) =>
+                p.id === item.productId ||
+                p.slug === item.productId ||
+                (lowerName.includes("scalp") && p.slug?.includes("scalp")) ||
+                (lowerName.includes("follicle") && p.slug?.includes("follicle")) ||
+                (lowerId.includes("scalp") && p.slug?.includes("scalp")) ||
+                (lowerId.includes("follicle") && p.slug?.includes("follicle"))
+            );
+            if (match) {
+              const prices = Array.isArray(match.product_prices)
+                ? match.product_prices[0]
+                : match.product_prices || {};
+              const price_aud = Number(prices.price_aud) || item.price_aud;
+              const price_inr = Number(prices.price_inr) || item.price_inr;
+              if (item.price_inr !== price_inr || item.price_aud !== price_aud) {
+                hasChanges = true;
+                return {
+                  ...item,
+                  price_aud,
+                  price_inr,
+                };
+              }
+            }
+            return item;
+          });
+          return hasChanges ? updated : prev;
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   // Derive items with current country price
   const items: CartItem[] = storedItems.map((item) => ({
@@ -115,11 +162,42 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const clearCart = () => setStoredItems([]);
 
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
-  const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const rawTotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+  // Australia Bundle Pricing:
+  // Strictly A$69 for 2 products, A$100 for 3 products.
+  // When quantity > 3: Math.floor(qty / 3) * 100 + (rem === 2 ? 69 : rem * 34.50)
+  const calculateTotal = () => {
+    if (selectedCountry === "australia") {
+      if (itemCount === 0) return 0;
+      if (itemCount === 1) return rawTotal;
+      if (itemCount === 2) return 69.0;
+      if (itemCount === 3) return 100.0;
+      const packsOf3 = Math.floor(itemCount / 3);
+      const rem = itemCount % 3;
+      return packsOf3 * 100.0 + (rem === 2 ? 69.0 : rem * 34.5);
+    }
+    return rawTotal;
+  };
+
+  const total = calculateTotal();
+  const bundleDiscount = Math.max(0, rawTotal - total);
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQuantity, clearCart, itemCount, total, isCartOpen, setIsCartOpen }}
+      value={{
+        items,
+        addItem,
+        removeItem,
+        updateQuantity,
+        clearCart,
+        itemCount,
+        total,
+        rawTotal,
+        bundleDiscount,
+        isCartOpen,
+        setIsCartOpen,
+      }}
     >
       {children}
     </CartContext.Provider>

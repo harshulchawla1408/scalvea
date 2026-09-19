@@ -12,11 +12,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { trackViewContent, trackAddToCart } from "@/lib/metaPixel";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WhatsappIcon } from "@/components/ui/whatsapp-icon";
 import {
   Minus, Plus, Heart, Star, Share2, ShoppingBag, Check,
   ChevronDown, ChevronRight, Truck, Lock, FlaskConical, MessageCircle,
   Leaf, Award, Zap, Droplets, Sparkles, Shield, Clock, ChevronLeft,
-  Volume2, VolumeX, Play,
+  Volume2, VolumeX, Play, ExternalLink,
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +26,8 @@ import { toast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import IngredientShowcase from "@/components/products/IngredientShowcase";
+import amazonInLogo from "@/assets/Amazon.in-Logo.webp";
+import amazonAuLogo from "@/assets/au.webp";
 
 /* ─── Scroll-reveal hook ─── */
 function useReveal() {
@@ -901,6 +904,27 @@ const ProductDetail = () => {
                   >
                     Buy Now
                   </Button>
+
+                  <a
+                    href="https://wa.me/61494754851?text=Hi%20Scalvea%2C%20I%20need%20help%20placing%20my%20order."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Chat with us on WhatsApp"
+                    className="group flex w-full items-center gap-3 rounded-xl border border-emerald-200/70 bg-emerald-50/80 px-3.5 py-3 text-left shadow-[0_8px_20px_rgba(37,211,102,0.08)] transition-all duration-200 hover:border-emerald-300 hover:bg-emerald-100/80 active:scale-[0.99]"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-sm shadow-emerald-200/60">
+                      <WhatsappIcon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[11px] font-semibold tracking-[0.02em] text-neutral-900 sm:text-[12px]">
+                        Need help placing your order?
+                      </span>
+                      <span className="block text-[10px] text-emerald-700 sm:text-[11px]">
+                        Chat with us on WhatsApp
+                      </span>
+                    </span>
+                  </a>
+
                 </div>
 
                 {/* Mini trust row */}

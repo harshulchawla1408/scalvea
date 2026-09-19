@@ -14,7 +14,7 @@ const Cart = () => {
     noindex: true
   });
 
-  const { items, removeItem, updateQuantity, total } = useCart();
+  const { items, removeItem, updateQuantity, total, rawTotal, bundleDiscount } = useCart();
   const { currencySymbol, currencyCode, settings, selectedCountry } = useCountry();
 
   const isIndia = selectedCountry === "india";
@@ -38,7 +38,7 @@ const Cart = () => {
         <div className="bg-black text-white border border-neutral-800/80 py-2 px-2 text-center select-none shadow-sm mb-8 overflow-hidden">
           <div className="flex items-center justify-center text-xs sm:text-[13px] md:text-sm font-medium tracking-wide whitespace-nowrap">
             <span className="text-neutral-200 flex items-center justify-center gap-1 sm:gap-2">
-              <span className="font-semibold text-white">Free Delivery</span> in India 
+              <span className="font-semibold text-white">Free Shipping</span> Across All India 
               <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-3.5 sm:w-4 h-auto ml-0.5 rounded-sm shadow-sm" /> 
               <span className="mx-0.5 sm:mx-1.5 text-neutral-600">|</span> 
               <img src="https://flagcdn.com/w20/au.png" alt="Australia" className="w-3.5 sm:w-4 h-auto mr-0.5 rounded-sm shadow-sm" /> 
@@ -94,8 +94,14 @@ const Cart = () => {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-light">Subtotal</span>
-                  <span className="font-mono">{formatVal(total)}</span>
+                  <span className="font-mono">{formatVal(bundleDiscount > 0 && !isIndia ? rawTotal : total)}</span>
                 </div>
+                {bundleDiscount > 0 && !isIndia && (
+                  <div className="flex justify-between text-emerald-600 font-medium">
+                    <span>Bundle & Save</span>
+                    <span className="font-mono">-{formatVal(bundleDiscount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-light">Shipping</span>
                   <span className="font-mono">

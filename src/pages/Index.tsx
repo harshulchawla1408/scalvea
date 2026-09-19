@@ -11,6 +11,7 @@ import Lenis from "lenis";
 import { useSEO } from "@/hooks/useSEO";
 import ScalveaInMotion from "@/components/sections/ScalveaInMotion";
 import ProductInDemand from "@/components/sections/ProductInDemand";
+import AmazonStoresSection from "@/components/sections/AmazonStoresSection";
 
 import lap1 from "@/assets/lap1.webp";
 import lap2 from "@/assets/lap2.webp";
@@ -796,7 +797,6 @@ const Index = () => {
               e.preventDefault();
               const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
               if (!emailRegex.test(email)) {
-                // Show inline error
                 const form = e.currentTarget;
                 const input = form.querySelector('input[type="email"]') as HTMLInputElement;
                 if (input) {
@@ -807,7 +807,6 @@ const Index = () => {
                 return;
               }
               setEmail("");
-              // Show success notification in DOM
               const toast = document.getElementById('newsletter-toast');
               if (toast) {
                 toast.classList.remove('opacity-0', 'translate-y-2');
@@ -854,6 +853,10 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* AMAZON STORES SECTION */}
+      <AmazonStoresSection />
+
       <Footer />
     </div>
   );

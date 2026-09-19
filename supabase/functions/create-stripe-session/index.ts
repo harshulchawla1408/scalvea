@@ -102,10 +102,12 @@ Deno.serve(async (req) => {
 
     // ── Step 5: Build line items and calculate subtotal ──────────────────
     console.log("Step 5: Building Stripe line items...");
-    let subtotalCents = 0;
+    let rawSubtotalCents = 0;
     const stripeLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
     // Store product info for metadata (name + price for webhook reconstruction)
     const cartDetails: Array<{ productId: string; name: string; priceAud: number; quantity: number }> = [];
+
+    const totalQty = items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0);
 
     for (const item of items) {
       const prod = dbProducts.find((p: any) => p.id === item.productId);
@@ -121,7 +123,7 @@ Deno.serve(async (req) => {
 
       if (priceCents <= 0) throw new Error(`Product ${prod.name} has invalid price (${priceAud} AUD).`);
 
-      subtotalCents += priceCents * item.quantity;
+      rawSubtotalCents += priceCents * item.quantity;
       stripeLineItems.push({
         price_data: {
           currency: "aud",
@@ -141,10 +143,28 @@ Deno.serve(async (req) => {
         quantity: item.quantity,
       });
     }
-    console.log("Step 5: subtotalCents =", subtotalCents, "| line items =", stripeLineItems.length);
+
+    // Australia Bundle Pricing Rule:
+    // Strictly A$69 (6900 cents) for 2 products.
+    // Strictly A$100 (10000 cents) for 3 products.
+    // For > 3 products: floor(qty / 3) * 100 + (rem === 2 ? 69 : rem * 34.50)
+    let targetSubtotalCents = rawSubtotalCents;
+    if (totalQty === 2) {
+      targetSubtotalCents = 6900;
+    } else if (totalQty === 3) {
+      targetSubtotalCents = 10000;
+    } else if (totalQty > 3) {
+      const packsOf3 = Math.floor(totalQty / 3);
+      const rem = totalQty % 3;
+      const bundleDollars = packsOf3 * 100 + (rem === 2 ? 69 : rem * 34.50);
+      targetSubtotalCents = Math.round(bundleDollars * 100);
+    }
+
+    const bundleDiscountCents = Math.max(0, rawSubtotalCents - targetSubtotalCents);
+    console.log(`Step 5: rawSubtotalCents=${rawSubtotalCents}, targetSubtotalCents=${targetSubtotalCents}, bundleDiscountCents=${bundleDiscountCents}, totalQty=${totalQty}`);
 
     // ── Step 6: Process Coupon Discount ──────────────────────────────────
-    let discountCents = 0;
+    let promoDiscountCents = 0;
     let validCouponCode = "";
     let discountPct = 0;
 
@@ -167,12 +187,13 @@ Deno.serve(async (req) => {
       }
 
       if (discountPct > 0) {
-        discountCents = Math.round(subtotalCents * (discountPct / 100));
-        console.log(`Step 6: Coupon "${validCouponCode}" applied (${discountPct}% off).`);
+        promoDiscountCents = Math.round(targetSubtotalCents * (discountPct / 100));
+        console.log(`Step 6: Coupon "${validCouponCode}" applied (${discountPct}% off = ${promoDiscountCents} cents).`);
       }
     }
 
-    const subtotalAfterDiscountCents = subtotalCents - discountCents;
+    const totalDiscountCents = bundleDiscountCents + promoDiscountCents;
+    const subtotalAfterDiscountCents = targetSubtotalCents - promoDiscountCents;
 
     // ── Step 7: Calculate Shipping ───────────────────────────────────────
     let shippingCents = 950; // Standard: A$9.50
@@ -186,6 +207,7 @@ Deno.serve(async (req) => {
       deliveryMinDays = 2;
       deliveryMaxDays = 4;
     } else {
+      // Free shipping for A$60+ (6000 cents)
       if (subtotalAfterDiscountCents >= 6000) {
         shippingCents = 0;
         shippingDisplayName = "Free Standard Shipping";
@@ -193,10 +215,10 @@ Deno.serve(async (req) => {
     }
 
     // ── Step 8: Calculate final totals ───────────────────────────────────
-    const discountAmount   = discountCents / 100;
+    const discountAmount   = totalDiscountCents / 100;
     const shippingAmount   = shippingCents / 100;
     const totalAmount      = (subtotalAfterDiscountCents + shippingCents) / 100;
-    const subtotalVal      = subtotalCents / 100;
+    const subtotalVal      = targetSubtotalCents / 100;
     const deliveryEstimate = shipping_type === "express" ? "2-4 business days" : "5-7 business days";
 
     console.log(`Step 8: subtotal=${subtotalVal} discount=${discountAmount} shipping=${shippingAmount} total=${totalAmount}`);
@@ -278,17 +300,56 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(stripeKey);
 
     let stripeCouponId: string | null = null;
-    if (discountPct > 0 && validCouponCode) {
+    if (totalDiscountCents > 0) {
       try {
+        const couponTitle = totalQty === 3
+          ? "Bundle & Save (3 Serums for A$100)"
+          : validCouponCode
+          ? `${validCouponCode} + Bundle Discount`
+          : "Bundle & Save Discount";
+
         const coupon = await stripe.coupons.create({
-          percent_off: discountPct,
+          amount_off: totalDiscountCents,
+          currency: "aud",
           duration: "once",
-          name: `${validCouponCode} (${discountPct}% OFF)`,
+          name: couponTitle,
         });
         stripeCouponId = coupon.id;
-        console.log("Step 9: Created Stripe coupon:", stripeCouponId);
+        console.log("Step 9: Created Stripe coupon:", stripeCouponId, "for amount_off:", totalDiscountCents);
       } catch (err: any) {
         console.warn("Step 9: Failed to create Stripe coupon:", err.message);
+      }
+    }
+
+    // Direct fallback: if a discount exists but no coupon could be attached,
+    // adjust line items directly so the amount going to Stripe is STRICTLY identical to subtotalAfterDiscountCents
+    if (totalDiscountCents > 0 && !stripeCouponId) {
+      console.log("Step 9: Fallback adjusting line items directly to match subtotalAfterDiscountCents:", subtotalAfterDiscountCents);
+      let remainingCents = subtotalAfterDiscountCents;
+      stripeLineItems.length = 0;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const prod = dbProducts.find((p: any) => p.id === item.productId)!;
+        const isLastItem = i === items.length - 1;
+        let itemTotalCents = 0;
+        if (isLastItem) {
+          itemTotalCents = remainingCents;
+        } else {
+          itemTotalCents = Math.round((subtotalAfterDiscountCents * item.quantity) / totalQty);
+          remainingCents -= itemTotalCents;
+        }
+        const unitAmount = Math.round(itemTotalCents / item.quantity);
+        stripeLineItems.push({
+          price_data: {
+            currency: "aud",
+            product_data: {
+              name: prod.name,
+              images: prod.images && prod.images.length > 0 ? [prod.images[0]] : [],
+            },
+            unit_amount: unitAmount,
+          },
+          quantity: item.quantity,
+        });
       }
     }
 
@@ -339,6 +400,7 @@ Deno.serve(async (req) => {
           subtotal:             subtotalVal.toString(),
           shipping_amount:      shippingAmount.toString(),
           discount_amount:      discountAmount.toString(),
+          total_amount:         totalAmount.toString(),
         },
       };
 

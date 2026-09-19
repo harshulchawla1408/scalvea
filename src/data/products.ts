@@ -1,9 +1,9 @@
-import hero2 from "@/assets/hero2.webp";
+import prod1 from "@/assets/prod1.webp";
+import prod2 from "@/assets/prod2.webp";
 import hero3 from "@/assets/hero3.webp";
-import scalpPng from "@/assets/scalp.webp";
 
-const follicle8Serum = hero2;
-const follicle8Black = scalpPng;
+const follicle8Serum = prod1;
+const follicle8Black = prod2;
 const follicle8Spray = hero3;
 
 export interface Product {
