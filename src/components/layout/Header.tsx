@@ -5,9 +5,10 @@ import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useCountry } from "@/contexts/CountryContext";
 import CartDrawer from "@/components/cart/CartDrawer";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { motion } from "framer-motion";
 import logo1 from "@/assets/logo1.webp";
+import ShippingAnnouncementBar from "@/components/layout/ShippingAnnouncementBar";
 
 const headerVariants = {
   hidden: { opacity: 0, y: -20 },
@@ -274,17 +275,7 @@ const Header = () => {
         </nav>
 
         {/* HIGHLIGHTED SHIPPING BANNER */}
-        <div className="bg-black text-white border-t border-neutral-800/80 py-2 px-2 text-center select-none relative lg:absolute lg:top-full lg:left-0 lg:right-0 z-30 shadow-sm lg:bg-black/90 lg:backdrop-blur-md overflow-hidden">
-          <div className="max-w-7xl mx-auto flex items-center justify-center text-xs sm:text-[13px] md:text-sm font-medium tracking-wide whitespace-nowrap">
-            <span className="text-neutral-200 flex items-center justify-center gap-1 sm:gap-2">
-              <span className="font-semibold text-white">Free Delivery</span> in India 
-              <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-3.5 sm:w-4 h-auto ml-0.5 rounded-sm shadow-sm" /> 
-              <span className="mx-0.5 sm:mx-1.5 text-neutral-600">|</span> 
-              <img src="https://flagcdn.com/w20/au.png" alt="Australia" className="w-3.5 sm:w-4 h-auto mr-0.5 rounded-sm shadow-sm" /> 
-              <span className="font-semibold text-white">Free Shipping</span> A$60+
-            </span>
-          </div>
-        </div>
+        <ShippingAnnouncementBar />
 
         {/* Search bar drawer */}
         {isSearchOpen && (
@@ -311,6 +302,10 @@ const Header = () => {
             side="right" 
             className="w-full h-screen p-0 flex flex-col bg-white border-none z-[100]"
           >
+            <SheetHeader className="sr-only">
+              <SheetTitle>Navigation Menu</SheetTitle>
+              <SheetDescription>Mobile navigation menu for Scalvea store</SheetDescription>
+            </SheetHeader>
             {/* Mobile Drawer Header */}
             <div className="flex items-center justify-between px-6 h-[64px] border-b border-neutral-100 relative">
               <img 

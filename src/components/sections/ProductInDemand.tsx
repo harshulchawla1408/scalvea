@@ -29,15 +29,27 @@ const ProductInDemand = () => {
   const [showPlayOverlay, setShowPlayOverlay] = useState(false);
   const hasTriggeredLoad = useRef(false);
 
-  // Check real reviews from Supabase for Follicle 8 (product ID "1")
+  // Check real reviews from Supabase for Follicle 8
   const { data: reviews = [] } = useQuery({
-    queryKey: ["product-reviews-demanded", "1"],
+    queryKey: ["product-reviews-demanded", "follicle-8"],
     queryFn: async () => {
       try {
+        const { data: prod } = await supabase
+          .from("products")
+          .select("id")
+          .or("slug.ilike.%follicle%,name.ilike.%follicle%")
+          .limit(1)
+          .maybeSingle();
+
+        if (!prod?.id) return [];
+
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(prod.id);
+        if (!isUUID) return [];
+
         const { data, error } = await supabase
           .from("reviews")
           .select("rating")
-          .eq("product_id", "1");
+          .eq("product_id", prod.id);
         if (error) return [];
         return data || [];
       } catch {
@@ -153,7 +165,7 @@ const ProductInDemand = () => {
   return (
     <section 
       ref={containerRef}
-      className="bg-[#FFFFFF] py-14 md:py-20 lg:py-24 border-t border-border/30 relative select-none overflow-hidden"
+      className="bg-[#F6F5F2] py-14 md:py-20 lg:py-24 border-t border-border/30 relative select-none overflow-hidden"
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-16">
         
@@ -274,32 +286,14 @@ const ProductInDemand = () => {
               transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
               className="space-y-6"
             >
-              {/* Feature Focus Headline & Sub-content inspired by "For Every Indian Face With Acne" */}
-              <div className="space-y-2">
-                <h3 className="text-2xl sm:text-3xl md:text-[32px] font-heading text-[#111111] tracking-tight font-normal leading-[1.2]">
+              {/* Feature Focus Headline & High-Visibility Luxury Card */}
+              <div className="p-5 sm:p-6 rounded-2xl bg-[#F9F9F7] border border-neutral-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.03)] space-y-3">
+                <h3 className="text-2xl sm:text-3xl md:text-[32px] font-heading font-semibold text-black tracking-tight leading-[1.2]">
                   For Every Person Facing Hair Fall.
                 </h3>
-                <p className="text-xs sm:text-[13px] font-body font-medium text-neutral-500 tracking-[0.05em] uppercase">
-                  Twenties, thirties, forties. Thinning, shedding, receding. Men and women. Same researched actives, same root-targeted science.
+                <p className="text-xs sm:text-[13px] md:text-sm font-body font-semibold text-neutral-800 leading-relaxed tracking-wider uppercase">
+                  Twenties, thirties, forties. Thinning, shedding, receding. Men and women.
                 </p>
-              </div>
-
-              {/* Editorial Copy: Expanded for Desktop, Concise for Mobile */}
-              <div className="space-y-3 text-[#444444] font-body font-light leading-relaxed max-w-xl">
-                {/* Mobile version — 1 to 2 concise lines */}
-                <p className="text-xs sm:text-sm lg:hidden">
-                  A science-led hair growth serum formulated with four researched actives to support healthier, fuller, and stronger-looking hair directly from the root.
-                </p>
-
-                {/* Desktop version — richer, more detailed content */}
-                <div className="hidden lg:block space-y-2.5 text-[14.5px]">
-                  <p>
-                    Engineered for targeted daily scalp care, Follicle 8 unites four clinically researched active complexes — <strong>3% Redensyl</strong>, <strong>3% Baicapil</strong>, <strong>3% Procapil</strong>, and <strong>4% Anagain</strong> — to invigorate weakened hair roots and support the hair’s natural growth cycle.
-                  </p>
-                  <p className="text-neutral-500 text-sm leading-relaxed">
-                    Its ultra-lightweight, non-greasy formula absorbs quickly into the scalp without leaving residue or weighing down your hair. Designed for effortless morning or evening consistency, it delivers essential follicle-level nourishment suitable for men and women of all hair types.
-                  </p>
-                </div>
               </div>
 
               {/* ----------------------------------------------------
@@ -377,7 +371,7 @@ const ProductInDemand = () => {
                       ))}
                     </div>
                     <span className="text-[10.5px] font-body font-medium text-neutral-800 leading-tight">
-                      {reviewCount > 0 ? `${reviewCount}+ Happy Customers` : "Real Results. Real People."}
+                      250+ Happy Customers
                     </span>
                   </div>
                 </div>

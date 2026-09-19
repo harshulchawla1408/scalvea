@@ -431,17 +431,21 @@ const ProductDetail = () => {
     });
   }, [product?.id, product?.name, product?.price_inr, product?.price_aud, selectedCountry]);
 
+  const isUUID = Boolean(product?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(product.id));
+
   const { data: reviews = [], refetch: refetchReviews } = useQuery({
     queryKey: ["reviews", product?.id],
     queryFn: async () => {
-      const { data } = await supabase
+      if (!isUUID || !product?.id) return [];
+      const { data, error } = await supabase
         .from("reviews")
         .select("*")
-        .eq("product_id", product!.id)
+        .eq("product_id", product.id)
         .order("created_at", { ascending: false });
+      if (error) return [];
       return data || [];
     },
-    enabled: !!product?.id,
+    enabled: isUUID,
   });
 
   const avgRating = reviews.length > 0
@@ -744,7 +748,7 @@ const ProductDetail = () => {
                     src={mediaItems[selectedMediaIndex]?.url || product.images[0]}
                     alt={mediaItems[selectedMediaIndex]?.alt || product.name}
                     loading="eager"
-                    fetchPriority="high"
+                    fetchpriority="high"
                     className="w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                 )}

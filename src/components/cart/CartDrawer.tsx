@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useCountry } from "@/contexts/CountryContext";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useProducts } from "@/hooks/useProducts";
 import prod1 from "@/assets/prod1.webp";
@@ -103,6 +103,15 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
   // Total serums count in cart
   const serumCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
+  // India BUY 2 GET 1 FREE offer state (Buy 3 serums, at least 1 Scalp-5 -> 1 Scalp-5 FREE)
+  const isIndiaOfferUnlocked = isIndia && serumCount >= 3 && hasScalp5;
+
+  const isScalp5Item = (item: { productId?: string; name?: string }) => {
+    const name = (item.name || "").toLowerCase();
+    const id = (item.productId || "").toLowerCase();
+    return id.includes("scalp") || name.includes("scalp") || name.includes("dandruff");
+  };
+
   // Recommendation logic:
   // - Follicle 8 only (1 bottle) -> Recommend Scalp-5
   // - Scalp-5 only (1 bottle) -> Recommend Follicle 8
@@ -153,6 +162,9 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
           <SheetTitle className="text-xs sm:text-[13px] tracking-[0.2em] uppercase font-medium text-foreground">
             Your Bag ({itemCount})
           </SheetTitle>
+          <SheetDescription className="sr-only">
+            View items in your bag and proceed to checkout
+          </SheetDescription>
         </SheetHeader>
 
         {/* 2. COUNTRY-SPECIFIC FREE SHIPPING BAR */}
@@ -205,68 +217,113 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 sm:px-6 py-4 space-y-6 divide-y divide-border/40">
               {/* ITEM LIST */}
               <div className="space-y-4 pt-1">
-                {items.map((item) => (
-                  <div
-                    key={item.productId}
-                    className="flex items-start gap-3 sm:gap-4 group min-w-0"
-                  >
-                    {/* Thumbnail */}
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 min-w-[64px] min-h-[64px] max-w-[64px] sm:min-w-[80px] sm:max-w-[80px] bg-secondary/30 rounded-lg border border-border/50 flex-shrink-0 overflow-hidden p-1 flex items-center justify-center">
-                      <img
-                        src={getItemImage(item)}
-                        alt={item.name}
-                        className="w-full h-full object-contain mix-blend-multiply transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-
-                    {/* Meta info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-[13px] font-medium text-foreground leading-snug line-clamp-2">
-                        {item.name}
-                      </p>
-                      <p className="text-xs font-semibold text-foreground mt-1">
-                        {formatVal(item.price)}
-                      </p>
-                      <p className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light mt-0.5 tracking-wide">
-                        Inclusive of all taxes
-                      </p>
-
-                      {/* Quantity Controls */}
-                      <div className="flex items-center gap-1.5 mt-2">
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                          className="w-7 h-7 flex items-center justify-center rounded border border-border/80 text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors active:scale-95"
-                          aria-label="Decrease quantity"
-                        >
-                          <Minus className="h-3 w-3" />
-                        </button>
-                        <span className="text-xs font-medium w-7 text-center tabular-nums text-foreground">
-                          {item.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                          className="w-7 h-7 flex items-center justify-center rounded border border-border/80 text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors active:scale-95"
-                          aria-label="Increase quantity"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Remove button */}
-                    <button
-                      type="button"
-                      onClick={() => removeItem(item.productId)}
-                      className="p-1.5 -mr-1 self-start text-muted-foreground/60 hover:text-foreground transition-colors"
-                      title="Remove item"
-                      aria-label="Remove item"
+                {items.map((item) => {
+                  const isFreeScalp5 = isIndiaOfferUnlocked && isScalp5Item(item);
+                  return (
+                    <div
+                      key={item.productId}
+                      className="flex items-start gap-3 sm:gap-4 group min-w-0"
                     >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))}
+                      {/* Thumbnail */}
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 min-w-[64px] min-h-[64px] max-w-[64px] sm:min-w-[80px] sm:max-w-[80px] bg-secondary/30 rounded-lg border border-border/50 flex-shrink-0 overflow-hidden p-1 flex items-center justify-center relative">
+                        <img
+                          src={getItemImage(item)}
+                          alt={item.name}
+                          className="w-full h-full object-contain mix-blend-multiply transition-transform duration-300 group-hover:scale-105"
+                        />
+                        {isFreeScalp5 && (
+                          <span className="absolute top-1 left-1 bg-emerald-600 text-white text-[8px] font-bold tracking-wider px-1.5 py-0.5 rounded shadow-xs uppercase">
+                            FREE
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Meta info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-xs sm:text-[13px] font-medium text-foreground leading-snug line-clamp-2">
+                            {item.name}
+                          </p>
+                          {isFreeScalp5 && (
+                            <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                              <Gift className="w-2.5 h-2.5 text-emerald-600" /> Free Gift
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Price Display */}
+                        {isFreeScalp5 ? (
+                          item.quantity === 1 ? (
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center gap-1">
+                                <Gift className="w-3 h-3 text-emerald-600" /> FREE
+                              </span>
+                              <span className="text-[10px] text-muted-foreground line-through font-mono">
+                                {formatVal(item.price)}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="mt-1 space-y-0.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center gap-1">
+                                  <Gift className="w-3 h-3 text-emerald-600" /> 1 × FREE
+                                </span>
+                                <span className="text-xs font-semibold text-foreground">
+                                  + {item.quantity - 1} × {formatVal(item.price)}
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-emerald-700 font-medium block">
+                                1 eligible Scalp-5 free with 3+ serums
+                              </span>
+                            </div>
+                          )
+                        ) : (
+                          <p className="text-xs font-semibold text-foreground mt-1">
+                            {formatVal(item.price)}
+                          </p>
+                        )}
+
+                        <p className="text-[10px] text-emerald-600 dark:text-emerald-500 font-light mt-0.5 tracking-wide">
+                          Inclusive of all taxes
+                        </p>
+
+                        {/* Quantity Controls */}
+                        <div className="flex items-center gap-1.5 mt-2">
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                            className="w-7 h-7 flex items-center justify-center rounded border border-border/80 text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors active:scale-95"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <span className="text-xs font-medium w-7 text-center tabular-nums text-foreground">
+                            {item.quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                            className="w-7 h-7 flex items-center justify-center rounded border border-border/80 text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors active:scale-95"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Remove button */}
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.productId)}
+                        className="p-1.5 -mr-1 self-start text-muted-foreground/60 hover:text-foreground transition-colors"
+                        title="Remove item"
+                        aria-label="Remove item"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* 3. CONTEXTUAL PRODUCT RECOMMENDATION ("COMPLETE YOUR ROUTINE") */}
@@ -346,118 +403,101 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
 
               {/* 4. INDIA OFFERS (Only when isIndia) */}
               {isIndia && (
-                <div className="pt-5 space-y-2">
+                <div className="pt-5 space-y-3">
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-[10px] font-bold tracking-[0.16em] uppercase text-muted-foreground">
-                      Available Offers
+                      Promotional Offer
                     </p>
-                    <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
-                      Applied at checkout
-                    </span>
-                  </div>
-
-                  {serumCount >= 2 && (
-                    <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-[#f5fbf7] p-3.5 shadow-[0_10px_25px_rgba(16,185,129,0.08)]">
-                      <div className="absolute inset-y-0 left-0 w-1.5 bg-emerald-500" />
-                      <div className="pl-2 flex items-center gap-3">
-                        <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-xl border border-emerald-200 bg-white p-1 shadow-sm">
-                          <img src={prod2} alt="Scalp-5 Anti-Dandruff Hair Serum" className="h-full w-full object-contain" />
-                          <span className="absolute bottom-1 right-1 rounded-full bg-emerald-600 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">
-                            Free
-                          </span>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[9px] font-bold tracking-[0.18em] uppercase text-emerald-700">
-                              Gift with order
-                            </span>
-                            <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white">
-                              Included
-                            </span>
-                          </div>
-                          <p className="mt-1 text-[12px] font-semibold text-foreground leading-tight">
-                            Scalp-5 Anti-Dandruff Hair Serum
-                          </p>
-                          <p className="mt-1 text-[10px] text-emerald-700 font-medium">
-                            You qualify for 1 free serum with your 2-serum purchase.
-                          </p>
-                          <div className="mt-2 flex items-center gap-1 text-[10px] text-emerald-700 font-medium">
-                            <Check className="h-3 w-3" />
-                            Totally free at checkout
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 1. GET20 Card */}
-                  <div className="rounded-xl border border-[#dfcca8]/70 bg-gradient-to-r from-[#fdf8f0] to-[#fffcf8] p-3 flex items-start gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-[#f4e8cf] text-[#8c672b] flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <BadgePercent className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-xs font-extrabold text-[#7e5c26] tracking-wider bg-[#f6ecda] px-1.5 py-0.5 rounded">
-                          GET20
-                        </span>
-                        <span className="text-[11px] font-bold text-foreground tracking-wide uppercase">
-                          GET20 for all orders
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-emerald-700 dark:text-emerald-500 font-medium mt-1 flex items-center gap-1">
-                        <Check className="w-3 h-3 flex-shrink-0" /> Automatically applied at final stage
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* 2. BUY 2 GET 1 SCALP-5 SERUM FREE Card */}
-                  <div
-                    className={`rounded-xl border p-3 transition-all ${
-                      serumCount >= 2
-                        ? "border-emerald-500/80 bg-[#f2faf4]"
-                        : "border-emerald-300/60 bg-[#f6fcf8]"
-                    }`}
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <div
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                          serumCount >= 2 ? "bg-emerald-600 text-white" : "bg-emerald-100 text-emerald-700"
-                        }`}
-                      >
-                        <Gift className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-1 flex-wrap">
-                          <span className="text-[11px] font-extrabold text-emerald-900 tracking-wide uppercase">
-                            Buy 2 Get 1 Scalp-5 Serum Free
-                          </span>
-                          {serumCount >= 2 && (
-                            <span className="text-[9px] font-extrabold tracking-wider bg-emerald-600 text-white px-1.5 py-0.5 rounded uppercase">
-                              QUALIFIED
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-emerald-700 dark:text-emerald-500 font-medium mt-1 flex items-center gap-1">
-                          <Check className="w-3 h-3 flex-shrink-0" /> Automatically applied at final stage
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Action button if only 1 serum in cart */}
-                    {serumCount === 1 && (
-                      <button
-                        type="button"
-                        onClick={handleAddCounterpart}
-                        className="mt-2.5 w-full py-1.5 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-1 active:scale-[0.98]"
-                      >
-                        <Plus className="w-3 h-3" /> Add 2nd Serum to Qualify for Free Scalp-5
-                      </button>
+                    {isIndiaOfferUnlocked && (
+                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        Offer Applied
+                      </span>
                     )}
                   </div>
 
-                  <p className="text-[10px] text-muted-foreground/70 font-light text-center tracking-widest uppercase pt-0.5">
-                    Offers cannot be combined
-                  </p>
+                  {/* BUY 2, GET 1 FREE Card */}
+                  <div
+                    className={`rounded-2xl border p-4 transition-all ${
+                      isIndiaOfferUnlocked
+                        ? "border-emerald-500/80 bg-gradient-to-r from-[#f0faf2] via-white to-[#f5fbf7] shadow-xs"
+                        : "border-neutral-200/90 bg-white shadow-2xs"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                          isIndiaOfferUnlocked ? "bg-emerald-600 text-white" : "bg-neutral-100 text-neutral-800"
+                        }`}
+                      >
+                        <Gift className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1 flex-wrap">
+                          <span className="text-xs font-bold text-neutral-900 uppercase tracking-wide">
+                            BUY 2, GET 1 FREE
+                          </span>
+                          {isIndiaOfferUnlocked ? (
+                            <span className="text-[9px] font-extrabold tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full uppercase flex items-center gap-1">
+                              <Check className="w-2.5 h-2.5" /> UNLOCKED
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-mono font-medium tracking-wider text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded">
+                              SPECIAL OFFER
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-[11px] text-neutral-600 font-light mt-1 leading-snug">
+                          Add any 3 Scalvea serums to your cart and get 1 Scalp-5 Anti Dandruff Hair Serum FREE.
+                        </p>
+
+                        {/* Dynamic Progress / State message */}
+                        {isIndiaOfferUnlocked ? (
+                          <div className="mt-2.5 pt-2 border-t border-emerald-100/80 space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                              <Check className="w-3.5 h-3.5 flex-shrink-0 text-emerald-600" />
+                              <span>Offer unlocked — 1 Scalp-5 is FREE</span>
+                            </div>
+                            <p className="text-[10px] text-emerald-700/90 font-medium">
+                              Offer applied at final checkout
+                            </p>
+                          </div>
+                        ) : serumCount >= 3 && !hasScalp5 ? (
+                          <div className="mt-2.5 pt-2 border-t border-neutral-100 space-y-2">
+                            <p className="text-[11px] font-medium text-amber-800">
+                              Add Scalp-5 Anti Dandruff Serum to unlock your FREE gift
+                            </p>
+                            <button
+                              type="button"
+                              onClick={handleAddScalp5}
+                              className="w-full py-2 px-3 rounded-lg bg-black text-white text-[11px] font-semibold uppercase tracking-wider hover:bg-neutral-800 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98]"
+                            >
+                              <Plus className="w-3 h-3" /> Add Scalp-5 Serum
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="mt-2.5 pt-2 border-t border-neutral-100 space-y-2">
+                            <p className="text-[11px] font-medium text-neutral-700">
+                              {serumCount === 2
+                                ? "Add 1 more serum to unlock your FREE Scalp-5"
+                                : `Add ${Math.max(1, 3 - serumCount)} more serums to unlock your FREE Scalp-5`}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={!hasScalp5 ? handleAddScalp5 : handleAddFollicle8}
+                              className="w-full py-2 px-3 rounded-lg bg-black text-white text-[11px] font-semibold uppercase tracking-wider hover:bg-neutral-800 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98]"
+                            >
+                              <Plus className="w-3 h-3" /> Add {!hasScalp5 ? "Scalp-5" : "Serum"} to Bag
+                            </button>
+                          </div>
+                        )}
+
+                        <p className="text-[9px] text-neutral-400 font-light mt-2">
+                          Offer cannot be combined with other promotions.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 

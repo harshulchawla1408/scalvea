@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useCart } from "@/contexts/CartContext";
@@ -22,6 +22,10 @@ import {
   BadgePercent,
   ShoppingBag,
   Sparkles,
+  Check,
+  ChevronRight,
+  ArrowLeft,
+  Edit2,
 } from "lucide-react";
 import { trackInitiateCheckout } from "@/lib/metaPixel";
 import prod1 from "@/assets/prod1.webp";
@@ -88,8 +92,18 @@ const SCALP5_PRODUCT_IDS = ["scalp-5-anti-dandruff"];
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 /** India — offer cards: GET20 + Free Shipping + BUY 2 GET 1 FREE */
-const IndiaOfferCards = ({ onAddSerum, totalItems }: { onAddSerum: () => void; totalItems: number }) => {
-  const isQualified = totalItems >= 2;
+const IndiaOfferCards = ({ 
+  onAddSerum, 
+  onAddScalp5, 
+  totalItems, 
+  hasScalp5 
+}: { 
+  onAddSerum: () => void; 
+  onAddScalp5: () => void; 
+  totalItems: number; 
+  hasScalp5: boolean; 
+}) => {
+  const isQualified = totalItems >= 3 && hasScalp5;
 
   return (
     <div className="space-y-2.5">
@@ -148,33 +162,45 @@ const IndiaOfferCards = ({ onAddSerum, totalItems }: { onAddSerum: () => void; t
                   Buy 2 Get 1 Scalp-5 Serum Free
                 </span>
                 {isQualified && (
-                  <span className="text-[9px] font-extrabold tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded uppercase">
+                  <span className="text-[9px] font-extrabold tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full uppercase">
                     QUALIFIED
                   </span>
                 )}
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5 font-light">
-                Buy any 2 Scalvea serums — get 1 Scalp-5 FREE.
+                Add any 3 Scalvea serums (incl. Scalp-5) — get 1 Scalp-5 FREE.
               </p>
-              <p className="text-[11px] text-emerald-700 mt-1 font-medium flex items-center gap-1">
-                ✓ Automatically applied at final stage
-              </p>
+              {isQualified ? (
+                <p className="text-[11px] text-emerald-700 mt-1 font-medium flex items-center gap-1">
+                  ✓ 1 Scalp-5 FREE — applied at final checkout
+                </p>
+              ) : totalItems >= 3 && !hasScalp5 ? (
+                <p className="text-[11px] text-amber-800 mt-1 font-medium">
+                  Add Scalp-5 Anti Dandruff Serum to unlock your FREE gift
+                </p>
+              ) : (
+                <p className="text-[11px] text-emerald-700 mt-1 font-medium">
+                  {totalItems === 2
+                    ? "Add 1 more serum to unlock your FREE Scalp-5"
+                    : `Add ${Math.max(1, 3 - totalItems)} more serums to unlock your FREE Scalp-5`}
+                </p>
+              )}
             </div>
           </div>
           {!isQualified && (
             <button
               type="button"
-              onClick={onAddSerum}
+              onClick={totalItems >= 3 && !hasScalp5 ? onAddScalp5 : (!hasScalp5 ? onAddScalp5 : onAddSerum)}
               className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-emerald-700 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-emerald-800 transition-colors active:scale-[0.98]"
             >
-              <Plus className="w-3 h-3" /> Add Another Serum to Qualify for Free Scalp-5
+              <Plus className="w-3 h-3" /> {!hasScalp5 ? "Add Scalp-5 to Qualify" : "Add Another Serum"}
             </button>
           )}
         </div>
       </div>
 
       <p className="text-[10px] text-muted-foreground/70 font-light text-center tracking-widest uppercase">
-        Offers cannot be combined
+        Offer cannot be combined with other promotions.
       </p>
     </div>
   );
@@ -732,26 +758,19 @@ const Checkout = () => {
     }
   };
 
-  // ─── Form Submit ─────────────────────────────────────────────────────────
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const [auStep, setAuStep] = useState<1 | 2 | 3>(1);
+
+  // ─── Australia Step 1 Validation & Proceed to Step 2 ───
+  const validateAndProceedToReview = (e?: React.MouseEvent | React.FormEvent) => {
+    e?.preventDefault();
     if (!user) {
-      toast({ title: "Please sign in", description: "You need an account to place an order.", variant: "destructive" });
+      toast({ title: "Please sign in", description: "You need an account to complete checkout.", variant: "destructive" });
       navigate("/auth?returnTo=/cart");
       return;
     }
 
-    if (isIndia) {
-      if (!form.firstName || !form.lastName || !form.address || !form.city || !form.state || !form.postcode || !form.phone) {
-        toast({ title: "Missing details", description: "Please fill in all required fields.", variant: "destructive" });
-        return;
-      }
-      handleShiprocketCheckout(e as unknown as React.MouseEvent<HTMLButtonElement>);
-      return;
-    }
-
-    if (!form.firstName || !form.lastName || !form.address || !form.city || !form.state || !form.postcode || !form.phone) {
-      toast({ title: "Missing details", description: "Please fill in all required fields.", variant: "destructive" });
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.address.trim() || !form.city.trim() || !form.state.trim() || !form.postcode.trim() || !form.phone.trim()) {
+      toast({ title: "Missing details", description: "Please fill in all required shipping fields.", variant: "destructive" });
       return;
     }
 
@@ -762,12 +781,55 @@ const Checkout = () => {
 
     const phoneDigits = form.phone.replace(/\D/g, "");
     if (phoneDigits.length < 8) {
-      toast({ title: "Invalid phone number", description: "Please enter a valid phone number.", variant: "destructive" });
+      toast({ title: "Invalid phone number", description: "Please enter a valid phone number (at least 8 digits).", variant: "destructive" });
       return;
     }
 
+    setAuStep(2);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const proceedToPayment = () => {
+    setAuStep(3);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handlePaySecurely = async (e?: React.MouseEvent | React.FormEvent) => {
+    e?.preventDefault();
+    if (!user) {
+      toast({ title: "Please sign in", description: "You need an account to complete checkout.", variant: "destructive" });
+      navigate("/auth?returnTo=/cart");
+      return;
+    }
     setPlacing(true);
     await startStripeCheckout();
+  };
+
+  // ─── Form Submit ─────────────────────────────────────────────────────────
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isIndia) {
+      if (!user) {
+        toast({ title: "Please sign in", description: "You need an account to place an order.", variant: "destructive" });
+        navigate("/auth?returnTo=/cart");
+        return;
+      }
+      if (!form.firstName || !form.lastName || !form.address || !form.city || !form.state || !form.postcode || !form.phone) {
+        toast({ title: "Missing details", description: "Please fill in all required fields.", variant: "destructive" });
+        return;
+      }
+      handleShiprocketCheckout(e as unknown as React.MouseEvent<HTMLButtonElement>);
+      return;
+    }
+
+    // Australia flow based on active step
+    if (auStep === 1) {
+      validateAndProceedToReview(e);
+    } else if (auStep === 2) {
+      proceedToPayment();
+    } else {
+      await handlePaySecurely(e);
+    }
   };
 
   // ─── Empty cart state ─────────────────────────────────────────────────────
@@ -798,435 +860,13 @@ const Checkout = () => {
     );
   }
 
-  // ─── ORDER SUMMARY (shared, sticky right column on desktop) ───────────────
-  const OrderSummaryPanel = () => (
-    <div className="space-y-5">
-      {/* Order items card */}
-      <div className="bg-white rounded-2xl border border-[#e8e8e8] shadow-[0_2px_16px_rgba(0,0,0,0.04)] overflow-hidden">
-        <div className="px-5 pt-5 pb-3 border-b border-[#f0f0f0]">
-          <h2 className="text-[11px] font-bold tracking-[0.14em] uppercase text-foreground">
-            Order Summary
-          </h2>
-        </div>
-
-        {/* Items list */}
-        <div className="px-5 py-4 space-y-4 max-h-[260px] overflow-y-auto scrollbar-none">
-          {items.map((item) => (
-            <div key={item.productId} className="flex gap-3.5 items-center">
-              <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#f5f5f5] border border-[#ebebeb] flex-shrink-0 relative">
-                <img src={getItemImage(item)} alt={item.name} className="w-full h-full object-cover" />
-                <span className="absolute -top-1.5 -right-1.5 bg-foreground text-background text-[9px] w-5 h-5 flex items-center justify-center font-bold rounded-full">
-                  {item.quantity}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-foreground leading-snug truncate">{item.name}</p>
-                <p className="text-xs text-muted-foreground font-mono mt-0.5">{formatVal(item.price * item.quantity)}</p>
-                <p className="text-[9px] text-emerald-600 font-light mt-0.5 tracking-wide">
-                  {isIndia ? "Inclusive of all taxes" : "GST included"}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Product Recommendations — bidirectional, both markets */}
-        {showScalp5Rec && (
-          <div className="px-4 pb-4">
-            <ProductRecommendationCard
-              image={SCALP5_CONFIG.image}
-              name={SCALP5_CONFIG.name}
-              subtitle="Complete your routine with anti-dandruff care."
-              price={isIndia ? `₹${scalp5PriceInr.toLocaleString("en-IN")}` : `A$${scalp5PriceAud.toFixed(2)}`}
-              label="Complete Your Scalp Care"
-              onAdd={handleAddScalp5}
-            />
-          </div>
-        )}
-        {showFollicle8Rec && (
-          <div className="px-4 pb-4">
-            <ProductRecommendationCard
-              image={FOLLICLE8_CONFIG.image}
-              name={FOLLICLE8_CONFIG.name}
-              subtitle="Add hair growth serum to complete your routine."
-              price={isIndia ? `₹${follicle8PriceInr.toLocaleString("en-IN")}` : `A$${follicle8PriceAud.toFixed(2)}`}
-              label="Pair It With Hair Growth"
-              onAdd={handleAddFollicle8}
-            />
-          </div>
-        )}
-
-        {/* Price breakdown */}
-        <div className="px-5 py-4 border-t border-[#f0f0f0] space-y-2">
-          <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground font-light">Subtotal</span>
-            <span className="font-mono font-medium">{formatVal(bundleDiscount > 0 && !isIndia ? rawTotal : total)}</span>
-          </div>
-          {bundleDiscount > 0 && !isIndia && (
-            <div className="flex justify-between text-xs text-emerald-600 font-medium">
-              <span className="flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
-                Bundle & Save ({totalItemCount === 3 ? "3 Serums for A$100" : "Bundle Deal"})
-              </span>
-              <span className="font-mono">-{formatVal(bundleDiscount)}</span>
-            </div>
-          )}
-          {appliedCoupon && (
-            <div className="flex justify-between text-xs text-emerald-600">
-              <span>Discount ({appliedCoupon.discount_percentage}%)</span>
-              <span className="font-mono">-{formatVal(discountAmount)}</span>
-            </div>
-          )}
-          {taxAmount > 0 && (
-            <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground font-light">Tax ({settings?.tax_percentage}%)</span>
-              <span className="font-mono">{formatVal(taxAmount)}</span>
-            </div>
-          )}
-          <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground font-light">Shipping</span>
-            <span className="font-mono">
-              {shippingAmount === 0 ? (
-                <span className="text-emerald-600 font-semibold">Free</span>
-              ) : (
-                <span className="font-medium text-foreground">{formatVal(shippingAmount)}</span>
-              )}
-            </span>
-          </div>
-          <div className="flex justify-between items-end pt-3 border-t border-[#f0f0f0]">
-            <span className="text-sm font-semibold tracking-[0.04em] text-foreground">Total Due</span>
-            <div className="text-right">
-              <span className="block text-lg font-bold font-mono text-foreground">{formatVal(grandTotal)}</span>
-              <span className="text-[10px] text-emerald-600 font-light tracking-wide">Inclusive of all taxes</span>
-            </div>
-          </div>
-        </div>
-
-        {settings && (
-          <div className="px-5 py-3 bg-[#fafafa] border-t border-[#f0f0f0] flex items-center gap-2">
-            <Truck className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-            <p className="text-[10px] text-muted-foreground font-light">
-              Estimated delivery: <span className="font-medium text-foreground">{settings.delivery_time}</span>
-            </p>
-          </div>
-        )}
-      </div>
-
-      {isIndia && totalItemCount >= 2 && (
-        <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-[#f5fbf7] p-4 shadow-[0_12px_25px_rgba(16,185,129,0.08)]">
-          <div className="absolute inset-y-0 left-0 w-1.5 bg-emerald-500" />
-          <div className="pl-3 flex items-center gap-3">
-            <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-xl border border-emerald-200 bg-white p-1 shadow-sm">
-              <img src={prod2} alt="Scalp-5 Anti-Dandruff Hair Serum" className="h-full w-full object-contain" />
-              <span className="absolute bottom-1 right-1 rounded-full bg-emerald-600 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">
-                Free
-              </span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[9px] font-bold tracking-[0.18em] uppercase text-emerald-700">
-                  Gift with order
-                </span>
-                <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white">
-                  Included
-                </span>
-              </div>
-              <p className="mt-1 text-sm font-semibold text-foreground leading-tight">
-                Scalp-5 Anti-Dandruff Hair Serum
-              </p>
-              <p className="mt-1 text-[11px] text-emerald-700 font-medium">
-                Qualifies for a free serum with your 2-serum purchase.
-              </p>
-              <div className="mt-2 flex items-center gap-1 text-[11px] text-emerald-700 font-medium">
-                <span className="inline-flex items-center justify-center">
-                  <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-                    <path d="M7.6 14.85 3.75 11l1.05-1.05L7.6 12.75l7.6-7.6 1.05 1.05-8.65 8.65Z"/>
-                  </svg>
-                </span>
-                Totally free at checkout
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* CTA Button */}
-      <div>
-        {isIndia ? (
-          <Button
-            type="button"
-            onClick={(e) => handleShiprocketCheckout(e)}
-            disabled={placing}
-            className="w-full h-14 rounded-xl bg-foreground text-background hover:bg-foreground/90 text-sm font-bold tracking-[0.1em] uppercase shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-all hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 active:translate-y-0"
-          >
-            {placing ? (
-              <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin" />
-                Loading...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Lock className="w-4 h-4" />
-                Continue to Secure Checkout
-              </span>
-            )}
-          </Button>
-        ) : (
-          <Button
-            type="submit"
-            disabled={placing}
-            className="w-full h-14 rounded-xl bg-foreground text-background hover:bg-foreground/90 text-sm font-bold tracking-[0.1em] uppercase shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-all hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 active:translate-y-0"
-          >
-            {placing ? (
-              <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin" />
-                Processing...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Lock className="w-4 h-4" />
-                Continue to Payment — {formatVal(grandTotal)}
-              </span>
-            )}
-          </Button>
-        )}
-
-        {/* Minimal lock line below CTA */}
-        <p className="flex items-center justify-center gap-1.5 mt-3 text-[10px] text-muted-foreground/70 tracking-widest uppercase">
-          <Lock className="w-3 h-3" /> SSL Secured Checkout
-        </p>
-      </div>
-
-      {/* Offer cards — below CTA, country-specific */}
-      {isIndia
-        ? <IndiaOfferCards onAddSerum={handleAddAuSerum} totalItems={totalItemCount} />
-        : <AustraliaOfferCards totalItems={totalItemCount} onAddOne={handleAddAuSerum} />
-      }
-
-      {/* Trust indicators grid */}
-      <TrustIndicators isIndia={isIndia} />
-    </div>
-  );
-
-  // ─── INDIA LEFT PANEL — Partial COD + Payment strip (no text-duplicate list) ─────
-  const IndiaLeftPanel = () => (
-    <div className="space-y-5">
-      {/* Secure checkout header — compact */}
-      <div className="bg-white rounded-2xl border border-[#e8e8e8] shadow-[0_2px_16px_rgba(0,0,0,0.04)] p-5">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center flex-shrink-0">
-            <ShieldCheck className="w-5 h-5 text-foreground" strokeWidth={1.8} />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold tracking-[0.06em] text-foreground">Secure Checkout</h2>
-            <p className="text-[11px] text-muted-foreground font-light mt-0.5">
-              Complete your order with your preferred payment method.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Partial COD */}
-      <PartialCodBadge />
-
-      {/* Payment icons strip — replaces the text method list */}
-      <IndiaPaymentTrustStrip />
-    </div>
-  );
-
-  // ─── AUSTRALIA LEFT PANEL — Shipping Form + Payment Section ──────────────
-  const AustraliaLeftPanel = () => (
-    <div className="space-y-6">
-      {/* Contact */}
-      {!user?.email && (
-        <div className="bg-white rounded-2xl border border-[#e8e8e8] shadow-[0_2px_16px_rgba(0,0,0,0.04)] p-5">
-          <h2 className="text-[11px] font-bold tracking-[0.14em] uppercase mb-4 text-foreground">Contact</h2>
-          <input
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            placeholder="Email address"
-            className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
-          />
-        </div>
-      )}
-
-      {/* Shipping Details */}
-      <div className="bg-white rounded-2xl border border-[#e8e8e8] shadow-[0_2px_16px_rgba(0,0,0,0.04)] p-5">
-        <h2 className="text-[11px] font-bold tracking-[0.14em] uppercase mb-5 text-foreground flex items-center gap-2">
-          <span>🇦🇺</span> Shipping Details
-        </h2>
-
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
-                First Name *
-              </label>
-              <input
-                value={form.firstName}
-                onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                placeholder="First name"
-                required
-                className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
-                Last Name *
-              </label>
-              <input
-                value={form.lastName}
-                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                placeholder="Last name"
-                required
-                className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
-              Mobile Number *
-            </label>
-            <input
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              placeholder="04XX XXX XXX"
-              type="tel"
-              required
-              className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
-            />
-          </div>
-
-          <div className="pt-1 border-t border-[#f0f0f0] space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
-                Street Address *
-              </label>
-              <input
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-                placeholder="123 Example Street"
-                required
-                className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
-                Apartment, Suite, Unit (optional)
-              </label>
-              <input
-                value={form.address_line2}
-                onChange={(e) => setForm({ ...form, address_line2: e.target.value })}
-                placeholder="Apt 4B"
-                className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
-                  City / Suburb *
-                </label>
-                <input
-                  value={form.city}
-                  onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  placeholder="Sydney"
-                  required
-                  className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
-                  Postcode *
-                </label>
-                <input
-                  value={form.postcode}
-                  onChange={(e) => setForm({ ...form, postcode: e.target.value })}
-                  placeholder="2000"
-                  required
-                  maxLength={4}
-                  inputMode="numeric"
-                  pattern="\d{4}"
-                  className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
-                State / Territory *
-              </label>
-              <select
-                value={form.state}
-                onChange={(e) => setForm({ ...form, state: e.target.value })}
-                required
-                className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors appearance-none cursor-pointer"
-              >
-                {AUSTRALIA_STATES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
-                Shipping Destination
-              </p>
-              <div className="w-full h-11 px-4 text-sm bg-[#fafafa] border border-[#e0e0e0] rounded-lg flex items-center text-muted-foreground cursor-not-allowed">
-                🇦🇺 Australia
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Payment section — using real AU-relevant SVG assets */}
-      <div className="bg-white rounded-2xl border border-[#e8e8e8] shadow-[0_2px_16px_rgba(0,0,0,0.04)] p-5">
-        <h2 className="text-[11px] font-bold tracking-[0.14em] uppercase mb-3 text-foreground">
-          Secure Payment
-        </h2>
-        <div className="rounded-xl border border-[#e8e8e8] bg-[#fafafa] p-4">
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-3">
-            <Lock className="w-3 h-3 flex-shrink-0" />
-            <span className="tracking-[0.05em] uppercase">Secure encrypted payment via Stripe</span>
-          </div>
-          {/* AU payment icons — only AU-relevant methods */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Apple Pay */}
-            <div title="Apple Pay" className="h-8 w-14 flex items-center justify-center rounded-lg border border-[#eaeaea] bg-white overflow-hidden p-1">
-              <img src={applepaySlug} alt="Apple Pay" className="max-h-full max-w-full object-contain" />
-            </div>
-            {/* Visa */}
-            <div title="Visa" className="h-8 w-12 flex items-center justify-center rounded-lg border border-[#eaeaea] bg-white overflow-hidden p-1">
-              <img src={visaSvg} alt="Visa" className="max-h-full max-w-full object-contain" />
-            </div>
-            {/* Cards / Mastercard */}
-            <div title="Cards" className="h-8 w-12 flex items-center justify-center rounded-lg border border-[#eaeaea] bg-white overflow-hidden p-1">
-              <img src={cardSvg} alt="Cards" className="max-h-full max-w-full object-contain" />
-            </div>
-            {/* Google Pay inline wordmark */}
-            <div title="Google Pay" className="h-8 px-2.5 flex items-center justify-center rounded-lg border border-[#eaeaea] bg-white text-[12px] font-black tracking-tight select-none">
-              <span className="text-[#1a73e8]">G</span><span className="text-[#ea4335]">P</span><span className="text-[#fbbc05]">a</span><span className="text-[#34a853]">y</span>
-            </div>
-            {/* Amex text badge */}
-            <div title="American Express" className="h-8 px-2 flex items-center justify-center rounded-lg border border-[#eaeaea] bg-white text-[10px] font-extrabold text-[#016FD0] tracking-widest select-none">
-              AMEX
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#f8f8f8]">
       <Header />
       <main className="px-4 sm:px-6 lg:px-12 py-8 lg:py-14 max-w-7xl mx-auto">
 
         {/* Page header */}
-        <div className="mb-8 lg:mb-10">
+        <div className="mb-6 lg:mb-8">
           <h1 className="text-xl font-light tracking-[0.06em] text-foreground">Checkout</h1>
           <div className="flex items-center gap-2 mt-2">
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -1245,21 +885,843 @@ const Checkout = () => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          {/* Desktop: two-column, Mobile: single column (summary first on mobile via order) */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 lg:gap-10 items-start">
+        {/* Australia 3-Step Stepper Header */}
+        {!isIndia && (
+          <div className="mb-6 lg:mb-8 bg-white rounded-2xl border border-[#e8e8e8] shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-3.5 sm:p-4 max-w-3xl mx-auto">
+            <div className="flex items-center justify-between max-w-xl mx-auto">
+              {/* Step 1 Indicator */}
+              <button
+                type="button"
+                onClick={() => setAuStep(1)}
+                className={`flex items-center gap-2 transition-all ${
+                  auStep === 1 ? "opacity-100 scale-100" : "opacity-75 hover:opacity-100 cursor-pointer"
+                }`}
+              >
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                    auStep > 1
+                      ? "bg-emerald-600 text-white"
+                      : auStep === 1
+                      ? "bg-foreground text-background shadow-xs"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {auStep > 1 ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : "1"}
+                </div>
+                <span
+                  className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider ${
+                    auStep === 1 ? "text-foreground font-extrabold" : auStep > 1 ? "text-emerald-700" : "text-muted-foreground"
+                  }`}
+                >
+                  Details
+                </span>
+              </button>
 
-            {/* LEFT — Info / Form (order-2 on mobile so summary shows first) */}
-            <div className="order-2 lg:order-1">
-              {isIndia ? <IndiaLeftPanel /> : <AustraliaLeftPanel />}
+              <div className={`flex-1 h-[2px] mx-2 sm:mx-4 rounded transition-colors ${auStep > 1 ? "bg-emerald-600" : "bg-[#ebebeb]"}`} />
+
+              {/* Step 2 Indicator */}
+              <button
+                type="button"
+                disabled={auStep < 2}
+                onClick={() => auStep > 1 && setAuStep(2)}
+                className={`flex items-center gap-2 transition-all ${
+                  auStep === 2
+                    ? "opacity-100 scale-100"
+                    : auStep > 2
+                    ? "opacity-75 hover:opacity-100 cursor-pointer"
+                    : "opacity-40 cursor-not-allowed"
+                }`}
+              >
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                    auStep > 2
+                      ? "bg-emerald-600 text-white"
+                      : auStep === 2
+                      ? "bg-foreground text-background shadow-xs"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {auStep > 2 ? <Check className="w-3.5 h-3.5 stroke-[2.5]" /> : "2"}
+                </div>
+                <span
+                  className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider ${
+                    auStep === 2 ? "text-foreground font-extrabold" : auStep > 2 ? "text-emerald-700" : "text-muted-foreground"
+                  }`}
+                >
+                  Review
+                </span>
+              </button>
+
+              <div className={`flex-1 h-[2px] mx-2 sm:mx-4 rounded transition-colors ${auStep > 2 ? "bg-emerald-600" : "bg-[#ebebeb]"}`} />
+
+              {/* Step 3 Indicator */}
+              <div
+                className={`flex items-center gap-2 transition-all ${
+                  auStep === 3 ? "opacity-100" : "opacity-40"
+                }`}
+              >
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                    auStep === 3
+                      ? "bg-foreground text-background shadow-xs"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  3
+                </div>
+                <span
+                  className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider ${
+                    auStep === 3 ? "text-foreground font-extrabold" : "text-muted-foreground"
+                  }`}
+                >
+                  Payment
+                </span>
+              </div>
             </div>
-
-            {/* RIGHT — Order summary (sticky, order-1 on mobile) */}
-            <div className="order-1 lg:order-2 lg:sticky lg:top-28 lg:h-fit">
-              <OrderSummaryPanel />
-            </div>
-
           </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          {isIndia ? (
+            /* INDIA CHECKOUT LAYOUT (Two-column with Shiprocket flow) */
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 lg:gap-10 items-start">
+              {/* LEFT — Info / Form */}
+              <div className="order-2 lg:order-1 space-y-5">
+                {/* India Secure checkout header */}
+                <div className="bg-white rounded-2xl border border-[#e8e8e8] shadow-[0_2px_16px_rgba(0,0,0,0.04)] p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center flex-shrink-0">
+                      <ShieldCheck className="w-5 h-5 text-foreground" strokeWidth={1.8} />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-bold tracking-[0.06em] text-foreground">Secure Checkout</h2>
+                      <p className="text-[11px] text-muted-foreground font-light mt-0.5">
+                        Complete your order with your preferred payment method.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment icons strip */}
+                <IndiaPaymentTrustStrip />
+              </div>
+
+              {/* RIGHT — India Order summary & CTA */}
+              <div className="order-1 lg:order-2 lg:sticky lg:top-28 lg:h-fit space-y-5">
+                {/* Order items card */}
+                <div className="bg-white rounded-2xl border border-[#e8e8e8] shadow-[0_2px_16px_rgba(0,0,0,0.04)] overflow-hidden">
+                  <div className="px-5 pt-5 pb-3 border-b border-[#f0f0f0]">
+                    <h2 className="text-[11px] font-bold tracking-[0.14em] uppercase text-foreground">
+                      Order Summary
+                    </h2>
+                  </div>
+
+                  {/* Items list */}
+                  <div className="px-5 py-4 space-y-4 max-h-[260px] overflow-y-auto scrollbar-none">
+                    {items.map((item) => {
+                      const isFreeScalp5 = isIndia && totalItemCount >= 3 && hasScalp5Already && (
+                        (item.name || "").toLowerCase().includes("scalp") ||
+                        (item.productId || "").toLowerCase().includes("scalp") ||
+                        (item.name || "").toLowerCase().includes("dandruff")
+                      );
+
+                      return (
+                        <div key={item.productId} className="flex gap-3.5 items-center">
+                          <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#f5f5f5] border border-[#ebebeb] flex-shrink-0 relative">
+                            <img src={getItemImage(item)} alt={item.name} className="w-full h-full object-cover" />
+                            <span className="absolute -top-1.5 -right-1.5 bg-foreground text-background text-[9px] w-5 h-5 flex items-center justify-center font-bold rounded-full">
+                              {item.quantity}
+                            </span>
+                            {isFreeScalp5 && (
+                              <span className="absolute bottom-1 left-1 bg-emerald-600 text-white text-[7px] font-bold tracking-wider px-1 py-0.5 rounded shadow-xs uppercase">
+                                FREE
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="text-xs font-semibold text-foreground leading-snug truncate">{item.name}</p>
+                              {isFreeScalp5 && (
+                                <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                  <Gift className="w-2.5 h-2.5 text-emerald-600" /> Free Gift
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                              {isFreeScalp5 && item.quantity === 1 ? (
+                                <span className="text-emerald-700 font-bold">🎁 FREE</span>
+                              ) : isFreeScalp5 && item.quantity > 1 ? (
+                                <span>
+                                  <span className="text-emerald-700 font-bold">1 × FREE</span> + {item.quantity - 1} × {formatVal(item.price)}
+                                </span>
+                              ) : (
+                                formatVal(item.price * item.quantity)
+                              )}
+                            </p>
+                            <p className="text-[9px] text-emerald-600 font-light mt-0.5 tracking-wide">
+                              Inclusive of all taxes
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Recommendations */}
+                  {showScalp5Rec && (
+                    <div className="px-4 pb-4">
+                      <ProductRecommendationCard
+                        image={SCALP5_CONFIG.image}
+                        name={SCALP5_CONFIG.name}
+                        subtitle="Complete your routine with anti-dandruff care."
+                        price={`₹${scalp5PriceInr.toLocaleString("en-IN")}`}
+                        label="Complete Your Scalp Care"
+                        onAdd={handleAddScalp5}
+                      />
+                    </div>
+                  )}
+                  {showFollicle8Rec && (
+                    <div className="px-4 pb-4">
+                      <ProductRecommendationCard
+                        image={FOLLICLE8_CONFIG.image}
+                        name={FOLLICLE8_CONFIG.name}
+                        subtitle="Add hair growth serum to complete your routine."
+                        price={`₹${follicle8PriceInr.toLocaleString("en-IN")}`}
+                        label="Pair It With Hair Growth"
+                        onAdd={handleAddFollicle8}
+                      />
+                    </div>
+                  )}
+
+                  {/* Price breakdown */}
+                  <div className="px-5 py-4 border-t border-[#f0f0f0] space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground font-light">Subtotal</span>
+                      <span className="font-mono font-medium">{formatVal(total)}</span>
+                    </div>
+                    {appliedCoupon && (
+                      <div className="flex justify-between text-xs text-emerald-600">
+                        <span>Discount ({appliedCoupon.discount_percentage}%)</span>
+                        <span className="font-mono">-{formatVal(discountAmount)}</span>
+                      </div>
+                    )}
+                    {taxAmount > 0 && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground font-light">Tax ({settings?.tax_percentage}%)</span>
+                        <span className="font-mono">{formatVal(taxAmount)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground font-light">Shipping</span>
+                      <span className="font-mono text-emerald-600 font-semibold">Free</span>
+                    </div>
+                    <div className="flex justify-between items-end pt-3 border-t border-[#f0f0f0]">
+                      <span className="text-sm font-semibold tracking-[0.04em] text-foreground">Total Due</span>
+                      <div className="text-right">
+                        <span className="block text-lg font-bold font-mono text-foreground">{formatVal(grandTotal)}</span>
+                        <span className="text-[10px] text-emerald-600 font-light tracking-wide">Inclusive of all taxes</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {settings && (
+                    <div className="px-5 py-3 bg-[#fafafa] border-t border-[#f0f0f0] flex items-center gap-2">
+                      <Truck className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                      <p className="text-[10px] text-muted-foreground font-light">
+                        Estimated delivery: <span className="font-medium text-foreground">{settings.delivery_time}</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* India qualified BUY 2 GET 1 FREE reminder card */}
+                {isIndia && totalItemCount >= 3 && hasScalp5Already && (
+                  <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-[#f5fbf7] p-4 shadow-xs">
+                    <div className="absolute inset-y-0 left-0 w-1.5 bg-emerald-500" />
+                    <div className="pl-2 flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Gift className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1 flex-wrap">
+                          <span className="text-xs font-bold text-neutral-900 uppercase tracking-wide">
+                            🎁 BUY 2, GET 1 FREE
+                          </span>
+                          <span className="text-[9px] font-extrabold tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full uppercase">
+                            QUALIFIED
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs font-semibold text-neutral-800 leading-snug">
+                          Your order qualifies for 1 FREE Scalp-5 Anti Dandruff Serum.
+                        </p>
+                        <p className="mt-1 text-[11px] text-emerald-700 font-medium">
+                          Offer applied at final checkout
+                        </p>
+                        <p className="mt-1.5 text-[9px] text-neutral-400 font-light">
+                          Offer cannot be combined with other promotions.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* India CTA Button in right column */}
+                <div>
+                  <Button
+                    type="button"
+                    onClick={(e) => handleShiprocketCheckout(e)}
+                    disabled={placing}
+                    className="w-full h-14 rounded-xl bg-foreground text-background hover:bg-foreground/90 text-sm font-bold tracking-[0.1em] uppercase shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-all hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 active:translate-y-0"
+                  >
+                    {placing ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin" />
+                        Loading...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Lock className="w-4 h-4" />
+                        Continue to Secure Checkout
+                      </span>
+                    )}
+                  </Button>
+                  <p className="flex items-center justify-center gap-1.5 mt-3 text-[10px] text-muted-foreground/70 tracking-widest uppercase">
+                    <Lock className="w-3 h-3" /> SSL Secured Checkout
+                  </p>
+                </div>
+
+                {/* Partial COD Available badge — just below CTA for India */}
+                <div className="pt-0.5">
+                  <PartialCodBadge />
+                </div>
+
+                {/* India Offer cards */}
+                <IndiaOfferCards onAddSerum={handleAddAuSerum} onAddScalp5={handleAddScalp5} totalItems={totalItemCount} hasScalp5={hasScalp5Already} />
+
+                {/* Trust indicators grid */}
+                <TrustIndicators isIndia={true} />
+              </div>
+            </div>
+          ) : (
+            /* AUSTRALIA CHECKOUT LAYOUT (Clean, focused 3-step experience centered and broader on laptop) */
+            <div className="max-w-3xl mx-auto space-y-6">
+
+              {/* ─────────────────────────────────────────────────────────── */}
+              {/* STEP 1: SHIPPING DETAILS                                   */}
+              {/* ─────────────────────────────────────────────────────────── */}
+              <div className="bg-white rounded-2xl border border-[#e8e8e8] shadow-[0_2px_16px_rgba(0,0,0,0.04)] overflow-hidden transition-all">
+                {auStep === 1 ? (
+                  /* ACTIVE STEP 1 */
+                  <div className="p-5 sm:p-7 space-y-5">
+                    <div className="flex items-start justify-between pb-3 border-b border-[#f0f0f0]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-extrabold flex-shrink-0">
+                          1
+                        </div>
+                        <div>
+                          <h2 className="text-sm font-bold tracking-[0.08em] uppercase text-foreground">
+                            Shipping Details
+                          </h2>
+                          <p className="text-[11px] text-muted-foreground font-light mt-0.5">
+                            Where should we deliver your order?
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-lg">🇦🇺</span>
+                    </div>
+
+                    {/* Email field if not already tied to account */}
+                    {!user?.email && (
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          value={form.email}
+                          onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                          placeholder="you@example.com"
+                          required
+                          className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
+                        />
+                      </div>
+                    )}
+
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
+                            First Name *
+                          </label>
+                          <input
+                            value={form.firstName}
+                            onChange={(e) => setForm((prev) => ({ ...prev, firstName: e.target.value }))}
+                            placeholder="First name"
+                            required
+                            className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
+                            Last Name *
+                          </label>
+                          <input
+                            value={form.lastName}
+                            onChange={(e) => setForm((prev) => ({ ...prev, lastName: e.target.value }))}
+                            placeholder="Last name"
+                            required
+                            className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
+                          Mobile Number *
+                        </label>
+                        <input
+                          value={form.phone}
+                          onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+                          placeholder="04XX XXX XXX"
+                          type="tel"
+                          required
+                          className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
+                        />
+                      </div>
+
+                      <div className="pt-2 border-t border-[#f0f0f0] space-y-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
+                            Street Address *
+                          </label>
+                          <input
+                            value={form.address}
+                            onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))}
+                            placeholder="123 Example Street"
+                            required
+                            className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
+                            Apartment, Suite, Unit (optional)
+                          </label>
+                          <input
+                            value={form.address_line2}
+                            onChange={(e) => setForm((prev) => ({ ...prev, address_line2: e.target.value }))}
+                            placeholder="Apt 4B"
+                            className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
+                              Suburb / City *
+                            </label>
+                            <input
+                              value={form.city}
+                              onChange={(e) => setForm((prev) => ({ ...prev, city: e.target.value }))}
+                              placeholder="Sydney"
+                              required
+                              className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
+                              Postcode *
+                            </label>
+                            <input
+                              value={form.postcode}
+                              onChange={(e) => setForm((prev) => ({ ...prev, postcode: e.target.value }))}
+                              placeholder="2000"
+                              required
+                              maxLength={4}
+                              inputMode="numeric"
+                              pattern="\d{4}"
+                              className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
+                            State / Territory *
+                          </label>
+                          <select
+                            value={form.state}
+                            onChange={(e) => setForm((prev) => ({ ...prev, state: e.target.value }))}
+                            required
+                            className="w-full h-11 px-4 text-sm bg-transparent border border-[#e0e0e0] rounded-lg outline-none focus:border-foreground transition-colors cursor-pointer"
+                          >
+                            {AUSTRALIA_STATES.map((s) => (
+                              <option key={s} value={s}>
+                                {s}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] font-semibold tracking-[0.1em] uppercase text-muted-foreground">
+                            Country
+                          </p>
+                          <div className="w-full h-11 px-4 text-sm bg-[#fafafa] border border-[#e0e0e0] rounded-lg flex items-center text-muted-foreground cursor-not-allowed">
+                            🇦🇺 Australia
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Step 1 Action Button */}
+                    <div className="pt-3">
+                      <Button
+                        type="button"
+                        onClick={validateAndProceedToReview}
+                        className="w-full h-14 rounded-xl bg-foreground text-background hover:bg-foreground/90 text-sm font-bold tracking-[0.1em] uppercase shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition-all hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 active:translate-y-0"
+                      >
+                        <span className="flex items-center gap-2">
+                          Continue to Order Review <ChevronRight className="w-4 h-4" />
+                        </span>
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  /* COMPLETED STEP 1 (COLLAPSED SUMMARY) */
+                  <div className="p-5 sm:p-6 flex items-center justify-between gap-4">
+                    <div className="flex items-start gap-3.5 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check className="w-4 h-4 stroke-[2.5]" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">
+                            1  Shipping Details
+                          </h3>
+                          <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded uppercase">
+                            Saved
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm font-semibold text-foreground mt-1 truncate">
+                          {form.firstName} {form.lastName} · {form.phone}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {form.address}{form.address_line2 ? `, ${form.address_line2}` : ""}, {form.city} {form.state} {form.postcode}, Australia
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAuStep(1)}
+                      className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-[#e0e0e0] text-xs font-bold uppercase tracking-wider text-foreground hover:bg-[#fafafa] transition-colors active:scale-95"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" /> Edit
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* ─────────────────────────────────────────────────────────── */}
+              {/* STEP 2: ORDER REVIEW                                       */}
+              {/* ─────────────────────────────────────────────────────────── */}
+              <div className="bg-white rounded-2xl border border-[#e8e8e8] shadow-[0_2px_16px_rgba(0,0,0,0.04)] overflow-hidden transition-all">
+                {auStep === 1 ? (
+                  /* UPCOMING STEP 2 */
+                  <div className="p-5 sm:p-6 flex items-center justify-between opacity-50">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs font-bold flex-shrink-0">
+                        2
+                      </div>
+                      <div>
+                        <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                          2  Order Review
+                        </h3>
+                        <p className="text-xs text-muted-foreground/80 font-light">
+                          Review items, bundle savings & delivery
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground uppercase font-medium tracking-wider">Step 2</span>
+                  </div>
+                ) : auStep === 2 ? (
+                  /* ACTIVE STEP 2 */
+                  <div className="p-5 sm:p-7 space-y-6">
+                    <div className="flex items-start justify-between pb-3 border-b border-[#f0f0f0]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-extrabold flex-shrink-0">
+                          2
+                        </div>
+                        <div>
+                          <h2 className="text-sm font-bold tracking-[0.08em] uppercase text-foreground">
+                            Order Review
+                          </h2>
+                          <p className="text-[11px] text-muted-foreground font-light mt-0.5">
+                            Please review your items and totals before payment.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Items List */}
+                    <div className="space-y-3 divide-y divide-[#f5f5f5]">
+                      {items.map((item) => (
+                        <div key={item.productId} className="pt-3 first:pt-0 flex items-center gap-4">
+                          <div className="w-16 h-16 rounded-xl overflow-hidden bg-[#f5f5f5] border border-[#ebebeb] flex-shrink-0 relative">
+                            <img src={getItemImage(item)} alt={item.name} className="w-full h-full object-cover" />
+                            <span className="absolute -top-1.5 -right-1.5 bg-foreground text-background text-[9px] w-5 h-5 flex items-center justify-center font-bold rounded-full">
+                              {item.quantity}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs sm:text-sm font-semibold text-foreground leading-snug truncate">{item.name}</p>
+                            <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                              {item.quantity > 1 ? `${item.quantity} × ` : ""}{formatVal(item.price * item.quantity)}
+                            </p>
+                            <p className="text-[9px] text-emerald-600 font-light tracking-wide">GST included</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Bundle upsell / recommendations if single bottle */}
+                    {showScalp5Rec && (
+                      <ProductRecommendationCard
+                        image={SCALP5_CONFIG.image}
+                        name={SCALP5_CONFIG.name}
+                        subtitle="Add anti-dandruff care to unlock 2 for A$69 bundle."
+                        price={`A$${scalp5PriceAud.toFixed(2)}`}
+                        label="Unlock Bundle Deal"
+                        onAdd={handleAddScalp5}
+                      />
+                    )}
+                    {showFollicle8Rec && (
+                      <ProductRecommendationCard
+                        image={FOLLICLE8_CONFIG.image}
+                        name={FOLLICLE8_CONFIG.name}
+                        subtitle="Add hair growth serum to unlock 2 for A$69 bundle."
+                        price={`A$${follicle8PriceAud.toFixed(2)}`}
+                        label="Unlock Bundle Deal"
+                        onAdd={handleAddFollicle8}
+                      />
+                    )}
+
+                    {/* Australia Offer / Bundle Cards */}
+                    <AustraliaOfferCards totalItems={totalItemCount} onAddOne={handleAddAuSerum} />
+
+                    {/* Compact Price Breakdown */}
+                    <div className="p-4 sm:p-5 rounded-xl bg-[#fafafa] border border-[#e8e8e8] space-y-2.5">
+                      <div className="flex justify-between text-xs sm:text-sm">
+                        <span className="text-muted-foreground font-light">Subtotal</span>
+                        <span className="font-mono font-medium">{formatVal(bundleDiscount > 0 ? rawTotal : total)}</span>
+                      </div>
+                      {bundleDiscount > 0 && (
+                        <div className="flex justify-between text-xs sm:text-sm text-emerald-600 font-medium">
+                          <span className="flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5" />
+                            Bundle & Save ({totalItemCount >= 3 ? "3 Serums for A$100" : "Bundle Deal"})
+                          </span>
+                          <span className="font-mono">-{formatVal(bundleDiscount)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-xs sm:text-sm">
+                        <span className="text-muted-foreground font-light">Shipping (Australia-Wide)</span>
+                        <span className="font-mono">
+                          {shippingAmount === 0 ? (
+                            <span className="text-emerald-600 font-semibold">Free</span>
+                          ) : (
+                            <span className="font-medium text-foreground">{formatVal(shippingAmount)}</span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-end pt-3 border-t border-[#ebebeb]">
+                        <span className="text-sm font-semibold tracking-[0.04em] text-foreground">Total Due</span>
+                        <div className="text-right">
+                          <span className="block text-xl font-bold font-mono text-foreground">{formatVal(grandTotal)}</span>
+                          <span className="text-[10px] text-emerald-600 font-light tracking-wide">Inclusive of GST</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="space-y-3 pt-2">
+                      <Button
+                        type="button"
+                        onClick={proceedToPayment}
+                        className="w-full h-14 rounded-xl bg-foreground text-background hover:bg-foreground/90 text-sm font-bold tracking-[0.1em] uppercase shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-all hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 active:translate-y-0"
+                      >
+                        <span className="flex items-center gap-2">
+                          Continue to Payment — {formatVal(grandTotal)} <ChevronRight className="w-4 h-4" />
+                        </span>
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => setAuStep(1)}
+                        className="w-full py-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1.5 uppercase tracking-wider"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" /> Edit Shipping Details
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* COMPLETED STEP 2 (COLLAPSED SUMMARY) */
+                  <div className="p-5 sm:p-6 flex items-center justify-between gap-4">
+                    <div className="flex items-start gap-3.5 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check className="w-4 h-4 stroke-[2.5]" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">
+                            2  Order Review
+                          </h3>
+                          <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded uppercase">
+                            Verified
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm font-semibold text-foreground mt-1">
+                          {totalItemCount} {totalItemCount === 1 ? "item" : "items"} · Total: {formatVal(grandTotal)}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAuStep(2)}
+                      className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-[#e0e0e0] text-xs font-bold uppercase tracking-wider text-foreground hover:bg-[#fafafa] transition-colors active:scale-95"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" /> Edit
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* ─────────────────────────────────────────────────────────── */}
+              {/* STEP 3: PAYMENT                                            */}
+              {/* ─────────────────────────────────────────────────────────── */}
+              <div className="bg-white rounded-2xl border border-[#e8e8e8] shadow-[0_2px_16px_rgba(0,0,0,0.04)] overflow-hidden transition-all">
+                {auStep < 3 ? (
+                  /* UPCOMING STEP 3 */
+                  <div className="p-5 sm:p-6 flex items-center justify-between opacity-50">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs font-bold flex-shrink-0">
+                        3
+                      </div>
+                      <div>
+                        <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                          3  Payment
+                        </h3>
+                        <p className="text-xs text-muted-foreground/80 font-light">
+                          Secure encrypted payment with Stripe
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground uppercase font-medium tracking-wider">Step 3</span>
+                  </div>
+                ) : (
+                  /* ACTIVE STEP 3 */
+                  <div className="p-5 sm:p-7 space-y-6">
+                    <div className="flex items-start justify-between pb-3 border-b border-[#f0f0f0]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-extrabold flex-shrink-0">
+                          3
+                        </div>
+                        <div>
+                          <h2 className="text-sm font-bold tracking-[0.08em] uppercase text-foreground">
+                            Payment
+                          </h2>
+                          <p className="text-[11px] text-muted-foreground font-light mt-0.5">
+                            Secure payment with Stripe
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment Cards & Logos */}
+                    <div className="rounded-xl border border-[#e8e8e8] bg-[#fafafa] p-5">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3.5">
+                        <Lock className="w-3.5 h-3.5 flex-shrink-0 text-emerald-600" />
+                        <span className="tracking-[0.05em] uppercase font-medium text-foreground">
+                          Guaranteed 256-Bit SSL Encrypted Checkout
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        {/* Apple Pay */}
+                        <div title="Apple Pay" className="h-9 w-16 flex items-center justify-center rounded-lg border border-[#eaeaea] bg-white overflow-hidden p-1.5">
+                          <img src={applepaySlug} alt="Apple Pay" className="max-h-full max-w-full object-contain" />
+                        </div>
+                        {/* Visa */}
+                        <div title="Visa" className="h-9 w-14 flex items-center justify-center rounded-lg border border-[#eaeaea] bg-white overflow-hidden p-1.5">
+                          <img src={visaSvg} alt="Visa" className="max-h-full max-w-full object-contain" />
+                        </div>
+                        {/* Cards / Mastercard */}
+                        <div title="Cards" className="h-9 w-14 flex items-center justify-center rounded-lg border border-[#eaeaea] bg-white overflow-hidden p-1.5">
+                          <img src={cardSvg} alt="Cards" className="max-h-full max-w-full object-contain" />
+                        </div>
+                        {/* Amex text badge */}
+                        <div title="American Express" className="h-9 px-2.5 flex items-center justify-center rounded-lg border border-[#eaeaea] bg-white text-[11px] font-extrabold text-[#016FD0] tracking-widest select-none">
+                          AMEX
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground mt-3.5 font-light">
+                        You will be redirected to complete your payment securely via Stripe.
+                      </p>
+                    </div>
+
+                    {/* Final summary highlight */}
+                    <div className="p-4 sm:p-5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] font-bold tracking-wider uppercase text-emerald-800">
+                          Amount to Pay
+                        </p>
+                        <p className="text-xs text-muted-foreground font-light">
+                          Australia Delivery · GST Included
+                        </p>
+                      </div>
+                      <span className="text-2xl font-mono font-extrabold text-foreground">
+                        {formatVal(grandTotal)}
+                      </span>
+                    </div>
+
+                    {/* Action CTA */}
+                    <div className="space-y-3 pt-2">
+                      <Button
+                        type="button"
+                        onClick={handlePaySecurely}
+                        disabled={placing}
+                        className="w-full h-14 rounded-xl bg-foreground text-background hover:bg-foreground/90 text-sm font-bold tracking-[0.1em] uppercase shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-all hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 active:translate-y-0"
+                      >
+                        {placing ? (
+                          <span className="flex items-center gap-2">
+                            <span className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin" />
+                            Connecting to Stripe...
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-2">
+                            <Lock className="w-4 h-4" />
+                            Pay Securely — {formatVal(grandTotal)}
+                          </span>
+                        )}
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => setAuStep(2)}
+                        disabled={placing}
+                        className="w-full py-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1.5 uppercase tracking-wider"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" /> Back to Order Review
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Australia Trust Indicators Grid */}
+              <TrustIndicators isIndia={false} />
+
+            </div>
+          )}
         </form>
       </main>
       <Footer />
