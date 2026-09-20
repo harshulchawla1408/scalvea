@@ -198,30 +198,19 @@ Deno.serve(async (req) => {
     }
 
     const totalDiscountCents = bundleDiscountCents + promoDiscountCents;
-    const subtotalAfterDiscountCents = targetSubtotalCents - promoDiscountCents;
 
-    // ── Build Stripe Line Items summing EXACTLY to subtotalAfterDiscountCents ──
-    const N = allUnits.length;
-    const basePerUnit = Math.floor(subtotalAfterDiscountCents / N);
-    const remainder = subtotalAfterDiscountCents % N;
-
-    const unitPrices = allUnits.map((_, idx) => (idx < remainder ? basePerUnit + 1 : basePerUnit));
-
-    // Group identical (productId, unitPrice) to create clean Stripe line items:
+    // ── Build Stripe Line Items using ORIGINAL EXACT PRICES ──
+    // Group identical (productId) to create clean Stripe line items:
     const groupedMap = new Map<string, { name: string; image?: string; unitAmount: number; quantity: number }>();
 
-    for (let i = 0; i < N; i++) {
-      const unit = allUnits[i];
-      const price = unitPrices[i];
+    for (const unit of allUnits) {
+      const price = Math.round(unit.priceAud * 100);
       const key = `${unit.productId}_${price}`;
       if (groupedMap.has(key)) {
         groupedMap.get(key)!.quantity += 1;
       } else {
-        const displayName = bundleDiscountCents > 0
-          ? `${unit.name} (Bundle Offer)`
-          : unit.name;
         groupedMap.set(key, {
-          name: displayName,
+          name: unit.name,
           image: unit.image,
           unitAmount: price,
           quantity: 1,
@@ -257,6 +246,7 @@ Deno.serve(async (req) => {
       deliveryMaxDays = 4;
     } else {
       // Free shipping for A$60+ (6000 cents)
+      const subtotalAfterDiscountCents = rawSubtotalCents - totalDiscountCents;
       if (subtotalAfterDiscountCents >= 6000) {
         shippingCents = 0;
         shippingDisplayName = "Free Standard Shipping";
@@ -264,10 +254,11 @@ Deno.serve(async (req) => {
     }
 
     // ── Step 8: Calculate final totals ───────────────────────────────────
+    const subtotalAfterDiscountCents = rawSubtotalCents - totalDiscountCents;
     const discountAmount   = totalDiscountCents / 100;
     const shippingAmount   = shippingCents / 100;
     const totalAmount      = (subtotalAfterDiscountCents + shippingCents) / 100;
-    const subtotalVal      = targetSubtotalCents / 100;
+    const subtotalVal      = rawSubtotalCents / 100;
     const deliveryEstimate = shipping_type === "express" ? "2-4 business days" : "5-7 business days";
 
     console.log(`Step 8: subtotal=${subtotalVal} discount=${discountAmount} shipping=${shippingAmount} total=${totalAmount}`);
@@ -351,12 +342,29 @@ Deno.serve(async (req) => {
     // Build cart_items string for metadata: "productId:qty,productId:qty,..."
     const cartItemsMeta = items.map((i: any) => `${i.productId}:${i.quantity}`).join(",");
 
+    let sessionDiscounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined;
+    if (totalDiscountCents > 0) {
+      console.log(`Creating dynamic Stripe coupon for ${totalDiscountCents} cents...`);
+      try {
+        const ephemeralCoupon = await stripe.coupons.create({
+          amount_off: totalDiscountCents,
+          currency: "aud",
+          duration: "once",
+          name: "Bundle & Promo Discount",
+        });
+        sessionDiscounts = [{ coupon: ephemeralCoupon.id }];
+      } catch (err: any) {
+        console.error("Failed to create Stripe coupon:", err.message);
+      }
+    }
+
     let session: Stripe.Checkout.Session;
     try {
       const sessionCreateParams: Stripe.Checkout.SessionCreateParams = {
         payment_method_types: ["card"],
         line_items: stripeLineItems,
         mode: "payment",
+        ...(sessionDiscounts ? { discounts: sessionDiscounts } : {}),
         ...(email ? { customer_email: email } : {}),
         phone_number_collection: { enabled: true },
         shipping_options: [
