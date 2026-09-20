@@ -7,7 +7,7 @@ const PaymentPolicy = () => {
   useSEO({
     title: "Payment Policy",
     description: "Learn about Scalvea's secure payment methods, billing, tax regulations, and failed transaction resolution guidelines for India and Australia.",
-    keywords: "Scalvea payment methods, UPI, credit cards, Stripe, secure checkout, billing support",
+    canonical: "https://scalvea.com/payment-policy",
   });
 
   return (

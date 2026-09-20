@@ -27,7 +27,7 @@ export const BlogCard = ({ post, index = 0 }: { post: BlogPost; index?: number }
       </Link>
       
       <div className="p-6 flex flex-col flex-1">
-        <div className="flex items-center gap-3 text-[10px] text-neutral-400 uppercase tracking-wider font-medium mb-3">
+        <div className="flex items-center gap-3 text-[10px] text-neutral-500 uppercase tracking-wider font-medium mb-3">
           <span>{format(new Date(post.meta.date), "MMM d, yyyy")}</span>
           <span className="w-1 h-1 rounded-full bg-neutral-300" />
           <span>{post.meta.readingTime}</span>

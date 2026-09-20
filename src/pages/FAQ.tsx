@@ -1,5 +1,6 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { Link } from "react-router-dom";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useSEO } from "@/hooks/useSEO";
 
@@ -213,9 +214,9 @@ const FAQ = () => {
           <div className="mt-16 border border-border p-8 text-center">
             <h3 className="text-sm font-semibold tracking-[0.1em] uppercase mb-2">Still have questions?</h3>
             <p className="text-sm text-muted-foreground mb-4">We're here to help. Reach out and we'll get back to you within 24 hours.</p>
-            <a href="/contact" className="inline-block text-sm font-medium tracking-[0.08em] uppercase border border-foreground px-8 py-3.5 hover:bg-foreground hover:text-background transition-colors">
+            <Link to="/contact" className="inline-block text-sm font-medium tracking-[0.08em] uppercase border border-foreground px-8 py-3.5 hover:bg-foreground hover:text-background transition-colors">
               Contact Us
-            </a>
+            </Link>
           </div>
         </div>
       </main>

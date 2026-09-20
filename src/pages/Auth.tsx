@@ -102,7 +102,7 @@ const LuxuryInput = ({
       />
       <label
         htmlFor={id}
-        className="absolute left-4 top-[17px] pointer-events-none transition-all duration-300 uppercase tracking-[0.12em] text-[9px] text-neutral-400 peer-placeholder-shown:text-[10px] peer-placeholder-shown:top-[17px] peer-focus:top-1.5 peer-focus:text-[8px] peer-focus:text-neutral-500 peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-[8px] peer-[:not(:placeholder-shown)]:text-neutral-500"
+        className="absolute left-4 top-[17px] pointer-events-none transition-all duration-300 uppercase tracking-[0.12em] text-[9px] text-neutral-500 peer-placeholder-shown:text-[10px] peer-placeholder-shown:top-[17px] peer-focus:top-1.5 peer-focus:text-[8px] peer-focus:text-neutral-500 peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-[8px] peer-[:not(:placeholder-shown)]:text-neutral-500"
       >
         {label}
       </label>
@@ -111,7 +111,7 @@ const LuxuryInput = ({
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 transition-colors"
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-700 transition-colors"
         >
           {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
         </button>
@@ -406,7 +406,7 @@ const Auth = () => {
           </div>
 
           {/* Bottom Captions */}
-          <div className="text-[9px] tracking-[0.2em] uppercase text-neutral-400 font-light flex justify-between items-center border-t border-white/10 pt-6">
+          <div className="text-[9px] tracking-[0.2em] uppercase text-neutral-500 font-light flex justify-between items-center border-t border-white/10 pt-6">
             <span>Australia + India</span>
             <span>Est. 2026</span>
           </div>
@@ -433,12 +433,12 @@ const Auth = () => {
 
         {/* TOP HEADER: Centered Logo & Currency indicator */}
         <div className="w-full flex items-center justify-between z-10 relative">
-          <Link to="/" className="text-neutral-400 hover:text-neutral-800 transition-colors">
+          <Link to="/" className="text-neutral-500 hover:text-neutral-800 transition-colors">
             <ArrowLeft className="h-4 w-4" />
           </Link>
 
           {/* Subtle Region display */}
-          <div className="text-[9px] tracking-[0.2em] text-neutral-400 font-mono select-none px-2.5 py-1 border border-neutral-200 bg-neutral-50/50 backdrop-blur-md">
+          <div className="text-[9px] tracking-[0.2em] text-neutral-500 font-mono select-none px-2.5 py-1 border border-neutral-200 bg-neutral-50/50 backdrop-blur-md">
             {displayCurrency}
           </div>
         </div>
@@ -498,7 +498,7 @@ const Auth = () => {
                       <h2 className="text-xl font-light tracking-[0.06em] text-neutral-800">
                         Welcome Back
                       </h2>
-                      <p className="text-[10px] uppercase tracking-[0.1em] text-neutral-400 font-light">
+                      <p className="text-[10px] uppercase tracking-[0.1em] text-neutral-500 font-light">
                         Continue your hair growth journey.
                       </p>
                     </div>
@@ -520,7 +520,7 @@ const Auth = () => {
 
                       <div className="flex items-center justify-center gap-4 py-1 w-full select-none">
                         <div className="h-[1px] bg-neutral-200/80 flex-1" />
-                        <span className="text-[10px] sm:text-xs tracking-[0.1em] uppercase text-neutral-400 font-normal whitespace-nowrap">
+                        <span className="text-[10px] sm:text-xs tracking-[0.1em] uppercase text-neutral-500 font-normal whitespace-nowrap">
                           or continue with email
                         </span>
                         <div className="h-[1px] bg-neutral-200/80 flex-1" />
@@ -607,7 +607,7 @@ const Auth = () => {
                       <h2 className="text-xl font-light tracking-[0.06em] text-neutral-800">
                         Create Your Account
                       </h2>
-                      <p className="text-[10px] uppercase tracking-[0.1em] text-neutral-400 font-light">
+                      <p className="text-[10px] uppercase tracking-[0.1em] text-neutral-500 font-light">
                         Join the SCALVEA community.
                       </p>
                     </div>
@@ -629,7 +629,7 @@ const Auth = () => {
 
                       <div className="flex items-center justify-center gap-4 py-1 w-full select-none">
                         <div className="h-[1px] bg-neutral-200/80 flex-1" />
-                        <span className="text-[10px] sm:text-xs tracking-[0.1em] uppercase text-neutral-400 font-normal whitespace-nowrap">
+                        <span className="text-[10px] sm:text-xs tracking-[0.1em] uppercase text-neutral-500 font-normal whitespace-nowrap">
                           or continue with email
                         </span>
                         <div className="h-[1px] bg-neutral-200/80 flex-1" />
@@ -713,7 +713,7 @@ const Auth = () => {
                       <h2 className="text-xl font-light tracking-[0.06em] text-neutral-800">
                         Recover Password
                       </h2>
-                      <p className="text-[10px] uppercase tracking-[0.1em] text-neutral-400 font-light">
+                      <p className="text-[10px] uppercase tracking-[0.1em] text-neutral-500 font-light">
                         Enter your email to receive a recovery link.
                       </p>
                     </div>
@@ -765,7 +765,7 @@ const Auth = () => {
                       <h2 className="text-xl font-light tracking-[0.06em] text-neutral-800">
                         Reset Password
                       </h2>
-                      <p className="text-[10px] uppercase tracking-[0.1em] text-neutral-400 font-light">
+                      <p className="text-[10px] uppercase tracking-[0.1em] text-neutral-500 font-light">
                         Create a new secure password for your account.
                       </p>
                     </div>
@@ -812,7 +812,7 @@ const Auth = () => {
 
         {/* BOTTOM FOOTER: Legal terms */}
         <div className="w-full text-center z-10 relative pt-8 md:pt-0 select-none">
-          <div className="flex justify-center gap-4 text-xs tracking-[0.15em] text-neutral-400 uppercase font-normal">
+          <div className="flex justify-center gap-4 text-xs tracking-[0.15em] text-neutral-500 uppercase font-normal">
             <Link to="/privacy-policy" className="hover:text-neutral-700 transition-colors">Privacy</Link>
             <span>·</span>
             <Link to="/terms-of-service" className="hover:text-neutral-700 transition-colors">Terms</Link>

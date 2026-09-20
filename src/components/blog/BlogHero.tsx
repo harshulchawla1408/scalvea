@@ -10,7 +10,7 @@ const BlogHero = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-body font-light block mb-4"
+          className="text-[9px] tracking-[0.3em] uppercase text-neutral-500 font-body font-light block mb-4"
         >
           READ & LEARN
         </motion.span>
@@ -26,7 +26,7 @@ const BlogHero = () => {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-sm md:text-base text-neutral-400 font-body font-light leading-relaxed max-w-lg mx-auto"
+          className="text-sm md:text-base text-neutral-500 font-body font-light leading-relaxed max-w-lg mx-auto"
         >
           Science-backed hair care education, ingredient guides, scalp health articles, routines and research.
         </motion.p>

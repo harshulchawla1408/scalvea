@@ -57,7 +57,7 @@ const fadeUp = {
 // ─── Component ────────────────────────────────────────────────────────────────
 const About = () => {
   useSEO({
-    title: "Our Story – Science-Backed Hair Care Brand",
+    title: "About Scalvea | Science-Backed Hair Care",
     description: "Scalvea was built on one belief: that hair care should be honest, transparent, and clinically grounded. Read the story behind the brand.",
     canonical: "https://scalvea.com/about",
     schema: {
@@ -135,7 +135,7 @@ const About = () => {
               transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
               className="mb-20 md:mb-28"
             >
-              <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-body font-light block mb-5">
+              <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-500 font-body font-light block mb-5">
                 THE FOUNDER'S STORY
               </span>
               <h1 className="text-3xl md:text-5xl lg:text-[56px] font-heading text-neutral-900 leading-tight tracking-tight max-w-xl mb-6">
@@ -160,7 +160,7 @@ const About = () => {
                 >
                   {/* Left — index + label */}
                   <div className="md:col-span-4 flex flex-row md:flex-col gap-4 md:gap-3 items-baseline md:items-start">
-                    <span className="text-[11px] md:text-xs font-mono text-neutral-400 font-medium shrink-0 select-none">
+                    <span className="text-[11px] md:text-xs font-mono text-neutral-500 font-medium shrink-0 select-none">
                       {block.index}
                     </span>
                     <span className="text-[9px] tracking-[0.22em] uppercase text-neutral-700 font-body font-semibold">
@@ -250,7 +250,7 @@ const About = () => {
               className="bg-white border border-neutral-100 rounded-[28px] px-8 md:px-16 py-14 md:py-20 text-center shadow-[0_8px_48px_rgba(0,0,0,0.05)]"
             >
               {/* Eyebrow */}
-              <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-body font-light block mb-5">
+              <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-500 font-body font-light block mb-5">
                 JOIN THE TEAM
               </span>
 
@@ -263,7 +263,7 @@ const About = () => {
               <p className="text-sm md:text-base text-neutral-600 font-body font-light leading-relaxed max-w-xl mx-auto mb-3">
                 Grow with a team passionate about building transparent, science-first hair care.
               </p>
-              <p className="text-xs md:text-sm text-neutral-400 font-body font-light leading-relaxed max-w-lg mx-auto mb-10">
+              <p className="text-xs md:text-sm text-neutral-500 font-body font-light leading-relaxed max-w-lg mx-auto mb-10">
                 We're always excited to connect with talented individuals who share our vision for thoughtful innovation and exceptional customer experiences.
               </p>
 

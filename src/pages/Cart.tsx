@@ -138,7 +138,7 @@ const Cart = () => {
                             <span>Offer unlocked — 1 Scalp-5 is FREE</span>
                           </div>
                           <p className="text-[11px] text-emerald-700 font-medium">
-                            Offer applied at final checkout
+                            ✓ ₹899 discount applied to your total
                           </p>
                         </div>
                       ) : totalSerumCount >= 3 && !hasScalp5 ? (
@@ -171,7 +171,7 @@ const Cart = () => {
                         </div>
                       )}
 
-                      <p className="text-[10px] text-neutral-400 font-light mt-2">
+                      <p className="text-[10px] text-neutral-500 font-light mt-2">
                         Offer cannot be combined with other promotions.
                       </p>
                     </div>
@@ -273,7 +273,7 @@ const Cart = () => {
                     <span>BUY 2, GET 1 FREE UNLOCKED</span>
                   </div>
                   <p className="text-[11px] text-emerald-700">1 Scalp-5 Anti Dandruff Serum FREE</p>
-                  <p className="text-[10px] text-emerald-600 font-medium">Offer applied at final checkout</p>
+                  <p className="text-[10px] text-emerald-600 font-medium">✓ ₹899 discount applied to your total</p>
                   <p className="text-[9px] text-muted-foreground/80 pt-0.5">Offer cannot be combined with other promotions.</p>
                 </div>
               )}
@@ -281,11 +281,14 @@ const Cart = () => {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-light">Subtotal</span>
-                  <span className="font-mono">{formatVal(bundleDiscount > 0 && !isIndia ? rawTotal : total)}</span>
+                  <span className="font-mono">{formatVal(bundleDiscount > 0 ? rawTotal : total)}</span>
                 </div>
-                {bundleDiscount > 0 && !isIndia && (
+                {bundleDiscount > 0 && (
                   <div className="flex justify-between text-emerald-600 font-medium">
-                    <span>Bundle & Save</span>
+                    <span className="flex items-center gap-1">
+                      <Gift className="w-3.5 h-3.5 text-emerald-600" />
+                      {isIndia ? "BUY 2, GET 1 FREE (1 Scalp-5 Free)" : "Bundle & Save"}
+                    </span>
                     <span className="font-mono">-{formatVal(bundleDiscount)}</span>
                   </div>
                 )}

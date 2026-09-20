@@ -114,9 +114,9 @@ const Footer = () => {
               onClick={() => toggleAccordion("shop")}
               className="w-full flex items-center justify-between lg:pointer-events-none text-left focus:outline-none"
             >
-              <h4 className="text-sm md:text-[14px] tracking-[0.16em] uppercase font-semibold text-white mb-0 lg:mb-5">
+              <div className="text-sm md:text-[14px] tracking-[0.16em] uppercase font-semibold text-white mb-0 lg:mb-5">
                 Shop
-              </h4>
+              </div>
               <span className="lg:hidden text-neutral-500">
                 {activeAccordion === "shop" ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
               </span>
@@ -136,9 +136,9 @@ const Footer = () => {
               onClick={() => toggleAccordion("company")}
               className="w-full flex items-center justify-between lg:pointer-events-none text-left focus:outline-none"
             >
-              <h4 className="text-sm md:text-[14px] tracking-[0.16em] uppercase font-semibold text-white mb-0 lg:mb-5">
+              <div className="text-sm md:text-[14px] tracking-[0.16em] uppercase font-semibold text-white mb-0 lg:mb-5">
                 Company
-              </h4>
+              </div>
               <span className="lg:hidden text-neutral-500">
                 {activeAccordion === "company" ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
               </span>
@@ -159,9 +159,9 @@ const Footer = () => {
               onClick={() => toggleAccordion("support")}
               className="w-full flex items-center justify-between lg:pointer-events-none text-left focus:outline-none"
             >
-              <h4 className="text-sm md:text-[14px] tracking-[0.16em] uppercase font-semibold text-white mb-0 lg:mb-5">
+              <div className="text-sm md:text-[14px] tracking-[0.16em] uppercase font-semibold text-white mb-0 lg:mb-5">
                 Support
-              </h4>
+              </div>
               <span className="lg:hidden text-neutral-500">
                 {activeAccordion === "support" ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
               </span>
@@ -182,9 +182,9 @@ const Footer = () => {
               onClick={() => toggleAccordion("locations")}
               className="w-full flex items-center justify-between lg:pointer-events-none text-left focus:outline-none"
             >
-              <h4 className="text-sm md:text-[14px] tracking-[0.16em] uppercase font-semibold text-white mb-0 lg:mb-5">
-                Locations
-              </h4>
+              <div className="text-sm md:text-[14px] tracking-[0.16em] uppercase font-semibold text-white mb-0 lg:mb-5">
+                Contact & Locations
+              </div>
               <span className="lg:hidden text-neutral-500">
                 {activeAccordion === "locations" ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
               </span>
@@ -192,18 +192,36 @@ const Footer = () => {
             <div className={`mt-4 lg:mt-0 ${activeAccordion === "locations" ? "block" : "hidden lg:block"}`}>
               <div className="space-y-5 text-sm text-neutral-400 font-light">
                 <div>
-                  <p className="text-neutral-200 font-semibold tracking-wider text-xs uppercase mb-1 flex items-center gap-1.5">
+                  <p className="text-neutral-200 font-semibold tracking-wider text-[11px] uppercase mb-1.5 flex items-center gap-1.5">
                     <img src="https://flagcdn.com/w40/au.png" alt="Australia" className="w-3.5 h-auto rounded-[1.5px] shadow-sm" />
-                    <span>Australia</span>
+                    <span>Australia (HQ)</span>
                   </p>
-                  <p className="leading-relaxed text-neutral-300 text-sm">Victoria</p>
+                  <address className="not-italic leading-relaxed text-neutral-400 text-[13px]">
+                    Little Collins St<br />Melbourne VIC 3000
+                  </address>
                 </div>
                 <div>
-                  <p className="text-neutral-200 font-semibold tracking-wider text-xs uppercase mb-1 flex items-center gap-1.5">
+                  <p className="text-neutral-200 font-semibold tracking-wider text-[11px] uppercase mb-1.5 flex items-center gap-1.5">
                     <img src="https://flagcdn.com/w40/in.png" alt="India" className="w-3.5 h-auto rounded-[1.5px] shadow-sm" />
                     <span>India</span>
                   </p>
-                  <p className="leading-relaxed text-neutral-300 text-sm">Punjab</p>
+                  <address className="not-italic leading-relaxed text-neutral-400 text-[13px]">
+                    Patiala, Punjab
+                  </address>
+                </div>
+                
+                <div className="pt-2 mt-2 border-t border-neutral-900">
+                  <p className="text-neutral-200 font-semibold tracking-wider text-[11px] uppercase mb-2">
+                    Get in Touch
+                  </p>
+                  <div className="space-y-1.5">
+                    <a href="https://wa.me/61494754851" target="_blank" rel="noopener noreferrer" className="block text-neutral-400 hover:text-white transition-colors text-[13px]">
+                      WhatsApp: +61 494 754 851
+                    </a>
+                    <a href="mailto:info@scalvea.com" className="block text-neutral-400 hover:text-white transition-colors text-[13px]">
+                      info@scalvea.com
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>

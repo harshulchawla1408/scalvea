@@ -20,7 +20,7 @@ const CancellationPolicy = () => {
   useSEO({
     title: "Cancellation Policy",
     description: "Read SCALVEA's order cancellation terms and policies. Learn about timelines, dispatch rules, and approval rights.",
-    keywords: "Scalvea cancellation, cancel order, refund, dispatch rule, shipping",
+    canonical: "https://scalvea.com/cancellation-policy",
   });
 
   const containerVariants = {
@@ -46,10 +46,10 @@ const CancellationPolicy = () => {
 
   // Assign icons to each rule for luxury card layout
   const ruleIcons = [
-    <Clock className="h-5 w-5 text-neutral-400 mt-1 shrink-0" />,
-    <Ban className="h-5 w-5 text-neutral-400 mt-1 shrink-0" />,
-    <Mail className="h-5 w-5 text-neutral-400 mt-1 shrink-0" />,
-    <FileCheck className="h-5 w-5 text-neutral-400 mt-1 shrink-0" />,
+    <Clock className="h-5 w-5 text-neutral-500 mt-1 shrink-0" />,
+    <Ban className="h-5 w-5 text-neutral-500 mt-1 shrink-0" />,
+    <Mail className="h-5 w-5 text-neutral-500 mt-1 shrink-0" />,
+    <FileCheck className="h-5 w-5 text-neutral-500 mt-1 shrink-0" />,
   ];
 
   const ruleTitles = [
@@ -70,7 +70,7 @@ const CancellationPolicy = () => {
         <main className="max-w-4xl mx-auto px-6 py-16 md:py-24 relative z-10">
           {/* Editorial Page Header */}
           <div className="text-center mb-16 md:mb-20">
-            <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-light block mb-3">
+            <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-500 font-light block mb-3">
               LEGAL & POLICIES
             </span>
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.05em] mb-4 text-foreground uppercase">
@@ -102,7 +102,7 @@ const CancellationPolicy = () => {
                 >
                   <div className="space-y-4">
                     <div className="flex items-center gap-3 pb-3 border-b border-neutral-100">
-                      {ruleIcons[index] || <HelpCircle className="h-5 w-5 text-neutral-400 mt-1 shrink-0" />}
+                      {ruleIcons[index] || <HelpCircle className="h-5 w-5 text-neutral-500 mt-1 shrink-0" />}
                       <h3 className="text-[10px] tracking-[0.25em] uppercase font-semibold text-neutral-800">
                         {ruleTitles[index] || `Section ${index + 1}`}
                       </h3>
@@ -123,7 +123,7 @@ const CancellationPolicy = () => {
             transition={{ delay: 0.6, duration: 0.6 }}
             className="mt-16 max-w-3xl mx-auto border border-neutral-100 bg-[#fafafa] p-8 text-center"
           >
-            <p className="text-[10px] tracking-[0.2em] text-neutral-400 uppercase mb-2">Need Immediate Help?</p>
+            <p className="text-[10px] tracking-[0.2em] text-neutral-500 uppercase mb-2">Need Immediate Help?</p>
             <p className="text-xs text-neutral-600 font-light max-w-md mx-auto mb-4">
               If you have just placed an order and need to make modifications or request a cancel, please call or email operations support without delay.
             </p>

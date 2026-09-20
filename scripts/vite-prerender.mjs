@@ -63,12 +63,16 @@ function getBlogs() {
         const slugMatch = content.match(/^slug:\s*["']?([^"'\n]+)["']?/m);
         const titleMatch = content.match(/^title:\s*["']?([^"'\n]+)["']?/m);
         const descMatch = content.match(/^description:\s*["']?([^"'\n]+)["']?/m);
+        const seoTitleMatch = content.match(/^seoTitle:\s*["']?([^"'\n]+)["']?/m);
+        const seoDescMatch = content.match(/^seoDescription:\s*["']?([^"'\n]+)["']?/m);
         
         const slug = slugMatch ? slugMatch[1].trim() : file.replace(/\.mdx?$/, '');
         const title = titleMatch ? titleMatch[1].trim() : '';
         const description = descMatch ? descMatch[1].trim() : '';
+        const seoTitle = seoTitleMatch ? seoTitleMatch[1].trim() : '';
+        const seoDescription = seoDescMatch ? seoDescMatch[1].trim() : '';
         
-        blogs.push({ slug, title, description });
+        blogs.push({ slug, title, description, seoTitle, seoDescription });
       }
     }
   } catch (e) {
@@ -166,25 +170,52 @@ async function main() {
           title: "Science-Backed Hair & Scalp Care | Scalvea",
           description: "Science-backed hair growth serums & scalp treatments formulated with clinically researched ingredients. Shop Follicle 8 & Scalp-5. Fast shipping to Australia & India."
         },
+        '/shop': {
+          title: "Hair Care Products | Hair Growth & Scalp Care Serums | Scalvea",
+          description: "Shop Scalvea's science-backed hair growth serums and anti-dandruff scalp treatments. Clinically researched ingredients, lightweight formulas. Free shipping to Australia & India."
+        },
         '/about': {
-          title: "Our Story – Science-Backed Hair Care Brand | Scalvea",
+          title: "About Scalvea | Science-Backed Hair Care",
           description: "Scalvea was built on one belief: that hair care should be honest, transparent, and clinically grounded. Read the story behind the brand."
         },
         '/blogs': {
-          title: "Hair Care Blog – Scalp Health & Ingredient Guides | Scalvea",
-          description: "Expert guides on scalp health, hair fall, dandruff, and ingredient science — from the Scalvea team."
+          title: "Hair Care Journal | Hair Growth, Scalp Care & Ingredient Guides | Scalvea",
+          description: "Science-backed hair care articles, scalp health guides, ingredient breakdowns, and hair growth research from the Scalvea team. Practical advice for Australia & India."
         },
         '/contact': {
-          title: "Contact Scalvea – Customer Support & Enquiries",
+          title: "Contact Scalvea | Hair Care Support & Enquiries",
           description: "Get in touch with the Scalvea team. We aim to respond to all inquiries within 24 hours. Connect with us for support, wholesale, or press."
         },
         '/faq': {
           title: "FAQ – Hair Care Questions Answered | Scalvea",
           description: "Answers to common questions about Scalvea hair growth serums, anti-dandruff treatments, shipping, returns, and ingredients."
         },
+        '/shipping-policy': {
+          title: "Shipping Policy | Scalvea",
+          description: "Scalvea shipping information for Australia and India — delivery timelines, free shipping thresholds, order tracking, and dispatch guidelines."
+        },
+        '/returns-policy': {
+          title: "Returns & Refunds Policy | Scalvea",
+          description: "Scalvea's returns and refunds policy — eligibility, process, timelines, and how to request a return for orders in Australia and India."
+        },
         '/terms-of-service': {
           title: "Terms of Service | Scalvea",
           description: "Read Scalvea's terms of service governing purchases, pricing, orders, and website usage terms.",
+          noindex: true
+        },
+        '/privacy-policy': {
+          title: "Privacy Policy | Scalvea",
+          description: "Learn how Scalvea collects, uses, and safeguards your personal data under global data protection standards.",
+          noindex: true
+        },
+        '/payment-policy': {
+          title: "Payment Policy | Scalvea",
+          description: "Learn about Scalvea's secure payment methods, billing, and failed transaction resolution guidelines for India and Australia.",
+          noindex: true
+        },
+        '/cancellation-policy': {
+          title: "Cancellation Policy | Scalvea",
+          description: "Read Scalvea's order cancellation terms — timelines, dispatch rules, and approval guidelines.",
           noindex: true
         }
       };
@@ -199,7 +230,10 @@ async function main() {
         const slug = route.split('/')[2];
         const blog = blogsData.find(b => b.slug === slug);
         if (blog && blog.title) {
-          seo = { title: blog.title, description: blog.description };
+          // Issue 10: Use seoTitle from frontmatter if available, else append | Scalvea to raw title
+          const finalTitle = blog.seoTitle || `${blog.title} | Scalvea`;
+          const finalDesc = blog.seoDescription || blog.description;
+          seo = { title: finalTitle, description: finalDesc };
         }
       } else {
         seo = STATIC_SEO[route];
@@ -211,6 +245,29 @@ async function main() {
         if (seo.description) {
           html = html.replace(/<meta name="description"[\s\n]*content="[^"]*"/, `<meta name="description" content="${seo.description}"`);
         }
+      }
+
+      // ── Issue 11: Inject correct per-route canonical ─────────────────────
+      // The index.html template has canonical pointing to homepage.
+      // Every prerendered page needs its own canonical injected before JS hydrates.
+      const canonicalUrl = `https://scalvea.com${route === '/' ? '/' : route}`;
+      if (html.includes('<link rel="canonical"')) {
+        html = html.replace(
+          /<link rel="canonical"[^>]*>/,
+          `<link rel="canonical" href="${canonicalUrl}" />`
+        );
+      } else {
+        html = html.replace('</head>', `  <link rel="canonical" href="${canonicalUrl}" />\n</head>`);
+      }
+
+      // ── Issue 12: Inject correct per-route og:url ────────────────────────
+      if (html.includes('property="og:url"')) {
+        html = html.replace(
+          /<meta property="og:url"[^>]*>/,
+          `<meta property="og:url" content="${canonicalUrl}" />`
+        );
+      } else {
+        html = html.replace('</head>', `  <meta property="og:url" content="${canonicalUrl}" />\n</head>`);
       }
 
       if (noindex) {

@@ -30,8 +30,9 @@ const Contact = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useSEO({
-    title: "Contact Scalvea | Care You Deserve",
+    title: "Contact Scalvea | Hair Care Support & Enquiries",
     description: "Get in touch with Scalvea's support team. Reach us via email, WhatsApp, Instagram, or TikTok for product questions, orders, partnerships, or wholesale enquiries.",
+    canonical: "https://scalvea.com/contact",
     schema: {
       "@context": "https://schema.org",
       "@type": "ContactPage",
@@ -92,7 +93,7 @@ const Contact = () => {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-sm md:text-base text-neutral-400 font-body font-light leading-relaxed max-w-lg mx-auto"
+              className="text-sm md:text-base text-neutral-500 font-body font-light leading-relaxed max-w-lg mx-auto"
             >
               Whether you have a question about our products, an order, a partnership, or anything else — our team is ready to help.
             </motion.p>
@@ -111,7 +112,7 @@ const Contact = () => {
               transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
               className="text-center mb-12"
             >
-              <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-body font-light block mb-4">
+              <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-500 font-body font-light block mb-4">
                 WHERE WE ARE
               </span>
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-heading text-neutral-900 leading-tight mb-3">
@@ -146,13 +147,15 @@ const Contact = () => {
                   flagUrl: "https://flagcdn.com/w40/au.png", 
                   label: "Australian Headquarters", 
                   state: "Victoria", 
-                  country: "Australia" 
+                  country: "Australia",
+                  address: "Little Collins St, Melbourne VIC 3000, Australia"
                 },
                 { 
                   flagUrl: "https://flagcdn.com/w40/in.png", 
                   label: "India Operations", 
                   state: "Punjab", 
-                  country: "India" 
+                  country: "India",
+                  address: "Patiala, Punjab"
                 },
               ].map((loc, i) => (
                 <motion.div
@@ -161,15 +164,16 @@ const Contact = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.7, delay: i * 0.15 }}
-                  className="flex items-center gap-4 bg-white border border-neutral-150 rounded-2xl px-5 py-4 shadow-[0_2px_16px_rgba(0,0,0,0.04)]"
+                  className="flex items-start gap-4 bg-white border border-neutral-150 rounded-2xl px-5 py-4 shadow-[0_2px_16px_rgba(0,0,0,0.04)]"
                 >
-                  <div className="w-9 h-6.5 rounded overflow-hidden shadow-sm flex items-center justify-center shrink-0 border border-neutral-100">
+                  <div className="w-9 h-6.5 rounded overflow-hidden shadow-sm flex items-center justify-center shrink-0 border border-neutral-100 mt-0.5">
                     <img src={loc.flagUrl} alt={loc.country} className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-0.5">{loc.label}</p>
-                    <p className="text-sm font-heading text-neutral-900">{loc.state}</p>
-                    <p className="text-[11px] text-neutral-500 font-body font-light">{loc.country}</p>
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-500 font-body font-medium mb-0.5">{loc.label}</p>
+                    <p className="text-sm font-heading text-neutral-900 leading-snug">{loc.state}</p>
+                    <p className="text-[11px] text-neutral-500 font-body font-light mb-1">{loc.country}</p>
+                    <p className="text-[10px] text-neutral-600 font-body leading-relaxed">{loc.address}</p>
                   </div>
                 </motion.div>
               ))}
@@ -193,7 +197,7 @@ const Contact = () => {
                 className="space-y-10"
               >
                 <div>
-                  <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-body font-light block mb-4">
+                  <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-500 font-body font-light block mb-4">
                     REACH US
                   </span>
                   <h2 className="text-2xl md:text-3xl lg:text-4xl font-heading text-neutral-900 leading-tight mb-4">
@@ -215,9 +219,9 @@ const Contact = () => {
                       <Mail className="h-4.5 w-4.5 text-neutral-700 group-hover:text-white transition-colors duration-300" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-0.5">Email</p>
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-500 font-body font-medium mb-0.5">Email</p>
                       <p className="text-sm font-body font-medium text-neutral-900 truncate">info@scalvea.com</p>
-                      <p className="text-[10px] text-neutral-400 font-body font-light">We respond within 24 hours</p>
+                      <p className="text-[10px] text-neutral-500 font-body font-light">We respond within 24 hours</p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-neutral-300 group-hover:text-neutral-600 group-hover:translate-x-1 transition-all duration-300 shrink-0" />
                   </a>
@@ -233,9 +237,9 @@ const Contact = () => {
                       <WhatsappIcon className="h-4.5 w-4.5 text-neutral-700 group-hover:text-white transition-colors duration-300" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-0.5">WhatsApp</p>
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-500 font-body font-medium mb-0.5">WhatsApp</p>
                       <p className="text-sm font-body font-medium text-neutral-900 truncate">+61 494 754 851</p>
-                      <p className="text-[10px] text-neutral-400 font-body font-light">Message us anytime</p>
+                      <p className="text-[10px] text-neutral-500 font-body font-light">Message us anytime</p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-neutral-300 group-hover:text-neutral-600 group-hover:translate-x-1 transition-all duration-300 shrink-0" />
                   </a>
@@ -251,9 +255,9 @@ const Contact = () => {
                       <Instagram className="h-4.5 w-4.5 text-neutral-700 group-hover:text-white transition-colors duration-300" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-0.5">Instagram</p>
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-500 font-body font-medium mb-0.5">Instagram</p>
                       <p className="text-sm font-body font-medium text-neutral-900">@scalvea_</p>
-                      <p className="text-[10px] text-neutral-400 font-body font-light">DM us for quick responses</p>
+                      <p className="text-[10px] text-neutral-500 font-body font-light">DM us for quick responses</p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-neutral-300 group-hover:text-neutral-600 group-hover:translate-x-1 transition-all duration-300 shrink-0" />
                   </a>
@@ -269,9 +273,9 @@ const Contact = () => {
                       <TiktokIcon className="h-4 w-4 text-neutral-700 group-hover:text-white transition-colors duration-300" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-0.5">TikTok</p>
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-500 font-body font-medium mb-0.5">TikTok</p>
                       <p className="text-sm font-body font-medium text-neutral-900">@scalvea</p>
-                      <p className="text-[10px] text-neutral-400 font-body font-light">Follow for updates & tips</p>
+                      <p className="text-[10px] text-neutral-500 font-body font-light">Follow for updates & tips</p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-neutral-300 group-hover:text-neutral-600 group-hover:translate-x-1 transition-all duration-300 shrink-0" />
                   </a>
@@ -287,9 +291,9 @@ const Contact = () => {
                       <Linkedin className="h-4.5 w-4.5 text-neutral-700 group-hover:text-white transition-colors duration-300" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-400 font-body font-medium mb-0.5">LinkedIn</p>
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-500 font-body font-medium mb-0.5">LinkedIn</p>
                       <p className="text-sm font-body font-medium text-neutral-900">Scalvea</p>
-                      <p className="text-[10px] text-neutral-400 font-body font-light">Follow for business & updates</p>
+                      <p className="text-[10px] text-neutral-500 font-body font-light">Follow for business & updates</p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-neutral-300 group-hover:text-neutral-600 group-hover:translate-x-1 transition-all duration-300 shrink-0" />
                   </a>
@@ -297,7 +301,7 @@ const Contact = () => {
 
                 {/* Response time note */}
                 <div className="border-t border-neutral-100 pt-6">
-                  <p className="text-[10px] text-neutral-400 font-body font-light leading-relaxed">
+                  <p className="text-[10px] text-neutral-500 font-body font-light leading-relaxed">
                     Our team operates across Australian Eastern Time (AEST) and Indian Standard Time (IST). Response times may vary slightly based on timezone.
                   </p>
                 </div>
@@ -311,7 +315,7 @@ const Contact = () => {
                 transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
               >
                 <div className="mb-8">
-                  <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-body font-light block mb-4">
+                  <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-500 font-body font-light block mb-4">
                     SEND A MESSAGE
                   </span>
                   <h2 className="text-2xl md:text-3xl font-heading text-neutral-900 leading-tight mb-2">
@@ -334,7 +338,7 @@ const Contact = () => {
                         onChange={e => setForm({ ...form, name: e.target.value })}
                         required
                         placeholder="e.g. Puneet"
-                        className="w-full h-11 px-4 text-sm bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-400"
+                        className="w-full h-11 px-4 text-sm bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-500"
                       />
                     </div>
 
@@ -349,7 +353,7 @@ const Contact = () => {
                         onChange={e => setForm({ ...form, email: e.target.value })}
                         required
                         placeholder="you@example.com"
-                        className="w-full h-11 px-4 text-sm bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-400"
+                        className="w-full h-11 px-4 text-sm bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-500"
                       />
                     </div>
                   </div>
@@ -364,7 +368,7 @@ const Contact = () => {
                       onChange={e => setForm({ ...form, subject: e.target.value })}
                       required
                       placeholder="What is your enquiry about?"
-                      className="w-full h-11 px-4 text-sm bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-400"
+                      className="w-full h-11 px-4 text-sm bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light text-neutral-900 placeholder:text-neutral-500"
                     />
                   </div>
 
@@ -379,7 +383,7 @@ const Contact = () => {
                       required
                       rows={5}
                       placeholder="Please describe your question or concern in detail..."
-                      className="w-full px-4 py-3.5 text-sm bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light resize-none text-neutral-900 placeholder:text-neutral-400"
+                      className="w-full px-4 py-3.5 text-sm bg-[#F9F9F7] border border-neutral-200 rounded-xl outline-none focus:border-neutral-800 focus:ring-2 focus:ring-neutral-100 transition-all font-body font-light resize-none text-neutral-900 placeholder:text-neutral-500"
                     />
                   </div>
 
@@ -402,7 +406,7 @@ const Contact = () => {
                     )}
                   </button>
 
-                  <p className="text-[9px] text-neutral-400 font-body font-light text-center tracking-wide">
+                  <p className="text-[9px] text-neutral-500 font-body font-light text-center tracking-wide">
                     We respect your privacy and will never share your details.
                   </p>
                 </form>

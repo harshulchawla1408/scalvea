@@ -213,7 +213,7 @@ const Account = () => {
           {/* Top Account Title Bar */}
           <div className="flex items-center justify-between pb-2 border-b border-neutral-200/80">
             <div>
-              <span className="text-[9px] sm:text-[10px] font-mono tracking-[0.25em] uppercase text-neutral-400 block mb-1">
+              <span className="text-[9px] sm:text-[10px] font-mono tracking-[0.25em] uppercase text-neutral-500 block mb-1">
                 CUSTOMER DASHBOARD
               </span>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-light font-heading text-neutral-900 tracking-tight">
@@ -253,12 +253,12 @@ const Account = () => {
                 
                 <div className="flex flex-col gap-1 text-xs text-neutral-600 font-body">
                   <div className="flex items-center justify-center sm:justify-start gap-2">
-                    <Mail className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
+                    <Mail className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
                     <span className="truncate">{displayEmail}</span>
                   </div>
                   
                   <div className="flex items-center justify-center sm:justify-start gap-2">
-                    <Phone className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
+                    <Phone className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
                     <span>{displayPhone}</span>
                   </div>
                 </div>
@@ -327,22 +327,22 @@ const Account = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm">
                   <div className="p-3.5 bg-[#FAF9F7] rounded-xl border border-neutral-150">
-                    <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-400 block mb-1">Full Name</span>
+                    <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-500 block mb-1">Full Name</span>
                     <span className="font-medium text-neutral-900">{displayName}</span>
                   </div>
 
                   <div className="p-3.5 bg-[#FAF9F7] rounded-xl border border-neutral-150">
-                    <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-400 block mb-1">Email Address</span>
+                    <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-500 block mb-1">Email Address</span>
                     <span className="font-medium text-neutral-900">{displayEmail}</span>
                   </div>
 
                   <div className="p-3.5 bg-[#FAF9F7] rounded-xl border border-neutral-150">
-                    <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-400 block mb-1">Mobile Phone</span>
+                    <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-500 block mb-1">Mobile Phone</span>
                     <span className="font-medium text-neutral-900">{displayPhone}</span>
                   </div>
 
                   <div className="p-3.5 bg-[#FAF9F7] rounded-xl border border-neutral-150">
-                    <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-400 block mb-1">Account Region</span>
+                    <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-500 block mb-1">Account Region</span>
                     <span className="font-medium text-neutral-900 capitalize">{country}</span>
                   </div>
                 </div>
@@ -477,7 +477,7 @@ const Account = () => {
                               )}
                             </div>
                             
-                            <p className="text-xs text-neutral-400 font-body">
+                            <p className="text-xs text-neutral-500 font-body">
                               Placed on {formattedDate}
                             </p>
                           </div>
@@ -485,7 +485,7 @@ const Account = () => {
                           {/* Total & Expand Trigger */}
                           <div className="flex items-center justify-between sm:justify-end gap-4 pt-1 sm:pt-0">
                             <div className="text-left sm:text-right">
-                              <span className="text-[10px] text-neutral-400 font-mono uppercase block">Total</span>
+                              <span className="text-[10px] text-neutral-500 font-mono uppercase block">Total</span>
                               <span className="text-sm sm:text-base font-bold text-neutral-900 font-body">
                                 {formatCurrency(Number(order.total_amount))}
                               </span>
@@ -507,12 +507,12 @@ const Account = () => {
                         {!isExpanded && items.length > 0 && (
                           <div className="px-4 sm:px-5 py-3 bg-[#FAF9F7]/60 flex items-center justify-between text-xs text-neutral-600">
                             <div className="truncate flex items-center gap-2">
-                              <ShoppingBag className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
+                              <ShoppingBag className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
                               <span className="truncate">
                                 {items.map(i => `${i.product_name} (${i.quantity})`).join(", ")}
                               </span>
                             </div>
-                            <span className="text-[11px] text-neutral-400 shrink-0 font-mono">
+                            <span className="text-[11px] text-neutral-500 shrink-0 font-mono">
                               {items.length} item{items.length > 1 ? "s" : ""}
                             </span>
                           </div>
@@ -524,7 +524,7 @@ const Account = () => {
                             
                             {/* Visual Status Progression Tracker */}
                             <div className="bg-white border border-neutral-200/80 rounded-xl p-4">
-                              <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-400 block mb-3">
+                              <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-500 block mb-3">
                                 DELIVERY PROGRESS
                               </span>
                               {(() => {
@@ -555,7 +555,7 @@ const Account = () => {
                                         <span 
                                           key={step} 
                                           className={`text-[9px] font-mono uppercase tracking-wider ${
-                                            i <= stepIdx ? "text-neutral-900 font-semibold" : "text-neutral-400"
+                                            i <= stepIdx ? "text-neutral-900 font-semibold" : "text-neutral-500"
                                           }`}
                                         >
                                           {step.replace(/_/g, " ")}
@@ -569,7 +569,7 @@ const Account = () => {
 
                             {/* Ordered Items List */}
                             <div className="bg-white border border-neutral-200/80 rounded-xl p-4 space-y-3">
-                              <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-400 block border-b border-neutral-100 pb-2">
+                              <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-500 block border-b border-neutral-100 pb-2">
                                 ORDERED PRODUCTS
                               </span>
                               <div className="divide-y divide-neutral-100">
@@ -577,7 +577,7 @@ const Account = () => {
                                   <div key={item.id} className="py-2.5 flex items-center justify-between text-xs sm:text-sm">
                                     <div className="space-y-0.5">
                                       <p className="font-medium text-neutral-900">{item.product_name}</p>
-                                      <p className="text-[11px] text-neutral-400 font-mono">Qty: {item.quantity}</p>
+                                      <p className="text-[11px] text-neutral-500 font-mono">Qty: {item.quantity}</p>
                                     </div>
                                     <span className="font-semibold text-neutral-900 font-mono">
                                       {formatCurrency(Number(item.price) * Number(item.quantity))}
@@ -592,7 +592,7 @@ const Account = () => {
                               
                               {/* Left: Financial Breakdown */}
                               <div className="bg-white border border-neutral-200/80 rounded-xl p-4 space-y-2 text-xs">
-                                <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-400 block border-b border-neutral-100 pb-2">
+                                <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-500 block border-b border-neutral-100 pb-2">
                                   PAYMENT BREAKDOWN
                                 </span>
                                 <div className="flex justify-between text-neutral-600">
@@ -623,7 +623,7 @@ const Account = () => {
 
                               {/* Right: Shipping Details & Tracking */}
                               <div className="bg-white border border-neutral-200/80 rounded-xl p-4 space-y-2 text-xs">
-                                <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-400 block border-b border-neutral-100 pb-2">
+                                <span className="text-[10px] font-mono tracking-widest uppercase text-neutral-500 block border-b border-neutral-100 pb-2">
                                   DELIVERY DETAILS
                                 </span>
                                 
@@ -640,11 +640,11 @@ const Account = () => {
 
                                 <div className="pt-2 border-t border-neutral-100 space-y-1 font-mono text-[11px]">
                                   <div className="flex justify-between">
-                                    <span className="text-neutral-400">Courier:</span>
+                                    <span className="text-neutral-500">Courier:</span>
                                     <span className="text-neutral-800">{order.courier_name || order.courier || "Standard Dispatch"}</span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span className="text-neutral-400">Tracking:</span>
+                                    <span className="text-neutral-500">Tracking:</span>
                                     <span className="text-neutral-900 font-semibold">{order.tracking_number || "Pending dispatch"}</span>
                                   </div>
                                 </div>
@@ -679,7 +679,7 @@ const Account = () => {
             <TabsContent value="recently-viewed" className="space-y-4 focus-visible:outline-none">
               {recentlyViewedProducts.length === 0 ? (
                 <div className="bg-white border border-neutral-200/90 rounded-2xl p-8 text-center space-y-3 shadow-sm">
-                  <Eye className="h-8 w-8 mx-auto text-neutral-400" />
+                  <Eye className="h-8 w-8 mx-auto text-neutral-500" />
                   <p className="text-sm text-neutral-600">No recently viewed products yet.</p>
                   <Button asChild variant="outline" className="text-xs uppercase tracking-wider rounded-xl h-10 px-5">
                     <Link to="/shop">Browse Collection</Link>
@@ -740,7 +740,7 @@ const Account = () => {
                 className="h-11 text-sm mt-1 rounded-xl bg-neutral-100/80 cursor-not-allowed text-neutral-500"
                 title="Email is managed via authentication settings"
               />
-              <span className="text-[10px] text-neutral-400 font-body mt-1 block">
+              <span className="text-[10px] text-neutral-500 font-body mt-1 block">
                 Primary account email address
               </span>
             </div>

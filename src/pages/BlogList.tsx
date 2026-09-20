@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { Search, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -12,13 +12,10 @@ import { getAllBlogs, getCategories } from "@/lib/blog";
 import { useSEO } from "@/hooks/useSEO";
 import { BlogPost } from "@/types/blog";
 
-const POSTS_PER_PAGE = 9;
-
 const BlogList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [activeCategory, setActiveCategory] = useState(searchParams.get("category") || "All");
-  const [currentPage, setCurrentPage] = useState(1);
   
   const blogs = useMemo(() => getAllBlogs(), []);
   const categories = useMemo(() => ["All", ...getCategories()], []);
@@ -26,17 +23,14 @@ const BlogList = () => {
   const featuredBlog = useMemo(() => blogs.find(b => b.meta.featured) || blogs[0], [blogs]);
 
   useSEO({
-    title: "Hair Care Blog – Scalp Health & Ingredient Guides",
-    description: "Science-backed hair care articles, ingredient guides, scalp health tips, and hair growth research from the Scalvea team.",
+    title: "Hair Care Journal | Hair Growth, Scalp Care & Ingredient Guides",
+    description: "Science-backed hair care articles, scalp health guides, ingredient breakdowns, and hair growth research from the Scalvea team. Practical advice for Australia & India.",
     canonical: "https://scalvea.com/blogs",
   });
 
   // Filter blogs based on search and category
   const filteredBlogs = useMemo(() => {
     let filtered = blogs;
-    
-    // Filter out the featured blog if we are on page 1 without search/category to avoid duplication
-    // Wait, the prompt says "Automatically show the latest featured article." It's fine to keep it in the grid or remove it. We'll keep it in the grid for simplicity.
     
     if (activeCategory !== "All") {
       filtered = filtered.filter(b => b.meta.category === activeCategory);
@@ -55,19 +49,12 @@ const BlogList = () => {
     return filtered;
   }, [blogs, activeCategory, searchQuery]);
 
-  const totalPages = Math.ceil(filteredBlogs.length / POSTS_PER_PAGE);
-  const paginatedBlogs = filteredBlogs.slice(
-    (currentPage - 1) * POSTS_PER_PAGE,
-    currentPage * POSTS_PER_PAGE
-  );
-
   // Sync state with URL params
   useEffect(() => {
     const params = new URLSearchParams();
     if (searchQuery) params.set("q", searchQuery);
     if (activeCategory !== "All") params.set("category", activeCategory);
     setSearchParams(params, { replace: true });
-    setCurrentPage(1); // Reset to page 1 on filter change
   }, [searchQuery, activeCategory, setSearchParams]);
 
   const handleCategoryClick = (cat: string) => {
@@ -82,7 +69,7 @@ const BlogList = () => {
         <BlogHero />
         
         {/* Featured Blog */}
-        {featuredBlog && currentPage === 1 && !searchQuery && activeCategory === "All" && (
+        {featuredBlog && !searchQuery && activeCategory === "All" && (
           <section className="max-w-6xl mx-auto px-6 lg:px-16 py-12 md:py-20">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -104,7 +91,7 @@ const BlogList = () => {
               </Link>
               
               <div className="p-8 md:p-12 flex flex-col justify-center md:w-1/2">
-                <div className="flex items-center gap-3 text-[10px] text-neutral-400 uppercase tracking-wider font-medium mb-4">
+                <div className="flex items-center gap-3 text-[10px] text-neutral-500 uppercase tracking-wider font-medium mb-4">
                   <span>{featuredBlog.meta.category}</span>
                   <span className="w-1 h-1 rounded-full bg-neutral-300" />
                   <span>{format(new Date(featuredBlog.meta.date), "MMM d, yyyy")}</span>
@@ -144,9 +131,9 @@ const BlogList = () => {
                 placeholder="Search articles..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-12 pl-12 pr-4 bg-white border border-neutral-200 rounded-full text-sm font-light text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
+                className="w-full h-12 pl-12 pr-4 bg-white border border-neutral-200 rounded-full text-sm font-light text-neutral-800 placeholder:text-neutral-500 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
               />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
             </div>
             
             {/* Categories */}
@@ -168,62 +155,12 @@ const BlogList = () => {
           </div>
           
           {/* Grid */}
-          {paginatedBlogs.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {paginatedBlogs.map((post, index) => (
-                  <BlogCard key={post.meta.slug} post={post} index={index} />
-                ))}
-              </div>
-              
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 mt-16">
-                  {currentPage > 1 ? (
-                    <Link
-                      to={`/blogs?${new URLSearchParams({...Object.fromEntries(searchParams.entries()), page: String(currentPage - 1)}).toString()}`}
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      className="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-200 text-neutral-500 hover:bg-neutral-100 transition-colors"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Link>
-                  ) : (
-                    <button disabled className="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-200 text-neutral-500 opacity-30 cursor-not-allowed">
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                  )}
-                  
-                  {Array.from({ length: totalPages }).map((_, i) => (
-                    <Link
-                      key={i}
-                      to={`/blogs?${new URLSearchParams({...Object.fromEntries(searchParams.entries()), page: String(i + 1)}).toString()}`}
-                      onClick={() => setCurrentPage(i + 1)}
-                      className={`w-10 h-10 flex items-center justify-center rounded-full text-xs font-medium transition-colors ${
-                        currentPage === i + 1 
-                          ? "bg-black text-white" 
-                          : "text-neutral-500 hover:bg-neutral-100 border border-transparent"
-                      }`}
-                    >
-                      {i + 1}
-                    </Link>
-                  ))}
-                  
-                  {currentPage < totalPages ? (
-                    <Link
-                      to={`/blogs?${new URLSearchParams({...Object.fromEntries(searchParams.entries()), page: String(currentPage + 1)}).toString()}`}
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      className="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-200 text-neutral-500 hover:bg-neutral-100 transition-colors"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  ) : (
-                    <button disabled className="w-10 h-10 flex items-center justify-center rounded-full border border-neutral-200 text-neutral-500 opacity-30 cursor-not-allowed">
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              )}
-            </>
+          {filteredBlogs.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredBlogs.map((post, index) => (
+                <BlogCard key={post.meta.slug} post={post} index={index} />
+              ))}
+            </div>
           ) : (
             <div className="text-center py-20">
               <p className="text-neutral-500 font-light">No articles found matching your criteria.</p>

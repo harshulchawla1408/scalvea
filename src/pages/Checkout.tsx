@@ -172,7 +172,7 @@ const IndiaOfferCards = ({
               </p>
               {isQualified ? (
                 <p className="text-[11px] text-emerald-700 mt-1 font-medium flex items-center gap-1">
-                  ✓ 1 Scalp-5 FREE — applied at final checkout
+                  ✓ 1 Scalp-5 FREE (-₹899) applied to your order
                 </p>
               ) : totalItems >= 3 && !hasScalp5 ? (
                 <p className="text-[11px] text-amber-800 mt-1 font-medium">
@@ -1097,8 +1097,17 @@ const Checkout = () => {
                   <div className="px-5 py-4 border-t border-[#f0f0f0] space-y-2">
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground font-light">Subtotal</span>
-                      <span className="font-mono font-medium">{formatVal(total)}</span>
+                      <span className="font-mono font-medium">{formatVal(bundleDiscount > 0 ? rawTotal : total)}</span>
                     </div>
+                    {bundleDiscount > 0 && (
+                      <div className="flex justify-between text-xs text-emerald-600 font-medium">
+                        <span className="flex items-center gap-1">
+                          <Gift className="w-3.5 h-3.5 text-emerald-600" />
+                          {isIndia ? "BUY 2, GET 1 FREE (1 Scalp-5 Free)" : "Bundle & Save"}
+                        </span>
+                        <span className="font-mono font-bold">-{formatVal(bundleDiscount)}</span>
+                      </div>
+                    )}
                     {appliedCoupon && (
                       <div className="flex justify-between text-xs text-emerald-600">
                         <span>Discount ({appliedCoupon.discount_percentage}%)</span>
@@ -1155,9 +1164,9 @@ const Checkout = () => {
                           Your order qualifies for 1 FREE Scalp-5 Anti Dandruff Serum.
                         </p>
                         <p className="mt-1 text-[11px] text-emerald-700 font-medium">
-                          Offer applied at final checkout
+                          ✓ ₹899 discount applied to your order
                         </p>
-                        <p className="mt-1.5 text-[9px] text-neutral-400 font-light">
+                        <p className="mt-1.5 text-[9px] text-neutral-500 font-light">
                           Offer cannot be combined with other promotions.
                         </p>
                       </div>

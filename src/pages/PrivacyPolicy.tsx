@@ -14,6 +14,7 @@ const PrivacyPolicy = () => {
   useSEO({
     title: "Privacy Policy",
     description: "Learn how Scalvea collects, uses, and safeguards your personal data under global data protection standards.",
+    canonical: "https://scalvea.com/privacy-policy",
   });
 
   return (

@@ -10,7 +10,7 @@ export default function AmazonStoresSection({ className = "" }: AmazonStoresSect
     <section className={`bg-[#F6F5F2] py-12 sm:py-14 md:py-16 border-t border-neutral-150 select-none ${className}`}>
       <div className="max-w-xl mx-auto px-4 sm:px-6 text-center">
         {/* Eyebrow */}
-        <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-neutral-400 font-body font-medium block mb-1.5 sm:mb-2">
+        <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-neutral-500 font-body font-medium block mb-1.5 sm:mb-2">
           SHOP SCALVEA ON AMAZON
         </span>
 

@@ -459,7 +459,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                               <span>Offer unlocked — 1 Scalp-5 is FREE</span>
                             </div>
                             <p className="text-[10px] text-emerald-700/90 font-medium">
-                              Offer applied at final checkout
+                              ✓ ₹899 discount applied to your order
                             </p>
                           </div>
                         ) : serumCount >= 3 && !hasScalp5 ? (
@@ -492,7 +492,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                           </div>
                         )}
 
-                        <p className="text-[9px] text-neutral-400 font-light mt-2">
+                        <p className="text-[9px] text-neutral-500 font-light mt-2">
                           Offer cannot be combined with other promotions.
                         </p>
                       </div>
@@ -587,11 +587,11 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
 
             {/* 7. CART FOOTER */}
             <div className="border-t border-border/70 p-5 sm:p-6 bg-background/95 backdrop-blur-sm space-y-3.5 flex-shrink-0 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
-              {bundleDiscount > 0 && !isIndia && (
+              {bundleDiscount > 0 && (
                 <div className="flex items-center justify-between text-xs px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-medium">
                   <span className="flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                    Bundle Deal Applied
+                    {isIndia ? "BUY 2, GET 1 FREE Applied (1 Scalp-5 Free)" : "Bundle Deal Applied"}
                   </span>
                   <span className="font-bold">-{formatVal(bundleDiscount)}</span>
                 </div>
@@ -603,7 +603,7 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                 </span>
                 <div className="text-right">
                   <div className="flex items-baseline gap-2 justify-end">
-                    {bundleDiscount > 0 && !isIndia && (
+                    {bundleDiscount > 0 && (
                       <span className="text-xs text-muted-foreground line-through font-mono">
                         {formatVal(rawTotal)}
                       </span>
@@ -617,10 +617,6 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                   </span>
                 </div>
               </div>
-
-              <p className="text-[11px] text-muted-foreground font-light text-center">
-                Shipping & taxes calculated at checkout
-              </p>
 
               {/* Dominant Checkout CTA */}
               <Button

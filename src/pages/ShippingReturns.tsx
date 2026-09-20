@@ -29,7 +29,7 @@ const ShippingReturns = () => {
 
       <main className="max-w-4xl mx-auto px-6 py-16 md:py-24 relative z-10">
         <div className="text-center mb-12">
-          <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-400 font-light block mb-3">
+          <span className="text-[9px] tracking-[0.25em] uppercase text-neutral-500 font-light block mb-3">
             CUSTOMER CARE
           </span>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.04em] mb-4 text-foreground uppercase">

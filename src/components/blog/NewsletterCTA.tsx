@@ -15,7 +15,7 @@ export const NewsletterCTA = () => {
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-body font-light block mb-4"
+          className="text-[9px] tracking-[0.3em] uppercase text-neutral-500 font-body font-light block mb-4"
         >
           STAY INFORMED
         </motion.span>
@@ -35,7 +35,7 @@ export const NewsletterCTA = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="text-sm md:text-base text-neutral-400 font-body font-light leading-relaxed max-w-xl mx-auto mb-10"
+          className="text-sm md:text-base text-neutral-500 font-body font-light leading-relaxed max-w-xl mx-auto mb-10"
         >
           Explore more of our science-backed educational content and take control of your hair health journey.
         </motion.p>

@@ -103,11 +103,18 @@ Deno.serve(async (req) => {
     // ── Step 5: Build line items and calculate subtotal ──────────────────
     console.log("Step 5: Building Stripe line items...");
     let rawSubtotalCents = 0;
-    const stripeLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
     // Store product info for metadata (name + price for webhook reconstruction)
     const cartDetails: Array<{ productId: string; name: string; priceAud: number; quantity: number }> = [];
 
     const totalQty = items.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 0), 0);
+
+    // Collect all units and verify inventory
+    const allUnits: Array<{
+      productId: string;
+      name: string;
+      image?: string;
+      priceAud: number;
+    }> = [];
 
     for (const item of items) {
       const prod = dbProducts.find((p: any) => p.id === item.productId);
@@ -124,17 +131,6 @@ Deno.serve(async (req) => {
       if (priceCents <= 0) throw new Error(`Product ${prod.name} has invalid price (${priceAud} AUD).`);
 
       rawSubtotalCents += priceCents * item.quantity;
-      stripeLineItems.push({
-        price_data: {
-          currency: "aud",
-          product_data: {
-            name: prod.name,
-            images: prod.images && prod.images.length > 0 ? [prod.images[0]] : [],
-          },
-          unit_amount: priceCents,
-        },
-        quantity: item.quantity,
-      });
 
       cartDetails.push({
         productId: prod.id,
@@ -142,6 +138,15 @@ Deno.serve(async (req) => {
         priceAud,
         quantity: item.quantity,
       });
+
+      for (let q = 0; q < item.quantity; q++) {
+        allUnits.push({
+          productId: prod.id,
+          name: prod.name,
+          image: prod.images && prod.images.length > 0 ? prod.images[0] : undefined,
+          priceAud,
+        });
+      }
     }
 
     // Australia Bundle Pricing Rule:
@@ -194,6 +199,50 @@ Deno.serve(async (req) => {
 
     const totalDiscountCents = bundleDiscountCents + promoDiscountCents;
     const subtotalAfterDiscountCents = targetSubtotalCents - promoDiscountCents;
+
+    // ── Build Stripe Line Items summing EXACTLY to subtotalAfterDiscountCents ──
+    const N = allUnits.length;
+    const basePerUnit = Math.floor(subtotalAfterDiscountCents / N);
+    const remainder = subtotalAfterDiscountCents % N;
+
+    const unitPrices = allUnits.map((_, idx) => (idx < remainder ? basePerUnit + 1 : basePerUnit));
+
+    // Group identical (productId, unitPrice) to create clean Stripe line items:
+    const groupedMap = new Map<string, { name: string; image?: string; unitAmount: number; quantity: number }>();
+
+    for (let i = 0; i < N; i++) {
+      const unit = allUnits[i];
+      const price = unitPrices[i];
+      const key = `${unit.productId}_${price}`;
+      if (groupedMap.has(key)) {
+        groupedMap.get(key)!.quantity += 1;
+      } else {
+        const displayName = bundleDiscountCents > 0
+          ? `${unit.name} (Bundle Offer)`
+          : unit.name;
+        groupedMap.set(key, {
+          name: displayName,
+          image: unit.image,
+          unitAmount: price,
+          quantity: 1,
+        });
+      }
+    }
+
+    const stripeLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+    for (const [, grp] of groupedMap) {
+      stripeLineItems.push({
+        price_data: {
+          currency: "aud",
+          product_data: {
+            name: grp.name,
+            images: grp.image ? [grp.image] : [],
+          },
+          unit_amount: grp.unitAmount,
+        },
+        quantity: grp.quantity,
+      });
+    }
 
     // ── Step 7: Calculate Shipping ───────────────────────────────────────
     let shippingCents = 950; // Standard: A$9.50
@@ -294,64 +343,10 @@ Deno.serve(async (req) => {
     }
 
     // ── Step 9: Create Stripe Checkout Session ────────────────────────────
-    // No DB order is created here. All order data is stored in Stripe metadata.
+    // All order data is stored in Stripe metadata.
     // The stripe-webhook will create the real order on payment confirmation.
     console.log("Step 9: Creating Stripe Checkout Session (no DB order pre-created)...");
     const stripe = new Stripe(stripeKey);
-
-    let stripeCouponId: string | null = null;
-    if (totalDiscountCents > 0) {
-      try {
-        const couponTitle = totalQty === 3
-          ? "Bundle & Save (3 Serums for A$100)"
-          : validCouponCode
-          ? `${validCouponCode} + Bundle Discount`
-          : "Bundle & Save Discount";
-
-        const coupon = await stripe.coupons.create({
-          amount_off: totalDiscountCents,
-          currency: "aud",
-          duration: "once",
-          name: couponTitle,
-        });
-        stripeCouponId = coupon.id;
-        console.log("Step 9: Created Stripe coupon:", stripeCouponId, "for amount_off:", totalDiscountCents);
-      } catch (err: any) {
-        console.warn("Step 9: Failed to create Stripe coupon:", err.message);
-      }
-    }
-
-    // Direct fallback: if a discount exists but no coupon could be attached,
-    // adjust line items directly so the amount going to Stripe is STRICTLY identical to subtotalAfterDiscountCents
-    if (totalDiscountCents > 0 && !stripeCouponId) {
-      console.log("Step 9: Fallback adjusting line items directly to match subtotalAfterDiscountCents:", subtotalAfterDiscountCents);
-      let remainingCents = subtotalAfterDiscountCents;
-      stripeLineItems.length = 0;
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        const prod = dbProducts.find((p: any) => p.id === item.productId)!;
-        const isLastItem = i === items.length - 1;
-        let itemTotalCents = 0;
-        if (isLastItem) {
-          itemTotalCents = remainingCents;
-        } else {
-          itemTotalCents = Math.round((subtotalAfterDiscountCents * item.quantity) / totalQty);
-          remainingCents -= itemTotalCents;
-        }
-        const unitAmount = Math.round(itemTotalCents / item.quantity);
-        stripeLineItems.push({
-          price_data: {
-            currency: "aud",
-            product_data: {
-              name: prod.name,
-              images: prod.images && prod.images.length > 0 ? [prod.images[0]] : [],
-            },
-            unit_amount: unitAmount,
-          },
-          quantity: item.quantity,
-        });
-      }
-    }
 
     // Build cart_items string for metadata: "productId:qty,productId:qty,..."
     const cartItemsMeta = items.map((i: any) => `${i.productId}:${i.quantity}`).join(",");
@@ -403,12 +398,6 @@ Deno.serve(async (req) => {
           total_amount:         totalAmount.toString(),
         },
       };
-
-      if (stripeCouponId) {
-        sessionCreateParams.discounts = [{ coupon: stripeCouponId }];
-      } else {
-        sessionCreateParams.allow_promotion_codes = true;
-      }
 
       session = await stripe.checkout.sessions.create(sessionCreateParams);
     } catch (stripeError: any) {

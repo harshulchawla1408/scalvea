@@ -146,7 +146,7 @@ export default function ShopByConcern() {
             ================================================== */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 md:mb-14 gap-4 sm:gap-6">
           <div className="max-w-2xl">
-            <span className="text-[10px] sm:text-[11px] tracking-[0.28em] uppercase text-neutral-400 font-body font-medium block mb-2 sm:mb-3">
+            <span className="text-[10px] sm:text-[11px] tracking-[0.28em] uppercase text-neutral-500 font-body font-medium block mb-2 sm:mb-3">
               SHOP BY CONCERN
             </span>
             <h2 className="text-2xl sm:text-3xl md:text-[38px] lg:text-[42px] leading-[1.15] font-heading text-neutral-900 tracking-tight font-normal mb-2.5 sm:mb-3.5">
@@ -235,9 +235,9 @@ export default function ShopByConcern() {
                         to={`/product/${concern.productSlug}`}
                         className="flex-1 min-w-0 flex flex-col justify-between py-0.5 px-0.5 group/item overflow-hidden"
                       >
-                        <div className="min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-[8px] sm:text-[9px] font-mono font-medium tracking-wider uppercase text-neutral-400 truncate">
+                        <div className="min-w-0 flex-1 flex flex-col">
+                          <div className="flex items-center justify-between mb-1 shrink-0">
+                            <span className="text-[8px] sm:text-[9px] font-mono font-medium tracking-wider uppercase text-neutral-500 truncate">
                               SOLUTION
                             </span>
                             <span className="text-[9px] sm:text-[10px] text-neutral-500 group-hover/item:text-black group-hover/item:translate-x-0.5 transition-all font-medium shrink-0">
@@ -246,24 +246,24 @@ export default function ShopByConcern() {
                           </div>
 
                           {/* Product Bottle Image Container */}
-                          <div className="relative w-full aspect-square max-h-[110px] sm:max-h-[125px] mx-auto my-0.5 flex items-center justify-center p-1">
+                          <div className="relative w-full flex-1 min-h-[130px] sm:min-h-[155px] max-h-[190px] sm:max-h-[220px] mx-auto my-0.5 flex items-center justify-center p-1 overflow-hidden">
                             <img
                               src={productImage}
                               alt={concern.productName}
-                              className="w-full h-full max-w-[110px] max-h-[110px] sm:max-w-[125px] sm:max-h-[125px] object-contain transform group-hover/item:scale-105 transition-transform duration-500"
+                              className="w-full h-full max-h-[170px] sm:max-h-[200px] object-contain transform scale-110 group-hover/item:scale-115 transition-transform duration-500"
                               loading="lazy"
                             />
                           </div>
                         </div>
 
                         {/* Product Title & Price */}
-                        <div className="space-y-0.5 pt-1 border-t border-neutral-100 min-w-0">
+                        <div className="space-y-0.5 pt-1 border-t border-neutral-100 min-w-0 shrink-0">
                           <h4 className="text-[12px] sm:text-[13px] font-medium text-neutral-900 leading-tight truncate font-heading group-hover/item:text-black transition-colors">
                             {concern.productName}
                           </h4>
                           <div className="flex items-baseline gap-1.5 pt-0.5">
                             {hasDiscount && (
-                              <span className="text-[10px] sm:text-[11px] text-neutral-400 line-through font-body">
+                              <span className="text-[10px] sm:text-[11px] text-neutral-500 line-through font-body">
                                 {formatPrice(mrpAud, mrpInr)}
                               </span>
                             )}

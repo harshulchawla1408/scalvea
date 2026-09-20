@@ -510,8 +510,7 @@ const ProductDetail = () => {
           "itemListElement": [
             { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://scalvea.com" },
             { "@type": "ListItem", "position": 2, "name": "Shop", "item": "https://scalvea.com/shop" },
-            { "@type": "ListItem", "position": 3, "name": product.category, "item": `https://scalvea.com/shop?category=${encodeURIComponent(product.category)}` },
-            { "@type": "ListItem", "position": 4, "name": product.name, "item": `https://scalvea.com/product/${product.slug}` },
+            { "@type": "ListItem", "position": 3, "name": product.name, "item": `https://scalvea.com/product/${product.slug}` },
           ],
         },
       ],
@@ -822,7 +821,7 @@ const ProductDetail = () => {
                   return (
                     <div className="flex items-baseline gap-3 mb-1 flex-wrap">
                       {hasDiscount && (
-                        <span className="text-xl md:text-2xl font-normal text-neutral-400 line-through">
+                        <span className="text-xl md:text-2xl font-normal text-neutral-500 line-through">
                           {formatPrice(product.mrp_aud || product.price_aud, product.mrp_inr || product.price_inr)}
                         </span>
                       )}

@@ -14,6 +14,12 @@ const staticRoutes = [
   { path: '/contact',              priority: '0.8', changefreq: 'weekly' },
   { path: '/blogs',                priority: '0.8', changefreq: 'weekly' },
   { path: '/faq',                  priority: '0.7', changefreq: 'weekly' },
+  { path: '/shipping-policy',      priority: '0.5', changefreq: 'monthly' },
+  { path: '/returns-policy',       priority: '0.5', changefreq: 'monthly' },
+  { path: '/privacy-policy',       priority: '0.3', changefreq: 'yearly' },
+  { path: '/terms-of-service',     priority: '0.3', changefreq: 'yearly' },
+  { path: '/payment-policy',       priority: '0.3', changefreq: 'yearly' },
+  { path: '/cancellation-policy',  priority: '0.3', changefreq: 'yearly' },
 ];
 
 // No static product seeds — live Supabase fetch handles all products

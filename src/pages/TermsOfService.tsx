@@ -6,7 +6,7 @@ const TermsOfService = () => {
   useSEO({
     title: "Terms of Service",
     description: "Read Scalvea's terms of service governing purchases, pricing, orders, and website usage terms.",
-    noindex: true,
+    canonical: "https://scalvea.com/terms-of-service",
   });
 
   return (

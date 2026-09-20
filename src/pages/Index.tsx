@@ -68,10 +68,9 @@ const CountUp = ({ value, duration = 1.8 }: { value: number; duration?: number }
 };
 
 const BASE_SLIDES = [
-  { lap: lap1, mob: mob1, alt: "Scalvea Scientific Haircare Banner 1", link: "/shop" },
-  { lap: lap4, mob: mob4, alt: "Scalvea Scientific Haircare Banner 2", link: "/shop" },
+  { lap: lap4, mob: mob4, alt: "Scalvea Scientific Haircare Banner 1", link: "/shop" },
+  { lap: lap1, mob: mob1, alt: "Scalvea Scientific Haircare Banner 2", link: "/shop" },
   { lap: lap2, mob: mob2, alt: "Scalvea Scientific Haircare Banner 3", link: "/shop" },
-  { lap: lap3, mob: mob3, alt: "Scalvea Scientific Haircare Banner 4", link: "/shop" },
 ];
 
 const TRUST_ITEMS = [
@@ -94,8 +93,8 @@ const TRUST_ITEMS = [
 
 const Index = () => {
   useSEO({
-    title: "Science-Backed Hair & Scalp Care",
-    description: "Science-backed hair growth serums & scalp treatments formulated with clinically researched ingredients. Shop Follicle 8 & Scalp-5. Fast shipping to Australia & India.",
+    title: "Science-Backed Hair Care | Hair Growth Solutions | Scalvea",
+    description: "Premium hair growth solutions & scalp treatments with clinically inspired ingredients. Shop Follicle 8 & Scalp-5 — designed for healthier-looking hair.",
     image: "https://scalvea.com/og-image.webp",
     canonical: "https://scalvea.com/",
     // max-image-preview:large is now the default — important for hair care product imagery
@@ -230,10 +229,12 @@ const Index = () => {
                 style={{ transitionDuration: "800ms" }}
               >
                 <picture className="block lg:pt-5">
-                  <source media="(max-width: 768px)" srcSet={slide.mob} />
+                  <source media="(max-width: 768px)" srcSet={slide.mob} width="800" height="1200" />
                   <img
                     src={slide.lap}
                     alt={slide.alt}
+                    width="1920"
+                    height="1080"
                     loading={isFirst ? "eager" : "lazy"}
                     fetchpriority={isFirst ? "high" : "low"}
                     className="w-full object-cover object-center block max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)] lg:max-h-[calc(100vh-74px)] h-auto pointer-events-none"
@@ -340,7 +341,7 @@ const Index = () => {
                     CLINICALLY DEVELOPED FORMULA
                   </span>
                   <h2 className="text-2xl sm:text-[30px] md:text-[34px] lg:text-[38px] leading-tight font-heading text-[#111111] tracking-tight font-normal">
-                    Meet the Science<br className="hidden sm:inline" /> Behind Follicle 8
+                    Meet the Science Behind Follicle 8 —<br className="hidden sm:inline" /> Premium Hair Growth Solutions
                   </h2>
                 </div>
 
@@ -496,7 +497,7 @@ const Index = () => {
           
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12 md:mb-16">
-            <span className="text-[9px] sm:text-[10px] md:text-xs tracking-[0.25em] uppercase text-neutral-400 font-body font-medium block mb-2 sm:mb-2.5">
+            <span className="text-[9px] sm:text-[10px] md:text-xs tracking-[0.25em] uppercase text-neutral-500 font-body font-medium block mb-2 sm:mb-2.5">
               OUR SCIENCE
             </span>
             <h2 className="text-2xl sm:text-3xl md:text-[36px] lg:text-[40px] leading-tight font-heading text-[#111111] tracking-tight font-normal mb-2.5 sm:mb-3">
@@ -570,11 +571,11 @@ const Index = () => {
                         className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 lg:h-16 lg:w-16 object-contain shrink-0 transition-transform duration-300 ease-out group-hover:scale-105"
                         loading="lazy"
                       />
-                      <h4 className="text-sm sm:text-lg md:text-xl font-heading font-medium text-neutral-900 leading-snug tracking-tight">
+                      <h3 className="text-sm sm:text-lg md:text-xl font-heading font-medium text-neutral-900 leading-snug tracking-tight">
                         {card.title}
-                      </h4>
+                      </h3>
                     </div>
-                    <span className="text-[10px] sm:text-xs md:text-sm font-mono tracking-widest text-neutral-400 group-hover:text-neutral-800 transition-colors duration-300 font-medium shrink-0">
+                    <span className="text-[10px] sm:text-xs md:text-sm font-mono tracking-widest text-neutral-500 group-hover:text-neutral-800 transition-colors duration-300 font-medium shrink-0">
                       {card.num}
                     </span>
                   </div>
@@ -722,7 +723,7 @@ const Index = () => {
           className="relative z-10 max-w-xl mx-auto text-center px-4 sm:px-6"
         >
           {/* Eyebrow */}
-          <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-neutral-400 font-body font-medium block mb-2 sm:mb-3">
+          <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-neutral-500 font-body font-medium block mb-2 sm:mb-3">
             STAY IN THE KNOW
           </span>
 
@@ -769,7 +770,7 @@ const Index = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email address"
-              className="flex-1 h-11 sm:h-12 px-5 text-xs sm:text-sm bg-white border border-neutral-200/90 rounded-full outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-all duration-200 font-body font-light text-neutral-900 placeholder:text-neutral-400"
+              className="flex-1 h-11 sm:h-12 px-5 text-xs sm:text-sm bg-white border border-neutral-200/90 rounded-full outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-all duration-200 font-body font-light text-neutral-900 placeholder:text-neutral-500"
               required
             />
             <button
@@ -782,7 +783,7 @@ const Index = () => {
           </form>
 
           {/* Privacy micro-note */}
-          <p className="text-[10px] sm:text-xs text-neutral-400 font-body font-light mt-3.5 tracking-normal">
+          <p className="text-[10px] sm:text-xs text-neutral-500 font-body font-light mt-3.5 tracking-normal">
             No spam. Just Scalvea updates.
           </p>
         </motion.div>

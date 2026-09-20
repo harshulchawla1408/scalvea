@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Globe } from "lucide-react";
+import { Globe, X } from "lucide-react";
 
 export interface CountrySettings {
   country: string;
@@ -58,40 +58,48 @@ const COUNTRY_FALLBACKS: Record<CountryType, CountrySettings> = {
   }
 };
 
-const CountrySelectionModal = ({ onSelect }: { onSelect: (c: CountryType) => void }) => {
+const CountrySelectionModal = ({ onSelect, onClose }: { onSelect: (c: CountryType) => void, onClose: () => void }) => {
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md transition-all duration-300">
-      <div className="bg-background border border-border max-w-md w-full p-8 mx-4 shadow-2xl relative overflow-hidden text-center rounded-none flex flex-col items-center">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] w-[calc(100%-2rem)] sm:w-auto max-w-sm">
+      <div className="bg-background/95 backdrop-blur-xl border border-border/60 shadow-[0_8px_32px_rgba(0,0,0,0.12)] p-6 relative overflow-hidden rounded-2xl flex flex-col items-start">
+        <button 
+          onClick={onClose}
+          className="absolute top-2 right-2 p-3 text-muted-foreground/60 hover:text-foreground transition-colors z-10"
+          aria-label="Close"
+        >
+          <X className="h-4 w-4" />
+        </button>
         {/* Subtle premium accent line */}
-        <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-orange-400 via-neutral-100 to-green-600" />
+        <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-orange-400 via-neutral-200 to-green-600" />
         
-        <Globe className="h-8 w-8 text-muted-foreground mb-4 animate-pulse" />
+        <div className="flex items-center gap-3 mb-3">
+          <Globe className="h-5 w-5 text-muted-foreground animate-pulse" />
+          <h2 className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground font-medium">Welcome to Scalvea</h2>
+        </div>
         
-        <h2 className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground mb-1">Welcome to</h2>
-        <h1 className="text-2xl font-extralight tracking-[0.2em] mb-4">SCALVEA</h1>
-        <p className="text-xs text-muted-foreground mb-8 max-w-[280px]">
-          Please select your shopping region. This will customize currency, shipping, and product availability.
+        <p className="text-xs text-muted-foreground mb-5 max-w-[280px] leading-relaxed">
+          Please select your shopping region for customized pricing and shipping.
         </p>
         
-        <div className="w-full space-y-3">
+        <div className="w-full space-y-2">
           <button
             onClick={() => onSelect("india")}
-            className="w-full py-3.5 px-6 border border-border hover:border-foreground transition-all duration-300 flex items-center justify-between group"
+            className="w-full py-2.5 px-4 bg-white/50 border border-border/80 hover:border-foreground/40 hover:bg-white transition-all duration-300 flex items-center justify-between group rounded-xl"
           >
             <span className="flex items-center gap-3">
-              <span className="text-xl">🇮🇳</span>
-              <span className="text-xs tracking-[0.15em] uppercase font-light">India (INR)</span>
+              <span className="text-lg">🇮🇳</span>
+              <span className="text-[11px] tracking-[0.12em] uppercase font-medium">India (INR)</span>
             </span>
             <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors group-hover:translate-x-1 duration-300 transform inline-block">→</span>
           </button>
           
           <button
             onClick={() => onSelect("australia")}
-            className="w-full py-3.5 px-6 border border-border hover:border-foreground transition-all duration-300 flex items-center justify-between group"
+            className="w-full py-2.5 px-4 bg-white/50 border border-border/80 hover:border-foreground/40 hover:bg-white transition-all duration-300 flex items-center justify-between group rounded-xl"
           >
             <span className="flex items-center gap-3">
-              <span className="text-xl">🇦🇺</span>
-              <span className="text-xs tracking-[0.15em] uppercase font-light">Australia (AUD)</span>
+              <span className="text-lg">🇦🇺</span>
+              <span className="text-[11px] tracking-[0.12em] uppercase font-medium">Australia (AUD)</span>
             </span>
             <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors group-hover:translate-x-1 duration-300 transform inline-block">→</span>
           </button>
@@ -114,6 +122,20 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
 
   const [allCountries, setAllCountries] = useState<CountrySettings[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Auto-detect country via IP if none selected
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !localStorage.getItem("scalvea-country")) {
+      fetch("https://ipapi.co/json/")
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.country_code) {
+            setSelectedCountry(data.country_code === 'IN' ? 'india' : 'australia');
+          }
+        })
+        .catch(err => console.warn("Geolocation fallback failed:", err));
+    }
+  }, []);
 
   useEffect(() => {
     supabase
@@ -220,7 +242,12 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
       }}
     >
       {children}
-      {selectedCountry === null && typeof window !== 'undefined' && <CountrySelectionModal onSelect={setSelectedCountry} />}
+      {selectedCountry === null && typeof window !== 'undefined' && (
+        <CountrySelectionModal 
+          onSelect={setSelectedCountry} 
+          onClose={() => setSelectedCountry('australia')} 
+        />
+      )}
     </CountryContext.Provider>
   );
 };

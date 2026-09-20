@@ -446,7 +446,7 @@ const ScalveaInMotion = () => {
     >
       {/* Header — aligned to main grid */}
       <div className="max-w-7xl mx-auto px-6 lg:px-16 mb-10 md:mb-14">
-        <span className="text-[9px] md:text-[10px] tracking-[0.3em] uppercase text-neutral-400 font-body font-medium block mb-3">
+        <span className="text-[9px] md:text-[10px] tracking-[0.3em] uppercase text-neutral-500 font-body font-medium block mb-3">
           REAL HAIR CARE. REAL MOMENTS.
         </span>
         <h2 className="text-3xl md:text-[42px] lg:text-[50px] leading-[1.1] font-heading text-neutral-900 tracking-tight mb-4">

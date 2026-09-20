@@ -180,7 +180,7 @@ const ProductInDemand = () => {
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="mb-8 md:mb-14 text-center lg:text-left"
         >
-          <span className="text-[10px] md:text-xs tracking-[0.25em] uppercase text-neutral-400 font-body font-medium block mb-2.5">
+          <span className="text-[10px] md:text-xs tracking-[0.25em] uppercase text-neutral-500 font-body font-medium block mb-2.5">
             FEATURED SPOTLIGHT
           </span>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] leading-[1.08] font-heading text-[#111111] tracking-tight font-normal">

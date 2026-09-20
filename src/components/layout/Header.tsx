@@ -321,13 +321,13 @@ const Header = () => {
                 {/* Search Bar in Mobile Menu */}
                 <div className="px-6 pt-6">
                   <form onSubmit={handleSearch} className="relative flex items-center border border-neutral-200 px-3 py-2 bg-neutral-50/50">
-                    <Search className="size-[16px] text-neutral-400 mr-2" />
+                    <Search className="size-[16px] text-neutral-500 mr-2" />
                     <input 
                       type="text" 
                       value={searchQuery} 
                       onChange={(e) => setSearchQuery(e.target.value)} 
                       placeholder="Search products..." 
-                      className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400 text-neutral-800" 
+                      className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-500 text-neutral-800" 
                     />
                   </form>
                 </div>

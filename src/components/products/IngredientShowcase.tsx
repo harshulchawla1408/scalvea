@@ -264,7 +264,7 @@ export const IngredientShowcase = ({ product }: IngredientShowcaseProps) => {
 
               <div className="flex items-center gap-1.5 px-3 py-1 bg-black/5 rounded-full text-xs font-mono font-medium text-neutral-700">
                 <span>{activeMobileIndex + 1}</span>
-                <span className="text-neutral-400">/</span>
+                <span className="text-neutral-500">/</span>
                 <span>{activeIngredients.length}</span>
               </div>
 

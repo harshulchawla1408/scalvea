@@ -28,10 +28,17 @@ const BlogDetail = () => {
     title: post.meta.seoTitle || `${post.meta.title} | Scalvea`,
     description: post.meta.seoDescription || post.meta.description,
     keywords: post.meta.focusKeyword ? `${post.meta.focusKeyword}, scalvea blog` : post.meta.tags.join(", "),
+    canonical: `https://scalvea.com/blogs/${post.meta.slug}`,
     schema: {
       "@context": "https://schema.org",
-      "@type": "Article",
+      "@type": "BlogPosting",
       "headline": post.meta.title,
+      "description": post.meta.seoDescription || post.meta.description,
+      "url": `https://scalvea.com/blogs/${post.meta.slug}`,
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": `https://scalvea.com/blogs/${post.meta.slug}`
+      },
       "image": [
         `https://scalvea.com${post.meta.featuredImage}`
       ],
@@ -39,8 +46,20 @@ const BlogDetail = () => {
       "dateModified": post.meta.updated || post.meta.date,
       "author": [{
         "@type": "Organization",
-        "name": post.meta.author
-      }]
+        "name": post.meta.author,
+        "url": "https://scalvea.com"
+      }],
+      "publisher": {
+        "@type": "Organization",
+        "name": "Scalvea",
+        "url": "https://scalvea.com",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://scalvea.com/scalvea-logo.webp",
+          "width": 512,
+          "height": 512
+        }
+      }
     }
   } : { title: "Blog Not Found" });
 
@@ -65,7 +84,7 @@ const BlogDetail = () => {
     table: ({ node, ...props }: any) => (
       <div className="w-full my-8 max-w-full">
         {/* Mobile horizontal scroll hint */}
-        <div className="sm:hidden flex items-center justify-between text-[11px] text-neutral-400 font-medium mb-1.5 px-0.5 select-none">
+        <div className="sm:hidden flex items-center justify-between text-[11px] text-neutral-500 font-medium mb-1.5 px-0.5 select-none">
           <span className="uppercase tracking-wider">Comparison Table</span>
           <span className="text-[10px] text-neutral-500 font-normal">Scroll horizontally ➔</span>
         </div>
@@ -105,7 +124,7 @@ const BlogDetail = () => {
         
         {/* Breadcrumb */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-16 pt-6 sm:pt-8 pb-4 w-full">
-          <nav className="flex items-center gap-2 text-xs sm:text-[13px] uppercase tracking-[0.06em] font-medium text-neutral-400 flex-wrap">
+          <nav className="flex items-center gap-2 text-xs sm:text-[13px] uppercase tracking-[0.06em] font-medium text-neutral-500 flex-wrap">
             <Link to="/" className="hover:text-black transition-colors">Home</Link>
             <ChevronRight className="w-3.5 h-3.5 shrink-0" />
             <Link to="/blogs" className="hover:text-black transition-colors">Journal</Link>
@@ -205,14 +224,22 @@ const BlogDetail = () => {
                   </div>
                 </div>
                 
-                {/* Back to blogs */}
-                <div className="mt-10 sm:mt-12">
+                {/* Links */}
+                <div className="mt-10 sm:mt-12 flex flex-wrap gap-6 items-center justify-between">
                   <Link 
                     to="/blogs"
                     className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.08em] font-semibold text-neutral-600 hover:text-black transition-colors"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Back to Journal
+                  </Link>
+                  
+                  <Link 
+                    to="/shop"
+                    className="inline-flex items-center gap-2 text-sm uppercase tracking-[0.08em] font-semibold text-neutral-600 hover:text-black transition-colors"
+                  >
+                    Shop Hair Care
+                    <ChevronRight className="w-4 h-4" />
                   </Link>
                 </div>
               </div>
@@ -226,7 +253,7 @@ const BlogDetail = () => {
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-16">
               <div className="flex items-end justify-between mb-10">
                 <div>
-                  <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 font-body font-light block mb-2">
+                  <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-500 font-body font-light block mb-2">
                     KEEP READING
                   </span>
                   <h3 className="text-3xl font-heading text-neutral-900 leading-tight">

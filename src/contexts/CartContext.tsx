@@ -167,6 +167,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   // Australia Bundle Pricing:
   // Strictly A$69 for 2 products, A$100 for 3 products.
   // When quantity > 3: Math.floor(qty / 3) * 100 + (rem === 2 ? 69 : rem * 34.50)
+  //
+  // India BUY 2 GET 1 FREE Offer:
+  // When 3+ serums in cart and at least 1 is Scalp-5, 1 Scalp-5 (₹899) is FREE.
   const calculateTotal = () => {
     if (selectedCountry === "australia") {
       if (itemCount === 0) return 0;
@@ -176,6 +179,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const packsOf3 = Math.floor(itemCount / 3);
       const rem = itemCount % 3;
       return packsOf3 * 100.0 + (rem === 2 ? 69.0 : rem * 34.5);
+    }
+    if (selectedCountry === "india") {
+      const hasScalp5 = items.some(
+        (i) =>
+          (i.name || "").toLowerCase().includes("scalp") ||
+          (i.productId || "").toLowerCase().includes("scalp")
+      );
+      if (itemCount >= 3 && hasScalp5) {
+        const scalp5Item = items.find(
+          (i) =>
+            (i.name || "").toLowerCase().includes("scalp") ||
+            (i.productId || "").toLowerCase().includes("scalp")
+        );
+        const scalp5Price = scalp5Item?.price ?? 899;
+        return Math.max(0, rawTotal - scalp5Price);
+      }
+      return rawTotal;
     }
     return rawTotal;
   };

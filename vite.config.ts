@@ -30,6 +30,9 @@ export default defineConfig(async ({ mode, isSsrBuild }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
+    build: {
+      sourcemap: true,
+    },
     // SSR build configuration
     ...(isSsrBuild && {
       build: {
