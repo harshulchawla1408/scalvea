@@ -35,6 +35,8 @@ import PaymentPolicy from "./pages/PaymentPolicy";
 import CancellationPolicy from "./pages/CancellationPolicy";
 import NotFound from "./pages/NotFound";
 
+import { AuthProvider } from "./contexts/AuthContext";
+
 // Static route tree — no Suspense, no lazy()
 const ServerRoutes = () => (
   <Routes>
@@ -81,9 +83,11 @@ export function render(url: string): string {
         <CountryProvider>
           <CartProvider>
             <WishlistProvider>
-              <StaticRouter location={url}>
-                <ServerRoutes />
-              </StaticRouter>
+              <AuthProvider>
+                <StaticRouter location={url}>
+                  <ServerRoutes />
+                </StaticRouter>
+              </AuthProvider>
             </WishlistProvider>
           </CartProvider>
         </CountryProvider>

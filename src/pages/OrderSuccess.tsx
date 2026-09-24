@@ -108,12 +108,21 @@ const OrderSuccess = () => {
       return;
     }
 
-    // ── 2. Shiprocket fallback: poll orders by shiprocket_order_id column ─
+    // ── 2. Shiprocket fallback: poll and actively verify via fetch-shiprocket-order ─
     let retries = 0;
-    const maxRetries = 15; // 15 × 2s = 30 seconds max wait
+    const maxRetries = 8; // 8 × 1.2s = ~10s max
+
+    let fallbackData: any = null;
+    try {
+      const raw =
+        sessionStorage.getItem("scalvea_pending_india_checkout") ||
+        localStorage.getItem("scalvea_pending_india_checkout");
+      if (raw) fallbackData = JSON.parse(raw);
+    } catch (_) {}
 
     const poll = async () => {
       try {
+        // First check if order is already in the database
         const { data } = await supabase
           .from("orders")
           .select("*, order_items(*)")
@@ -130,8 +139,24 @@ const OrderSuccess = () => {
           }
           return;
         }
+
+        // If not in database yet, trigger fetch-shiprocket-order immediately!
+        const { data: fnData } = await supabase.functions.invoke("fetch-shiprocket-order", {
+          body: { orderId: shiprocketOrderId, fallbackData },
+        });
+
+        if (fnData?.success && fnData?.order) {
+          setOrder(fnData.order);
+          setLoading(false);
+          clearCart();
+          if (!purchaseTracked.current) {
+            purchaseTracked.current = true;
+            trackPurchase(fnData.order);
+          }
+          return;
+        }
       } catch (err: any) {
-        console.error("Poll error:", err.message);
+        console.warn("[OrderSuccess] Verification poll warning:", err.message);
       }
 
       retries++;
@@ -139,7 +164,7 @@ const OrderSuccess = () => {
         setLoading(false);
         navigate("/order-failed?reason=timeout");
       } else {
-        setTimeout(poll, 2000);
+        setTimeout(poll, 1200);
       }
     };
 

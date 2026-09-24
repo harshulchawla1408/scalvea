@@ -4,7 +4,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useCart } from "@/contexts/CartContext";
 import { useCountry } from "@/contexts/CountryContext";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -468,19 +468,27 @@ const Checkout = () => {
   const scalp5PriceAud = dbScalp5?.price_aud ?? 34.50;
   const follicle8PriceInr = dbFollicle8?.price_inr ?? 999;
   const follicle8PriceAud = dbFollicle8?.price_aud ?? 34.50;
+  const isIndia = settings?.country?.toLowerCase() === "india";
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth?returnTo=/cart");
+    if (!authLoading && !user && !isIndia) {
+      navigate("/auth?returnTo=/checkout");
     }
-  }, [authLoading, user, navigate]);
+  }, [authLoading, user, isIndia, navigate]);
+
+  // If user lands on checkout after login but cart is empty, open cart drawer
+  useEffect(() => {
+    if (!authLoading && user && items.length === 0) {
+      setIsCartOpen(true);
+    }
+  }, [authLoading, user, items.length, setIsCartOpen]);
 
   // ── Coupon state kept for zero-breakage (not rendered) ──
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount_percentage: number } | null>(null);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
 
-  const isIndia = settings?.country?.toLowerCase() === "india";
+  
 
   const discountAmount = appliedCoupon ? total * (appliedCoupon.discount_percentage / 100) : 0;
   const subtotalAfterDiscount = total - discountAmount;
@@ -630,35 +638,48 @@ const Checkout = () => {
     const capturedNativeEvent: Event | null = (e?.nativeEvent as Event) || null;
     e?.preventDefault();
 
-    if (!user) {
+    if (!user && !isIndia) {
       toast({ title: "Please sign in", description: "You need an account to complete checkout.", variant: "destructive" });
-      navigate("/auth?returnTo=/cart");
+      navigate("/auth?returnTo=/checkout");
       return;
     }
 
     setPlacing(true);
 
     try {
+      const checkoutPayload = {
+        items: items.map((item) => ({
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+        })),
+        couponCode: appliedCoupon?.code || null,
+        discountAmount: discountAmount > 0 ? discountAmount : null,
+        email: form.email || user?.email || "",
+        phone: form.phone,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        address: form.address,
+        city: form.city,
+        state: form.state,
+        postcode: form.postcode,
+        subtotal: subtotalAfterDiscount,
+        shippingAmount: shippingAmount,
+        taxAmount: taxAmount,
+        grandTotal: grandTotal,
+        userId: user?.id || null,
+      };
+
+      // Cache snapshot for instant callback order confirmation
+      try {
+        sessionStorage.setItem("scalvea_pending_india_checkout", JSON.stringify(checkoutPayload));
+        localStorage.setItem("scalvea_pending_india_checkout", JSON.stringify(checkoutPayload));
+      } catch (_) {}
+
       const { data, error } = await supabase.functions.invoke("create-shiprocket-checkout-token", {
-        body: {
-          items: items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-          })),
-          couponCode: appliedCoupon?.code || null,
-          discountAmount: discountAmount > 0 ? discountAmount : null,
-          email: form.email || user?.email || "",
-          phone: form.phone,
-          firstName: form.firstName,
-          lastName: form.lastName,
-          address: form.address,
-          city: form.city,
-          state: form.state,
-          postcode: form.postcode,
-          subtotal: subtotalAfterDiscount,
-          shippingAmount: shippingAmount,
-          taxAmount: taxAmount,
-        },
+        body: checkoutPayload,
       });
 
       if (error || !data || !data.token) {
@@ -765,7 +786,7 @@ const Checkout = () => {
     e?.preventDefault();
     if (!user) {
       toast({ title: "Please sign in", description: "You need an account to complete checkout.", variant: "destructive" });
-      navigate("/auth?returnTo=/cart");
+      navigate("/auth?returnTo=/checkout");
       return;
     }
 
@@ -798,7 +819,7 @@ const Checkout = () => {
     e?.preventDefault();
     if (!user) {
       toast({ title: "Please sign in", description: "You need an account to complete checkout.", variant: "destructive" });
-      navigate("/auth?returnTo=/cart");
+      navigate("/auth?returnTo=/checkout");
       return;
     }
     setPlacing(true);
@@ -809,15 +830,6 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isIndia) {
-      if (!user) {
-        toast({ title: "Please sign in", description: "You need an account to place an order.", variant: "destructive" });
-        navigate("/auth?returnTo=/cart");
-        return;
-      }
-      if (!form.firstName || !form.lastName || !form.address || !form.city || !form.state || !form.postcode || !form.phone) {
-        toast({ title: "Missing details", description: "Please fill in all required fields.", variant: "destructive" });
-        return;
-      }
       handleShiprocketCheckout(e as unknown as React.MouseEvent<HTMLButtonElement>);
       return;
     }

@@ -10,6 +10,7 @@ import PageTransition from "./components/layout/PageTransition";
 import { CartProvider } from "./contexts/CartContext";
 import { WishlistProvider } from "./contexts/WishlistContext";
 import { CountryProvider } from "./contexts/CountryContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import AppRoutes from "./AppRoutes";
 
 const queryClient = new QueryClient();
@@ -20,15 +21,17 @@ const App = () => (
       <CountryProvider>
         <CartProvider>
           <WishlistProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-              <ScrollToTop />
-              <MetaPixelRouteTracker />
-              <ChatbaseController />
-              <PageTransition />
-              <AppRoutes />
-            </BrowserRouter>
+            <AuthProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                <ScrollToTop />
+                <MetaPixelRouteTracker />
+                <ChatbaseController />
+                <PageTransition />
+                <AppRoutes />
+              </BrowserRouter>
+            </AuthProvider>
           </WishlistProvider>
         </CartProvider>
       </CountryProvider>

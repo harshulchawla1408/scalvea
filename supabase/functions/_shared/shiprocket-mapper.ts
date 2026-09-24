@@ -530,7 +530,7 @@ export async function callOrderDetailsApi(
   };
   const sig        = await generateHmacSha256(secretKey, JSON.stringify(payload));
   const controller = new AbortController();
-  const timeoutId  = setTimeout(() => controller.abort(), 15_000);
+  const timeoutId  = setTimeout(() => controller.abort(), 4_000); // 4s timeout so frontend doesn't hang
 
   try {
     const res = await fetch(
@@ -555,14 +555,24 @@ export async function callOrderDetailsApi(
     }
     let parsed: any;
     try { parsed = JSON.parse(text); } catch { parsed = { raw: text }; }
+
+    // Validate that response is not an error payload
+    if (parsed && (parsed.status === false || parsed.success === false || parsed.error)) {
+      return { ok: false, data: null, error: parsed.message || parsed.error || "Order not ready in Shiprocket" };
+    }
+
     // Normalise envelope — may return { data: {...} } or the object directly
     const data = parsed?.data || parsed;
+    if (!data || (typeof data === "object" && Object.keys(data).length === 0)) {
+      return { ok: false, data: null, error: "Empty order details payload" };
+    }
+
     console.log(`Order Details API: success for Shiprocket order ${shiprocketOrderId}`);
     return { ok: true, data };
   } catch (err: any) {
     clearTimeout(timeoutId);
     const msg = err.name === "AbortError"
-      ? `Order Details API timed out (15s) for order ${shiprocketOrderId}`
+      ? `Order Details API timed out (4s) for order ${shiprocketOrderId}`
       : `Order Details API fetch error: ${err.message}`;
     console.error(msg);
     return { ok: false, data: null, error: msg };
@@ -711,6 +721,10 @@ export async function syncOrderFromDetails(
     const { data: pPhone } = await supabase.from("profiles").select("id").or(`phone.eq.${phone},phone.eq.+91${phone}`).maybeSingle();
     if (pPhone) userId = pPhone.id;
   }
+  // Check if passed explicitly from checkout snapshot
+  if (!userId && (orderDetails?.userId || webhookBody?.userId)) {
+    userId = orderDetails?.userId || webhookBody?.userId;
+  }
 
   // ── F: Build order payload ────────────────────────────────────────────────
   const gatewayResponse = { order_details_api: orderDetails, webhook_payload: webhookBody || null };
@@ -800,15 +814,15 @@ export async function syncOrderFromDetails(
 
   // ── J: Resolve cart items ─────────────────────────────────────────────────
   let rawItems: any[] = [];
-  if (Array.isArray(orderDetails.cart_data?.items)) rawItems = orderDetails.cart_data.items;
-  else if (Array.isArray(orderDetails.items)) rawItems = orderDetails.items;
-  else if (Array.isArray(orderDetails.products)) rawItems = orderDetails.products;
-  else if (Array.isArray(webhookBody?.cart_data?.items)) rawItems = webhookBody.cart_data.items;
-  else if (Array.isArray(webhookBody?.items)) rawItems = webhookBody.items;
-  else if (Array.isArray(webhookBody?.products)) rawItems = webhookBody.products;
+  if (Array.isArray(orderDetails.cart_data?.items) && orderDetails.cart_data.items.length > 0) rawItems = orderDetails.cart_data.items;
+  else if (Array.isArray(orderDetails.items) && orderDetails.items.length > 0) rawItems = orderDetails.items;
+  else if (Array.isArray(orderDetails.products) && orderDetails.products.length > 0) rawItems = orderDetails.products;
+  else if (Array.isArray(webhookBody?.cart_data?.items) && webhookBody.cart_data.items.length > 0) rawItems = webhookBody.cart_data.items;
+  else if (Array.isArray(webhookBody?.items) && webhookBody.items.length > 0) rawItems = webhookBody.items;
+  else if (Array.isArray(webhookBody?.products) && webhookBody.products.length > 0) rawItems = webhookBody.products;
 
   const cartItems = rawItems.map((it: any) => ({
-    variant_id: String(it.variant_id || it.product_id || it.id || ""),
+    variant_id: String(it.variant_id || it.product_id || it.productId || it.id || ""),
     quantity:   Number(it.quantity || 1),
     price:      Number(it.price || it.selling_price || 0),
     name:       it.name || it.product_name || "Scalvea Product",
