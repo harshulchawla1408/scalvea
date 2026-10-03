@@ -12,6 +12,7 @@ import {
   Check,
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useCountry } from "@/contexts/CountryContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,7 @@ const getItemImage = (item: { productId?: string; name?: string; image?: string 
 const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
   const { items, addItem, removeItem, updateQuantity, total, rawTotal, bundleDiscount, itemCount } = useCart();
   const { currencyCode, selectedCountry } = useCountry();
+  const { user } = useAuth();
   const { products } = useProducts();
 
   const isIndia = selectedCountry === "india";
@@ -623,7 +625,20 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
                 asChild
                 className="w-full bg-foreground text-background hover:bg-foreground/90 text-xs sm:text-sm font-bold tracking-[0.14em] uppercase h-12 rounded-lg transition-all active:scale-[0.99] shadow-sm flex items-center justify-center gap-2"
               >
-                <Link to="/checkout" onClick={onClose}>
+                <Link
+                  to={!user && !isIndia ? "/auth?returnTo=/checkout" : "/checkout"}
+                  onClick={() => {
+                    onClose();
+                    if (!isIndia) {
+                      try {
+                        sessionStorage.setItem("scalvea_buying_flow", "true");
+                        localStorage.setItem("scalvea_buying_flow", "true");
+                        sessionStorage.setItem("scalvea_auth_return_to", "/checkout");
+                        localStorage.setItem("scalvea_auth_return_to", "/checkout");
+                      } catch (_) {}
+                    }
+                  }}
+                >
                   <span>Proceed to Checkout</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>

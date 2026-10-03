@@ -75,10 +75,12 @@ const ConcernVideo = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasTriggeredLoad = useRef(false);
 
   useEffect(() => {
     const videoEl = videoRef.current;
-    if (!videoEl) return;
+    const container = containerRef.current;
+    if (!videoEl || !container) return;
 
     // Strict muted settings for 100% browser autoplay compliance
     videoEl.muted = true;
@@ -88,6 +90,11 @@ const ConcernVideo = ({
       ([entry]) => {
         if (!videoEl) return;
         if (entry.isIntersecting) {
+          if (!hasTriggeredLoad.current) {
+            hasTriggeredLoad.current = true;
+            videoEl.src = src;
+            videoEl.load();
+          }
           videoEl.play().catch(() => {
             // Autoplay prevention fallback
           });
@@ -98,9 +105,7 @@ const ConcernVideo = ({
       { threshold: 0.15 }
     );
 
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
+    observer.observe(container);
 
     return () => observer.disconnect();
   }, [src]);
@@ -112,12 +117,10 @@ const ConcernVideo = ({
     >
       <video
         ref={videoRef}
-        src={src}
-        autoPlay
         loop
         muted
         playsInline
-        preload="metadata"
+        preload="none"
         style={{ transform: "scale(1.28)" }}
         className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
         aria-label={alt}
@@ -146,13 +149,13 @@ export default function ShopByConcern() {
             ================================================== */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 md:mb-14 gap-4 sm:gap-6">
           <div className="max-w-2xl">
-            <span className="text-[10px] sm:text-[11px] tracking-[0.28em] uppercase text-neutral-500 font-body font-medium block mb-2 sm:mb-3">
+            <span className="text-[10px] sm:text-[11px] tracking-[0.28em] uppercase text-neutral-600 font-body font-medium block mb-2 sm:mb-3">
               SHOP BY CONCERN
             </span>
             <h2 className="text-2xl sm:text-3xl md:text-[38px] lg:text-[42px] leading-[1.15] font-heading text-neutral-900 tracking-tight font-normal mb-2.5 sm:mb-3.5">
               Real Problems. Real Solutions.
             </h2>
-            <p className="text-xs sm:text-sm text-neutral-500 font-body font-light leading-relaxed max-w-xl">
+            <p className="text-xs sm:text-sm text-neutral-600 font-body font-light leading-relaxed max-w-xl">
               Targeted hair care for the concerns that matter most. Choose your concern and discover the Scalvea solution designed for it.
             </p>
           </div>
@@ -237,10 +240,10 @@ export default function ShopByConcern() {
                       >
                         <div className="min-w-0 flex-1 flex flex-col">
                           <div className="flex items-center justify-between mb-1 shrink-0">
-                            <span className="text-[8px] sm:text-[9px] font-mono font-medium tracking-wider uppercase text-neutral-500 truncate">
+                            <span className="text-[8px] sm:text-[9px] font-mono font-medium tracking-wider uppercase text-neutral-600 truncate">
                               SOLUTION
                             </span>
-                            <span className="text-[9px] sm:text-[10px] text-neutral-500 group-hover/item:text-black group-hover/item:translate-x-0.5 transition-all font-medium shrink-0">
+                            <span className="text-[9px] sm:text-[10px] text-neutral-600 group-hover/item:text-black group-hover/item:translate-x-0.5 transition-all font-medium shrink-0">
                               Shop →
                             </span>
                           </div>
@@ -250,6 +253,8 @@ export default function ShopByConcern() {
                             <img
                               src={productImage}
                               alt={concern.productName}
+                              width="220"
+                              height="220"
                               className="w-full h-full max-h-[170px] sm:max-h-[200px] object-contain transform scale-110 group-hover/item:scale-115 transition-transform duration-500"
                               loading="lazy"
                             />
@@ -258,12 +263,12 @@ export default function ShopByConcern() {
 
                         {/* Product Title & Price */}
                         <div className="space-y-0.5 pt-1 border-t border-neutral-100 min-w-0 shrink-0">
-                          <h4 className="text-[12px] sm:text-[13px] font-medium text-neutral-900 leading-tight truncate font-heading group-hover/item:text-black transition-colors">
+                          <p className="text-[12px] sm:text-[13px] font-medium text-neutral-900 leading-tight truncate font-heading group-hover/item:text-black transition-colors">
                             {concern.productName}
-                          </h4>
+                          </p>
                           <div className="flex items-baseline gap-1.5 pt-0.5">
                             {hasDiscount && (
-                              <span className="text-[10px] sm:text-[11px] text-neutral-500 line-through font-body">
+                              <span className="text-[10px] sm:text-[11px] text-neutral-600 line-through font-body">
                                 {formatPrice(mrpAud, mrpInr)}
                               </span>
                             )}

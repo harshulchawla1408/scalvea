@@ -1,0 +1,50 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ards-project/ard-spec/main/schema/ai-catalog-v1.json",
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "Scalvea",
+    "identifier": "did:web:scalvea.com",
+    "documentationUrl": "https://scalvea.com/about",
+    "description": "Science-backed hair and scalp care brand formulated with clinically researched ingredients."
+  },
+  "entries": [
+    {
+      "identifier": "urn:scalvea:product:follicle-8-hair-growth-serum",
+      "displayName": "Follicle 8 Hair Growth Serum",
+      "type": "application/json",
+      "url": "https://scalvea.com/product/follicle-8-hair-growth-serum",
+      "description": "Clinically inspired hair growth serum powered by 4% Anagain, 3% Redensyl, 3% Baicapil, and 3% Procapil to nourish follicles and reduce excessive shedding.",
+      "representativeQueries": [
+        "What are the ingredients in Follicle 8?",
+        "How do I use Follicle 8 hair serum?",
+        "Does Follicle 8 contain Redensyl or Anagain?"
+      ]
+    },
+    {
+      "identifier": "urn:scalvea:product:scalp-5-anti-dandruff-hair-serum",
+      "displayName": "Scalp-5 Anti-Dandruff Hair Serum",
+      "type": "application/json",
+      "url": "https://scalvea.com/product/scalp-5-anti-dandruff-hair-serum",
+      "description": "Anti-dandruff treatment with Salicylic Acid, Piroctone Olamine, Zinc PCA, and Tea Tree Extract to reduce visible flakes and soothe irritation.",
+      "representativeQueries": [
+        "What is Scalp-5 serum used for?",
+        "Does Scalp-5 help with dandruff and flaky scalp?",
+        "Is Scalp-5 safe for daily use?"
+      ]
+    },
+    {
+      "identifier": "urn:scalvea:resource:llms-txt",
+      "displayName": "Scalvea LLM Documentation",
+      "type": "text/markdown",
+      "url": "https://scalvea.com/llms.txt",
+      "description": "Curated markdown documentation of Scalvea brand, products, policies, and key URLs for AI models."
+    },
+    {
+      "identifier": "urn:scalvea:resource:sitemap",
+      "displayName": "Scalvea XML Sitemap",
+      "type": "application/xml",
+      "url": "https://scalvea.com/sitemap.xml",
+      "description": "Comprehensive XML sitemap of all indexed Scalvea pages and scientific blog articles."
+    }
+  ]
+}

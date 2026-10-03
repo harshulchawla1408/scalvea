@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCountry } from "@/contexts/CountryContext";
+import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
 import { useSEO } from "@/hooks/useSEO";
 
@@ -186,9 +187,37 @@ const Auth = () => {
   const [rightLightOpacity, setRightLightOpacity] = useState(0);
 
   const { user, loading: authLoading } = useAuth();
-  const { currency } = useCountry();
+  const { currency, selectedCountry, market } = useCountry();
+  const { items } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Helper to determine accurate destination (always /checkout if in Australia buying flow)
+  const getEffectiveReturnTo = () => {
+    const params = new URLSearchParams(location.search);
+    const paramReturnTo = params.get("returnTo");
+    if (paramReturnTo && paramReturnTo !== "/") return paramReturnTo;
+
+    const storedReturnTo =
+      sessionStorage.getItem("scalvea_auth_return_to") ||
+      localStorage.getItem("scalvea_auth_return_to");
+    if (storedReturnTo && storedReturnTo !== "/") return storedReturnTo;
+
+    const isAustralia =
+      selectedCountry === "australia" || market === "AU" || currency === "AUD";
+    const isBuyingFlow =
+      sessionStorage.getItem("scalvea_buying_flow") === "true" ||
+      localStorage.getItem("scalvea_buying_flow") === "true";
+
+    // If user is at buying flow or in Australia with items in cart, ALWAYS route to /checkout!
+    if ((isAustralia && (isBuyingFlow || items.length > 0)) || isBuyingFlow) {
+      return "/checkout";
+    }
+
+    return "/account";
+  };
+
+  const isCheckoutFlow = getEffectiveReturnTo() === "/checkout";
 
   // Selected currency display
   const displayCurrency = currency === "INR" ? "INR" : currency === "AUD" ? "AUD" : "USD";
@@ -217,12 +246,18 @@ const Auth = () => {
     const hashParams = new URLSearchParams(location.hash.substring(1));
     const isRecovery = params.get("type") === "recovery" || hashParams.get("type") === "recovery" || location.hash.includes("type=recovery");
 
-    const returnTo = params.get("returnTo") || "/account";
+    const returnTo = getEffectiveReturnTo();
 
     if (!authLoading && user && !isRecovery) {
+      try {
+        sessionStorage.removeItem("scalvea_auth_return_to");
+        localStorage.removeItem("scalvea_auth_return_to");
+        sessionStorage.removeItem("scalvea_buying_flow");
+        localStorage.removeItem("scalvea_buying_flow");
+      } catch (_) {}
       navigate(returnTo, { replace: true });
     }
-  }, [authLoading, user, navigate, location]);
+  }, [authLoading, user, navigate, location, items.length, selectedCountry, market, currency]);
 
   // Left panel mouse movements
   const handleLeftMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -250,12 +285,36 @@ const Auth = () => {
     setRightLightOpacity(0);
   };
 
+  // Back button handler: Never drop buying-flow users on the home page
+  const handleBack = () => {
+    const returnTo = getEffectiveReturnTo();
+    if (returnTo === "/checkout") {
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        navigate("/cart");
+      }
+    } else if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  };
+
   // Handle Google Login
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams(location.search);
-      const returnTo = params.get("returnTo") || "/account";
+      const returnTo = getEffectiveReturnTo();
+      try {
+        sessionStorage.setItem("scalvea_auth_return_to", returnTo);
+        localStorage.setItem("scalvea_auth_return_to", returnTo);
+        if (returnTo === "/checkout") {
+          sessionStorage.setItem("scalvea_buying_flow", "true");
+          localStorage.setItem("scalvea_buying_flow", "true");
+        }
+      } catch (_) {}
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -287,25 +346,50 @@ const Auth = () => {
         }
 
         toast({ title: "Welcome back!" });
-        const params = new URLSearchParams(location.search);
-        const returnTo = params.get("returnTo") || "/account";
+        const returnTo = getEffectiveReturnTo();
+        try {
+          sessionStorage.removeItem("scalvea_auth_return_to");
+          localStorage.removeItem("scalvea_auth_return_to");
+          sessionStorage.removeItem("scalvea_buying_flow");
+          localStorage.removeItem("scalvea_buying_flow");
+        } catch (_) {}
         navigate(returnTo);
       } else if (view === "signup") {
         if (password !== confirmPassword) {
           throw new Error("Passwords do not match");
         }
 
-        const params = new URLSearchParams(location.search);
-        const returnTo = params.get("returnTo") ? `?returnTo=${params.get("returnTo")}` : "";
-        const { error } = await supabase.auth.signUp({
+        const returnTo = getEffectiveReturnTo();
+        try {
+          sessionStorage.setItem("scalvea_auth_return_to", returnTo);
+          localStorage.setItem("scalvea_auth_return_to", returnTo);
+          if (returnTo === "/checkout") {
+            sessionStorage.setItem("scalvea_buying_flow", "true");
+            localStorage.setItem("scalvea_buying_flow", "true");
+          }
+        } catch (_) {}
+
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: { full_name: name },
-            emailRedirectTo: window.location.origin + "/auth" + returnTo,
+            emailRedirectTo: `${window.location.origin}/auth?returnTo=${encodeURIComponent(returnTo)}`,
           },
         });
         if (error) throw error;
+
+        if (data?.session || data?.user) {
+          try {
+            sessionStorage.removeItem("scalvea_auth_return_to");
+            localStorage.removeItem("scalvea_auth_return_to");
+            sessionStorage.removeItem("scalvea_buying_flow");
+            localStorage.removeItem("scalvea_buying_flow");
+          } catch (_) {}
+          toast({ title: "Account created successfully!" });
+          navigate(returnTo);
+          return;
+        }
 
         setSuccessMessage("Your account has been created. Please check your email to verify and activate your account.");
         toast({ title: "Account created", description: "Verification link sent." });
@@ -433,9 +517,14 @@ const Auth = () => {
 
         {/* TOP HEADER: Centered Logo & Currency indicator */}
         <div className="w-full flex items-center justify-between z-10 relative">
-          <Link to="/" className="text-neutral-500 hover:text-neutral-800 transition-colors">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="text-neutral-500 hover:text-neutral-800 transition-colors flex items-center justify-center p-1 -ml-1"
+            aria-label="Go back"
+          >
             <ArrowLeft className="h-4 w-4" />
-          </Link>
+          </button>
 
           {/* Subtle Region display */}
           <div className="text-[9px] tracking-[0.2em] text-neutral-500 font-mono select-none px-2.5 py-1 border border-neutral-200 bg-neutral-50/50 backdrop-blur-md">
@@ -496,10 +585,10 @@ const Auth = () => {
                   >
                     <div className="text-center space-y-1">
                       <h2 className="text-xl font-light tracking-[0.06em] text-neutral-800">
-                        Welcome Back
+                        {isCheckoutFlow ? "Sign In to Checkout" : "Welcome Back"}
                       </h2>
                       <p className="text-[10px] uppercase tracking-[0.1em] text-neutral-500 font-light">
-                        Continue your hair growth journey.
+                        {isCheckoutFlow ? "Secure login to complete your Australia order." : "Continue your hair growth journey."}
                       </p>
                     </div>
 
@@ -605,10 +694,10 @@ const Auth = () => {
                   >
                     <div className="text-center space-y-1">
                       <h2 className="text-xl font-light tracking-[0.06em] text-neutral-800">
-                        Create Your Account
+                        {isCheckoutFlow ? "Create Account to Checkout" : "Create Your Account"}
                       </h2>
                       <p className="text-[10px] uppercase tracking-[0.1em] text-neutral-500 font-light">
-                        Join the SCALVEA community.
+                        {isCheckoutFlow ? "Fast setup to complete your Australia order." : "Join the SCALVEA community."}
                       </p>
                     </div>
 

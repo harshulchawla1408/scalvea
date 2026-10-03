@@ -167,12 +167,12 @@ const Contact = () => {
                   className="flex items-start gap-4 bg-white border border-neutral-150 rounded-2xl px-5 py-4 shadow-[0_2px_16px_rgba(0,0,0,0.04)]"
                 >
                   <div className="w-9 h-6.5 rounded overflow-hidden shadow-sm flex items-center justify-center shrink-0 border border-neutral-100 mt-0.5">
-                    <img src={loc.flagUrl} alt={loc.country} className="w-full h-full object-cover" />
+                    <img src={loc.flagUrl} alt={loc.country} width="36" height="26" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-500 font-body font-medium mb-0.5">{loc.label}</p>
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-600 font-body font-medium mb-0.5">{loc.label}</p>
                     <p className="text-sm font-heading text-neutral-900 leading-snug">{loc.state}</p>
-                    <p className="text-[11px] text-neutral-500 font-body font-light mb-1">{loc.country}</p>
+                    <p className="text-[11px] text-neutral-600 font-body font-light mb-1">{loc.country}</p>
                     <p className="text-[10px] text-neutral-600 font-body leading-relaxed">{loc.address}</p>
                   </div>
                 </motion.div>

@@ -513,6 +513,24 @@ const ProductDetail = () => {
             { "@type": "ListItem", "position": 3, "name": product.name, "item": `https://scalvea.com/product/${product.slug}` },
           ],
         },
+        {
+          "@type": "VideoObject",
+          "name": `${product.name} — Application & Results Demonstration`,
+          "description": `Watch application instructions and see the lightweight texture of ${product.name} by Scalvea.`,
+          "thumbnailUrl": product.images?.[0] || "https://scalvea.com/og-image.webp",
+          "uploadDate": "2026-09-01T08:00:00+00:00",
+          "duration": "PT45S",
+          "contentUrl": PRODUCT_GALLERY_VIDEO,
+          "embedUrl": `https://scalvea.com/product/${product.slug}`,
+          "publisher": {
+            "@type": "Organization",
+            "name": "Scalvea",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://scalvea.com/logo.webp"
+            }
+          }
+        },
       ],
     };
   }, [product, selectedCountry, reviews, avgRating]);
@@ -660,6 +678,15 @@ const ProductDetail = () => {
       price: selectedCountry === "india" ? product.price_inr : product.price_aud,
       currency: selectedCountry === "india" ? "INR" : "AUD",
     }, quantity);
+
+    if (selectedCountry !== "india") {
+      try {
+        sessionStorage.setItem("scalvea_buying_flow", "true");
+        localStorage.setItem("scalvea_buying_flow", "true");
+        sessionStorage.setItem("scalvea_auth_return_to", "/checkout");
+        localStorage.setItem("scalvea_auth_return_to", "/checkout");
+      } catch (_) {}
+    }
   };
   const handleBuyNow = () => {
     addItem({ productId: product.id, name: product.name, image: product.images[0], price_aud: product.price_aud, price_inr: product.price_inr, price_usd: product.price_usd }, quantity);
@@ -670,6 +697,21 @@ const ProductDetail = () => {
       price: selectedCountry === "india" ? product.price_inr : product.price_aud,
       currency: selectedCountry === "india" ? "INR" : "AUD",
     }, quantity);
+
+    if (selectedCountry !== "india") {
+      try {
+        sessionStorage.setItem("scalvea_buying_flow", "true");
+        localStorage.setItem("scalvea_buying_flow", "true");
+        sessionStorage.setItem("scalvea_auth_return_to", "/checkout");
+        localStorage.setItem("scalvea_auth_return_to", "/checkout");
+      } catch (_) {}
+
+      if (!user) {
+        navigate("/auth?returnTo=/checkout");
+        return;
+      }
+    }
+
     navigate("/checkout");
   };
 

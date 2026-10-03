@@ -56,17 +56,17 @@ const Footer = () => {
               </span>
             </div>
 
-            <p className="text-sm md:text-[13px] text-neutral-400 font-light leading-relaxed max-w-xs">
+            <p className="text-sm md:text-[13px] text-neutral-300 font-light leading-relaxed max-w-xs">
               Science-backed hair care formulated with clinically researched ingredients for healthier hair and scalp. Premium Australian innovation trusted across Australia and India.
             </p>
 
             {/* Social Icons — Instagram, TikTok, Email */}
-            <div className="flex gap-4 pt-2">
+            <div className="flex gap-2 pt-2">
               <a
                 href="https://www.instagram.com/scalvea_/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-neutral-400 hover:text-white transition-colors duration-200 p-1"
+                className="text-neutral-300 hover:text-white transition-colors duration-200 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="Instagram"
               >
                 <Instagram className="size-[18px]" />
@@ -75,7 +75,7 @@ const Footer = () => {
                 href="https://www.tiktok.com/@scalvea/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-neutral-400 hover:text-white transition-colors duration-200 p-1"
+                className="text-neutral-300 hover:text-white transition-colors duration-200 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="TikTok"
               >
                 <TiktokIcon className="size-[18px]" />
@@ -84,14 +84,14 @@ const Footer = () => {
                 href="https://wa.me/61494754851?text=Hi%20Scalvea%2C%20I%20would%20like%20to%20know%20more%20about%20your%20premium%20hair%20care%20products."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-neutral-400 hover:text-white transition-colors duration-200 p-1"
+                className="text-neutral-300 hover:text-white transition-colors duration-200 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="WhatsApp"
               >
                 <WhatsappIcon className="size-[18px]" />
               </a>
               <a
                 href="mailto:info@scalvea.com"
-                className="text-neutral-400 hover:text-white transition-colors duration-200 p-1"
+                className="text-neutral-300 hover:text-white transition-colors duration-200 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="Email"
               >
                 <Mail className="size-[18px]" />
@@ -100,7 +100,7 @@ const Footer = () => {
                 href="https://www.linkedin.com/company/scalvea/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-neutral-400 hover:text-white transition-colors duration-200 p-1"
+                className="text-neutral-300 hover:text-white transition-colors duration-200 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="size-[18px]" />
@@ -190,22 +190,22 @@ const Footer = () => {
               </span>
             </button>
             <div className={`mt-4 lg:mt-0 ${activeAccordion === "locations" ? "block" : "hidden lg:block"}`}>
-              <div className="space-y-5 text-sm text-neutral-400 font-light">
+              <div className="space-y-5 text-sm text-neutral-300 font-light">
                 <div>
                   <p className="text-neutral-200 font-semibold tracking-wider text-[11px] uppercase mb-1.5 flex items-center gap-1.5">
-                    <img src="https://flagcdn.com/w40/au.png" alt="Australia" className="w-3.5 h-auto rounded-[1.5px] shadow-sm" />
+                    <img src="https://flagcdn.com/w40/au.png" alt="Australia" className="w-3.5 h-auto rounded-[1.5px] shadow-sm" width="14" height="10" />
                     <span>Australia (HQ)</span>
                   </p>
-                  <address className="not-italic leading-relaxed text-neutral-400 text-[13px]">
+                  <address className="not-italic leading-relaxed text-neutral-300 text-[13px]">
                     Little Collins St<br />Melbourne VIC 3000
                   </address>
                 </div>
                 <div>
                   <p className="text-neutral-200 font-semibold tracking-wider text-[11px] uppercase mb-1.5 flex items-center gap-1.5">
-                    <img src="https://flagcdn.com/w40/in.png" alt="India" className="w-3.5 h-auto rounded-[1.5px] shadow-sm" />
+                    <img src="https://flagcdn.com/w40/in.png" alt="India" className="w-3.5 h-auto rounded-[1.5px] shadow-sm" width="14" height="10" />
                     <span>India</span>
                   </p>
-                  <address className="not-italic leading-relaxed text-neutral-400 text-[13px]">
+                  <address className="not-italic leading-relaxed text-neutral-300 text-[13px]">
                     Patiala, Punjab
                   </address>
                 </div>
@@ -215,10 +215,10 @@ const Footer = () => {
                     Get in Touch
                   </p>
                   <div className="space-y-1.5">
-                    <a href="https://wa.me/61494754851" target="_blank" rel="noopener noreferrer" className="block text-neutral-400 hover:text-white transition-colors text-[13px]">
+                    <a href="https://wa.me/61494754851" target="_blank" rel="noopener noreferrer" className="block text-neutral-300 hover:text-white transition-colors text-[13px]">
                       WhatsApp: +61 494 754 851
                     </a>
-                    <a href="mailto:info@scalvea.com" className="block text-neutral-400 hover:text-white transition-colors text-[13px]">
+                    <a href="mailto:info@scalvea.com" className="block text-neutral-300 hover:text-white transition-colors text-[13px]">
                       info@scalvea.com
                     </a>
                   </div>
@@ -230,11 +230,11 @@ const Footer = () => {
         </div>
 
         {/* FOOTER BOTTOM SECTION */}
-        <div className="border-t border-neutral-900 mt-20 pt-8 relative flex flex-col md:flex-row justify-between items-center gap-4 text-xs tracking-[0.14em] text-neutral-400 uppercase font-light w-full">
+        <div className="border-t border-neutral-900 mt-20 pt-8 relative flex flex-col md:flex-row justify-between items-center gap-4 text-xs tracking-[0.14em] text-neutral-300 uppercase font-light w-full">
           <div className="w-full md:w-auto text-center md:text-left">
             © 2026 SCALVEA. ALL RIGHTS RESERVED.
           </div>
-          <div className="md:absolute md:left-1/2 md:-translate-x-1/2 font-semibold text-neutral-300 text-center w-full md:w-auto py-2 md:py-0">
+          <div className="md:absolute md:left-1/2 md:-translate-x-1/2 font-semibold text-neutral-200 text-center w-full md:w-auto py-2 md:py-0">
             CARE YOU DESERVE.
           </div>
           <div className="w-full md:w-auto text-center md:text-right">

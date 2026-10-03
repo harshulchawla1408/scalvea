@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCountry } from "@/contexts/CountryContext";
+import { useCart } from "@/contexts/CartContext";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useProducts } from "@/hooks/useProducts";
 import { generateInvoicePDF } from "@/utils/generateInvoicePDF";
@@ -42,7 +43,8 @@ const Account = () => {
   });
 
   const { user, loading, isAdmin } = useAuth();
-  const { country, setCountry, allCountries } = useCountry();
+  const { country, setCountry, allCountries, selectedCountry, market } = useCountry();
+  const { items } = useCart();
   const { items: recentlyViewedIds } = useRecentlyViewed();
   const { products: allProducts } = useProducts();
   const navigate = useNavigate();
@@ -54,8 +56,20 @@ const Account = () => {
   const [activeTab, setActiveTab] = useState("profile");
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
-  }, [loading, user, navigate]);
+    if (!loading && !user) {
+      const isAustralia = selectedCountry === "australia" || market === "AU";
+      const isBuyingFlow =
+        sessionStorage.getItem("scalvea_buying_flow") === "true" ||
+        localStorage.getItem("scalvea_buying_flow") === "true" ||
+        items.length > 0;
+
+      if (isAustralia && isBuyingFlow) {
+        navigate("/auth?returnTo=/checkout", { replace: true });
+      } else {
+        navigate("/auth", { replace: true });
+      }
+    }
+  }, [loading, user, selectedCountry, market, items.length, navigate]);
 
   // Real-time Postgres changes for orders
   useEffect(() => {

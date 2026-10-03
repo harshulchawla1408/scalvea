@@ -64,7 +64,7 @@ const CountrySelectionModal = ({ onSelect, onClose }: { onSelect: (c: CountryTyp
       <div className="bg-background/95 backdrop-blur-xl border border-border/60 shadow-[0_8px_32px_rgba(0,0,0,0.12)] p-6 relative overflow-hidden rounded-2xl flex flex-col items-start">
         <button 
           onClick={onClose}
-          className="absolute top-2 right-2 p-3 text-muted-foreground/60 hover:text-foreground transition-colors z-10"
+          className="absolute top-1 right-1 min-w-[48px] min-h-[48px] flex items-center justify-center p-3 text-muted-foreground/80 hover:text-foreground transition-colors z-10"
           aria-label="Close"
         >
           <X className="h-4 w-4" />

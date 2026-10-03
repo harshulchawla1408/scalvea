@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
+import BuyingFlowRedirector from "./components/BuyingFlowRedirector";
 import MetaPixelRouteTracker from "./components/MetaPixelRouteTracker";
 import ChatbaseController from "./components/ChatbaseController";
 import PageTransition from "./components/layout/PageTransition";
@@ -26,6 +27,7 @@ const App = () => (
               <Sonner />
               <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <ScrollToTop />
+                <BuyingFlowRedirector />
                 <MetaPixelRouteTracker />
                 <ChatbaseController />
                 <PageTransition />

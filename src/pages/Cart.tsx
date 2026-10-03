@@ -3,6 +3,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ShippingAnnouncementBar from "@/components/layout/ShippingAnnouncementBar";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useCountry } from "@/contexts/CountryContext";
 import { useProducts } from "@/hooks/useProducts";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ const Cart = () => {
   });
 
   const { items, removeItem, updateQuantity, addItem, total, rawTotal, bundleDiscount } = useCart();
+  const { user } = useAuth();
   const { currencySymbol, currencyCode, settings, selectedCountry } = useCountry();
   const { products } = useProducts();
 
@@ -311,7 +313,21 @@ const Cart = () => {
                 </div>
               </div>
               <Button asChild className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 text-sm font-semibold tracking-[0.1em] uppercase">
-                <Link to="/checkout">Checkout</Link>
+                <Link
+                  to={!user && !isIndia ? "/auth?returnTo=/checkout" : "/checkout"}
+                  onClick={() => {
+                    if (!isIndia) {
+                      try {
+                        sessionStorage.setItem("scalvea_buying_flow", "true");
+                        localStorage.setItem("scalvea_buying_flow", "true");
+                        sessionStorage.setItem("scalvea_auth_return_to", "/checkout");
+                        localStorage.setItem("scalvea_auth_return_to", "/checkout");
+                      } catch (_) {}
+                    }
+                  }}
+                >
+                  Checkout
+                </Link>
               </Button>
               <Link to="/shop" className="block text-center text-sm font-medium tracking-[0.08em] uppercase text-muted-foreground hover:text-foreground transition-colors">
                 Continue Shopping

@@ -159,7 +159,7 @@ const BlogDetail = () => {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs font-light text-neutral-500 uppercase tracking-wider"
+              className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs font-light text-neutral-600 uppercase tracking-wider"
             >
               <span>By {post.meta.author}</span>
               <span className="w-1 h-1 rounded-full bg-neutral-300" />
@@ -180,6 +180,8 @@ const BlogDetail = () => {
               <img 
                 src={post.meta.featuredImage} 
                 alt={post.meta.title} 
+                width="1200"
+                height="630"
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/10 pointer-events-none" />

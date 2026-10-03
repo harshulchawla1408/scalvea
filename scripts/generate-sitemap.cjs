@@ -123,6 +123,63 @@ async function buildSitemap() {
   console.log(`Sitemap generated successfully at: ${sitemapPath}`);
   console.log(`  ✓ ${allRoutes.length} URLs indexed (incl. ${getBlogRoutes().length} blogs)`);
 
+  // ── Video Sitemap ─────────────────────────────────────────────────────────
+  const videoEntries = [
+    {
+      pageUrl: `${HOSTNAME}/product/follicle-8-hair-growth-serum`,
+      thumbnailUrl: `${HOSTNAME}/og-image.webp`,
+      title: 'Scalvea Follicle 8 Hair Growth Serum Application & Demonstration',
+      description: 'Watch how to apply Scalvea Follicle 8 Hair Growth Serum featuring 4% Anagain, 3% Redensyl, 3% Baicapil, and 3% Procapil.',
+      contentUrl: 'https://dtehgajreecaonqalxlf.supabase.co/storage/v1/object/public/Videos/Reel4.mp4',
+      duration: 45,
+      uploadDate: '2026-09-01T08:00:00+00:00',
+    },
+    {
+      pageUrl: `${HOSTNAME}/`,
+      thumbnailUrl: `${HOSTNAME}/og-image.webp`,
+      title: 'Scalvea Hair & Scalp Care — Product In Demand Showcase',
+      description: 'Explore Scalvea science-backed hair growth and scalp revitalization solutions.',
+      contentUrl: 'https://dtehgajreecaonqalxlf.supabase.co/storage/v1/object/public/Videos/demanded.mp4',
+      duration: 30,
+      uploadDate: '2026-09-05T08:00:00+00:00',
+    },
+    {
+      pageUrl: `${HOSTNAME}/about`,
+      thumbnailUrl: `${HOSTNAME}/og-image.webp`,
+      title: 'About Scalvea — Australian Science Meets Everyday Hair Care',
+      description: 'Our journey, philosophy, and dedication to transparent, clinically inspired formulations.',
+      contentUrl: 'https://dtehgajreecaonqalxlf.supabase.co/storage/v1/object/public/Videos/About.mp4',
+      duration: 60,
+      uploadDate: '2026-09-01T08:00:00+00:00',
+    }
+  ];
+
+  let videoXml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  videoXml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n';
+  videoXml += '        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">\n';
+
+  videoEntries.forEach(v => {
+    videoXml += '  <url>\n';
+    videoXml += `    <loc>${v.pageUrl}</loc>\n`;
+    videoXml += '    <video:video>\n';
+    videoXml += `      <video:thumbnail_loc>${v.thumbnailUrl}</video:thumbnail_loc>\n`;
+    videoXml += `      <video:title>${v.title.replace(/&/g, '&amp;')}</video:title>\n`;
+    videoXml += `      <video:description>${v.description.replace(/&/g, '&amp;')}</video:description>\n`;
+    videoXml += `      <video:content_loc>${v.contentUrl}</video:content_loc>\n`;
+    videoXml += `      <video:player_loc>${v.pageUrl}</video:player_loc>\n`;
+    videoXml += `      <video:duration>${v.duration}</video:duration>\n`;
+    videoXml += `      <video:publication_date>${v.uploadDate}</video:publication_date>\n`;
+    videoXml += '      <video:family_friendly>yes</video:family_friendly>\n';
+    videoXml += '    </video:video>\n';
+    videoXml += '  </url>\n';
+  });
+  videoXml += '</urlset>\n';
+
+  const videoSitemapPath = path.join(distDir, 'video-sitemap.xml');
+  fs.writeFileSync(videoSitemapPath, videoXml, 'utf8');
+  fs.writeFileSync(path.resolve(__dirname, '../public/video-sitemap.xml'), videoXml, 'utf8');
+  console.log(`Video sitemap generated successfully at: ${videoSitemapPath}`);
+
   // Copy robots.txt from public to dist
   const robotsSrc = path.resolve(__dirname, '../public/robots.txt');
   const robotsDist = path.join(distDir, 'robots.txt');

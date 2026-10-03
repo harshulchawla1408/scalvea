@@ -135,13 +135,13 @@ const About = () => {
               transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
               className="mb-20 md:mb-28"
             >
-              <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-500 font-body font-light block mb-5">
+              <span className="text-[9px] tracking-[0.3em] uppercase text-neutral-600 font-body font-light block mb-5">
                 THE FOUNDER'S STORY
               </span>
               <h1 className="text-3xl md:text-5xl lg:text-[56px] font-heading text-neutral-900 leading-tight tracking-tight max-w-xl mb-6">
                 About Scalvea: Our Story
               </h1>
-              <p className="text-sm md:text-base text-neutral-500 font-body font-light leading-relaxed max-w-2xl">
+              <p className="text-sm md:text-base text-neutral-600 font-body font-light leading-relaxed max-w-2xl">
                 Scalvea is a premium hair and scalp care brand formulated with clinically researched active ingredients. We partner with expert chemists to develop advanced formulations, maintaining strict quality standards throughout manufacturing. We believe in complete transparency—no hidden proprietary blends, just effective concentrations of the ingredients your scalp actually needs.
               </p>
             </motion.div>
@@ -160,7 +160,7 @@ const About = () => {
                 >
                   {/* Left — index + label */}
                   <div className="md:col-span-4 flex flex-row md:flex-col gap-4 md:gap-3 items-baseline md:items-start">
-                    <span className="text-[11px] md:text-xs font-mono text-neutral-500 font-medium shrink-0 select-none">
+                    <span className="text-[11px] md:text-xs font-mono text-neutral-600 font-medium shrink-0 select-none">
                       {block.index}
                     </span>
                     <span className="text-[9px] tracking-[0.22em] uppercase text-neutral-700 font-body font-semibold">
@@ -173,7 +173,7 @@ const About = () => {
                     <h3 className="text-xl md:text-2xl lg:text-3xl font-heading text-neutral-900 leading-snug">
                       {block.heading}
                     </h3>
-                    <p className="text-sm md:text-base text-neutral-500 font-body font-light leading-[1.8] max-w-xl">
+                    <p className="text-sm md:text-base text-neutral-600 font-body font-light leading-[1.8] max-w-xl">
                       {block.body}
                     </p>
                   </div>
@@ -213,6 +213,8 @@ const About = () => {
             <motion.img
               src={puneetPng}
               alt="Scalvea Campaign Poster"
+              width="1440"
+              height="600"
               className="hidden md:block w-full h-auto object-contain"
               loading="lazy"
               draggable={false}
@@ -225,6 +227,8 @@ const About = () => {
             <motion.img
               src={puneetMobPng}
               alt="Scalvea Campaign Poster"
+              width="768"
+              height="960"
               className="block md:hidden w-full h-auto object-contain"
               loading="lazy"
               draggable={false}

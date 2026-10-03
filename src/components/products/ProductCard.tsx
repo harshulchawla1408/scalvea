@@ -62,6 +62,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
       price_inr: priceInr,
       price_usd: priceUsd,
     });
+    if (selectedCountry !== "india") {
+      try {
+        sessionStorage.setItem("scalvea_buying_flow", "true");
+        localStorage.setItem("scalvea_buying_flow", "true");
+        sessionStorage.setItem("scalvea_auth_return_to", "/checkout");
+        localStorage.setItem("scalvea_auth_return_to", "/checkout");
+      } catch (_) {}
+    }
   };
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
@@ -188,7 +196,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           {/* Info Details */}
           <div className="space-y-1.5 flex-1 flex flex-col justify-between min-w-0 px-0.5">
             <div className="space-y-1">
-              <span className="text-[9px] sm:text-[10px] tracking-[0.16em] uppercase text-neutral-500 font-mono font-medium block truncate">
+              <span className="text-[9px] sm:text-[10px] tracking-[0.16em] uppercase text-neutral-600 font-mono font-medium block truncate">
                 {"category" in product ? product.category : "SERUMS"}
               </span>
               <h3 className="text-xs sm:text-sm md:text-[15px] font-normal text-neutral-900 group-hover:text-black transition-colors font-heading leading-snug line-clamp-2 min-h-[2.1rem] sm:min-h-[2.5rem]">
@@ -204,7 +212,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     ))}
                   </div>
                   {product.reviews_count !== undefined && (
-                    <span className="text-[9px] text-neutral-500">({product.reviews_count})</span>
+                    <span className="text-[9px] text-neutral-600">({product.reviews_count})</span>
                   )}
                 </div>
               )}
@@ -214,7 +222,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
               {/* Price Component with MRP Support */}
               <div className="flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
                 {hasDiscount && (
-                  <span className="font-body font-normal text-[10.5px] sm:text-xs text-neutral-500 line-through">
+                  <span className="font-body font-normal text-[10.5px] sm:text-xs text-neutral-600 line-through">
                     {formatPrice(mrpAud, mrpInr)}
                   </span>
                 )}
@@ -254,6 +262,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
               <img
                 src={product.images[0]}
                 alt={product.name}
+                width="300"
+                height="300"
                 className="max-h-[300px] object-contain"
               />
               {product.badge && (
@@ -266,12 +276,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
             {/* Right: Info Panels */}
             <div className="p-8 flex flex-col justify-between space-y-6">
               <div className="space-y-4">
-                <span className="text-[9px] tracking-[0.2em] uppercase text-neutral-500 font-body font-medium block">
+                <span className="text-[9px] tracking-[0.2em] uppercase text-neutral-600 font-body font-medium block">
                   {"category" in product ? product.category : "Skincare"}
                 </span>
-                <h2 className="text-2xl font-normal font-heading leading-tight text-neutral-900">
+                <p className="text-2xl font-normal font-heading leading-tight text-neutral-900">
                   {product.name}
-                </h2>
+                </p>
                 
                 {product.rating !== undefined && (
                   <div className="flex items-center gap-1.5">
@@ -281,14 +291,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
                       ))}
                     </div>
                     {product.reviews_count !== undefined && (
-                      <span className="text-[10px] text-neutral-500 font-body">({product.reviews_count} Reviews)</span>
+                      <span className="text-[10px] text-neutral-600 font-body">({product.reviews_count} Reviews)</span>
                     )}
                   </div>
                 )}
 
                 <div className="flex items-baseline gap-2 flex-wrap">
                   {hasDiscount && (
-                    <span className="font-body font-normal text-sm text-neutral-500 line-through">
+                    <span className="font-body font-normal text-sm text-neutral-600 line-through">
                       {formatPrice(mrpAud, mrpInr)}
                     </span>
                   )}
@@ -297,7 +307,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                   </span>
                 </div>
 
-                <p className="text-xs text-neutral-500 leading-relaxed font-body font-light pt-2">
+                <p className="text-xs text-neutral-600 leading-relaxed font-body font-light pt-2">
                   Experience scientific luxury formulation targeting active nourishment and recovery. Clean ingredients designed to support healthier-looking skin and hair.
                 </p>
               </div>

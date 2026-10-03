@@ -81,6 +81,8 @@ const BlogList = () => {
                 <img 
                   src={featuredBlog.meta.featuredImage} 
                   alt={featuredBlog.meta.title}
+                  width="600"
+                  height="400"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-luxury"
                 />
                 <div className="absolute top-6 left-6">
@@ -91,7 +93,7 @@ const BlogList = () => {
               </Link>
               
               <div className="p-8 md:p-12 flex flex-col justify-center md:w-1/2">
-                <div className="flex items-center gap-3 text-[10px] text-neutral-500 uppercase tracking-wider font-medium mb-4">
+                <div className="flex items-center gap-3 text-[10px] text-neutral-600 uppercase tracking-wider font-medium mb-4">
                   <span>{featuredBlog.meta.category}</span>
                   <span className="w-1 h-1 rounded-full bg-neutral-300" />
                   <span>{format(new Date(featuredBlog.meta.date), "MMM d, yyyy")}</span>
@@ -105,7 +107,7 @@ const BlogList = () => {
                   </h2>
                 </Link>
                 
-                <p className="text-sm md:text-base text-neutral-500 font-light leading-relaxed mb-8 line-clamp-3">
+                <p className="text-sm md:text-base text-neutral-600 font-light leading-relaxed mb-8 line-clamp-3">
                   {featuredBlog.meta.description}
                 </p>
                 

@@ -14,7 +14,7 @@ const SCALP_5_DESC = `Scalp-5 Anti Dandruff Hair Serum by Scalvea is an advanced
 Designed for both men and women, Scalp-5 works directly on the scalp to control dandruff-causing factors, gently exfoliate dead skin cells, and nourish the scalp without leaving a greasy residue. This lightweight serum helps reduce visible flakes, soothe irritation, and restore scalp balance for healthier-looking hair.
 
 ## Key Ingredients for Dandruff Control
-Powered by clinically inspired ingredients including Rosemary Oil, Piroctone Olamine (0.8%), Salicylic Acid, and Vitamin E (Tocopherol).
+Powered by clinically inspired ingredients including Rosemary Oil, Piroctone Olamine, Salicylic Acid, and Vitamin E (Tocopherol).
 
 • Helps reduce dandruff and visible flakes
 • Controls excess scalp oil production

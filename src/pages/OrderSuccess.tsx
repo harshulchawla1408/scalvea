@@ -75,6 +75,12 @@ const OrderSuccess = () => {
       return;
     }
     hasExecuted.current = true;
+    try {
+      sessionStorage.removeItem("scalvea_buying_flow");
+      localStorage.removeItem("scalvea_buying_flow");
+      sessionStorage.removeItem("scalvea_auth_return_to");
+      localStorage.removeItem("scalvea_auth_return_to");
+    } catch (_) {}
 
     // ── 1. Direct load: Stripe session_id or local UUID ───────────────────
     if (sessionId || orderId) {

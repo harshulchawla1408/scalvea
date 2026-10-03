@@ -159,7 +159,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const clearCart = () => setStoredItems([]);
+  const clearCart = () => {
+    setStoredItems([]);
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem("scalvea_buying_flow");
+        localStorage.removeItem("scalvea_buying_flow");
+        sessionStorage.removeItem("scalvea_auth_return_to");
+        localStorage.removeItem("scalvea_auth_return_to");
+      } catch (_) {}
+    }
+  };
 
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const rawTotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);

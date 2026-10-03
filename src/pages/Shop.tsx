@@ -50,9 +50,9 @@ const Shop = () => {
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 lg:py-10">
         {/* Breadcrumb */}
-        <nav aria-label="breadcrumb" className="text-[11px] sm:text-xs text-neutral-500 mb-2.5 sm:mb-3.5 flex items-center gap-1.5 font-mono tracking-wider uppercase">
+        <nav aria-label="breadcrumb" className="text-[11px] sm:text-xs text-neutral-600 mb-2.5 sm:mb-3.5 flex items-center gap-1.5 font-mono tracking-wider uppercase">
           <Link to="/" className="hover:text-black transition-colors">Home</Link>
-          <span className="text-neutral-300">/</span>
+          <span className="text-neutral-400">/</span>
           <span className="text-neutral-900 font-medium">Shop</span>
         </nav>
 
@@ -61,7 +61,7 @@ const Shop = () => {
           <h1 className="text-2xl sm:text-3xl md:text-[34px] font-normal font-heading tracking-tight text-neutral-900 leading-[1.2] mb-1">
             {searchQuery ? `Results for "${searchQuery}"` : "Hair Growth Serums & Scalp Care Products"}
           </h1>
-          <p className="text-xs sm:text-sm text-neutral-500 font-body font-light">
+          <p className="text-xs sm:text-sm text-neutral-600 font-body font-light">
             {filtered.length} {filtered.length === 1 ? "product" : "products"}
           </p>
         </div>
@@ -77,7 +77,7 @@ const Shop = () => {
                 className={`text-xs sm:text-[13px] font-medium tracking-[0.08em] uppercase transition-all shrink-0 pb-1.5 relative ${
                   activeCategory === cat
                     ? "text-black font-semibold"
-                    : "text-neutral-500 hover:text-neutral-700"
+                    : "text-neutral-600 hover:text-neutral-900"
                 }`}
               >
                 {cat}
@@ -105,7 +105,7 @@ const Shop = () => {
               <option value="price-high">Price: High to Low</option>
               <option value="name">Name: A to Z</option>
             </select>
-            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-neutral-500">
+            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-neutral-600">
               ▾
             </span>
           </div>

@@ -214,7 +214,7 @@ const Header = () => {
             <motion.button 
               variants={iconItemVariants}
               onClick={() => setIsSearchOpen(!isSearchOpen)} 
-              className="flex hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-1 items-center justify-center" 
+              className="flex hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-2 min-w-[44px] min-h-[44px] sm:min-w-[48px] sm:min-h-[48px] items-center justify-center" 
               aria-label="Search"
             >
               <Search className="size-[22px]" />
@@ -224,7 +224,7 @@ const Header = () => {
             <motion.div variants={iconItemVariants} className="hidden lg:block">
               <Link 
                 to="/account" 
-                className="hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-1 flex items-center justify-center" 
+                className="hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-2 min-w-[48px] min-h-[48px] flex items-center justify-center" 
                 aria-label="Account"
               >
                 <User className="size-[22px]" />
@@ -235,7 +235,7 @@ const Header = () => {
             <motion.div variants={iconItemVariants} className="hidden lg:block">
               <Link 
                 to="/wishlist" 
-                className="hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-1 flex items-center justify-center relative" 
+                className="hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-2 min-w-[48px] min-h-[48px] flex items-center justify-center relative" 
                 aria-label="Wishlist"
               >
                 <Heart className="size-[22px]" />
@@ -251,7 +251,7 @@ const Header = () => {
             <motion.button 
               variants={iconItemVariants}
               onClick={() => setIsCartOpen(true)} 
-              className="hidden lg:flex hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] relative p-1 items-center justify-center" 
+              className="hidden lg:flex hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] relative p-2 min-w-[48px] min-h-[48px] items-center justify-center" 
               aria-label="Cart"
             >
               <ShoppingBag className="size-[22px]" />
@@ -266,7 +266,7 @@ const Header = () => {
             <motion.button 
               variants={iconItemVariants}
               onClick={() => setIsMobileMenuOpen(true)} 
-              className="lg:hidden hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-1 flex items-center justify-center" 
+              className="lg:hidden hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-2 min-w-[44px] min-h-[44px] flex items-center justify-center" 
               aria-label="Open menu"
             >
               <Menu className="size-[22px]" />

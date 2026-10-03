@@ -286,6 +286,9 @@ async function main() {
 
       fs.mkdirSync(outDir, { recursive: true });
       fs.writeFileSync(path.join(outDir, 'index.html'), html, 'utf-8');
+      if (route !== '/') {
+        fs.writeFileSync(`${outDir}.html`, html, 'utf-8');
+      }
       success++;
     } catch (err) {
       console.warn(`[prerender] WARN: Failed to render ${route}: ${err.message}`);

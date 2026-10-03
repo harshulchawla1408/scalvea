@@ -97,7 +97,40 @@ const Index = () => {
     description: "Premium hair growth solutions & scalp treatments with clinically inspired ingredients. Shop Follicle 8 & Scalp-5 — designed for healthier-looking hair.",
     image: "https://scalvea.com/og-image.webp",
     canonical: "https://scalvea.com/",
-    // max-image-preview:large is now the default — important for hair care product imagery
+    schema: {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "name": "Scalvea",
+          "url": "https://scalvea.com",
+          "logo": "https://scalvea.com/logo.webp",
+          "sameAs": [
+            "https://www.instagram.com/scalvea_/",
+            "https://www.tiktok.com/@scalvea/",
+            "https://www.linkedin.com/company/scalvea/"
+          ]
+        },
+        {
+          "@type": "VideoObject",
+          "name": "Scalvea Follicle 8 Hair Growth Serum In-Demand Showcase",
+          "description": "Discover the clinically developed active ingredients in Scalvea Follicle 8 Serum designed for hair thinning, shedding, and scalp health.",
+          "thumbnailUrl": "https://scalvea.com/og-image.webp",
+          "uploadDate": "2026-09-05T08:00:00+00:00",
+          "duration": "PT30S",
+          "contentUrl": "https://dtehgajreecaonqalxlf.supabase.co/storage/v1/object/public/Videos/demanded.mp4",
+          "embedUrl": "https://scalvea.com/",
+          "publisher": {
+            "@type": "Organization",
+            "name": "Scalvea",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://scalvea.com/logo.webp"
+            }
+          }
+        }
+      ]
+    },
   });
 
   const { selectedCountry } = useCountry();
@@ -191,86 +224,87 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden relative">
+    <div className="min-h-screen bg-background overflow-hidden relative flex flex-col">
       <Header />
 
-      {/* SEO H1 — visually hidden but present in raw HTML for crawlers.
-          Screen readers also benefit. The hero imagery conveys the brand
-          visually; this H1 carries the primary keyword signal. */}
-      <h1 className="sr-only">Science-Backed Hair &amp; Scalp Care — Scalvea</h1>
+      <main id="main-content" className="flex-1">
+        {/* SEO H1 — visually hidden but present in raw HTML for crawlers.
+            Screen readers also benefit. The hero imagery conveys the brand
+            visually; this H1 carries the primary keyword signal. */}
+        <h1 className="sr-only">Science-Backed Hair &amp; Scalp Care — Scalvea</h1>
 
-      {/* Global Grain/Noise Overlay */}
-      <div className="fixed inset-0 noise-bg pointer-events-none z-40 select-none opacity-[0.02]" />
+        {/* Global Grain/Noise Overlay */}
+        <div className="fixed inset-0 noise-bg pointer-events-none z-40 select-none opacity-[0.02]" />
 
-      {/* 1. HERO SLIDER SECTION */}
-      <section 
-        className="relative w-full overflow-hidden bg-white select-none group max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)] lg:max-h-[calc(100vh-74px)] cursor-grab active:cursor-grabbing"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => {
-          setIsHovered(false);
-          isPointerDown.current = false;
-        }}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-      >
-        <div className="w-full relative overflow-hidden max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)] lg:max-h-[calc(100vh-74px)]">
-          {slides.map((slide, idx) => {
-            const isFirst = idx === 0;
-            return (
-              <div
-                key={idx}
-                className={`${
-                  isFirst ? "relative" : "absolute inset-0"
-                } transition-opacity ease-in-out ${
-                  currentSlide === idx ? "opacity-100 z-10" : "opacity-0 z-0"
-                }`}
-                style={{ transitionDuration: "800ms" }}
-              >
-                <picture className="block lg:pt-5">
-                  <source media="(max-width: 768px)" srcSet={slide.mob} width="800" height="1200" />
-                  <img
-                    src={slide.lap}
-                    alt={slide.alt}
-                    width="1920"
-                    height="1080"
-                    loading={isFirst ? "eager" : "lazy"}
-                    fetchpriority={isFirst ? "high" : "low"}
-                    className="w-full object-cover object-center block max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)] lg:max-h-[calc(100vh-74px)] h-auto pointer-events-none"
+        {/* 1. HERO SLIDER SECTION */}
+        <section 
+          className="relative w-full overflow-hidden bg-white select-none group max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)] lg:max-h-[calc(100vh-74px)] cursor-grab active:cursor-grabbing"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => {
+            setIsHovered(false);
+            isPointerDown.current = false;
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+        >
+          <div className="w-full relative overflow-hidden max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)] lg:max-h-[calc(100vh-74px)]">
+            {slides.map((slide, idx) => {
+              const isFirst = idx === 0;
+              return (
+                <div
+                  key={idx}
+                  className={`${
+                    isFirst ? "relative" : "absolute inset-0"
+                  } transition-opacity ease-in-out ${
+                    currentSlide === idx ? "opacity-100 z-10" : "opacity-0 z-0"
+                  }`}
+                  style={{ transitionDuration: "800ms" }}
+                >
+                  <picture className="block lg:pt-5">
+                    <source media="(max-width: 768px)" srcSet={slide.mob} width="800" height="1200" />
+                    <img
+                      src={slide.lap}
+                      alt={slide.alt}
+                      width="1920"
+                      height="1080"
+                      loading={isFirst ? "eager" : "lazy"}
+                      fetchpriority={isFirst ? "high" : "low"}
+                      className="w-full object-cover object-center block max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)] lg:max-h-[calc(100vh-74px)] h-auto pointer-events-none"
+                    />
+                  </picture>
+                  <Link
+                    to={slide.link || "/shop"}
+                    className="absolute inset-0 cursor-pointer"
+                    aria-label="Shop now"
                   />
-                </picture>
-                <Link
-                  to={slide.link || "/shop"}
-                  className="absolute inset-0 cursor-pointer"
-                  aria-label="Shop now"
-                />
-              </div>
-            );
-          })}
-        </div>
+                </div>
+              );
+            })}
+          </div>
 
-        {/* Navigation Arrows (User-friendly on both desktop & mobile) */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handlePrev();
-          }}
-          className="absolute left-3 sm:left-5 md:left-8 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-white/85 hover:bg-white text-black shadow-[0_4px_20px_rgba(0,0,0,0.18)] backdrop-blur-md border border-white/80 hover:scale-105 active:scale-95 transition-all duration-300 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 focus:outline-none"
-          aria-label="Previous Slide"
-        >
-          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2] -translate-x-0.5" />
-        </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleNext();
-          }}
-          className="absolute right-3 sm:right-5 md:right-8 top-1/2 -translate-y-1/2 z-20 w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-white/85 hover:bg-white text-black shadow-[0_4px_20px_rgba(0,0,0,0.18)] backdrop-blur-md border border-white/80 hover:scale-105 active:scale-95 transition-all duration-300 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 focus:outline-none"
-          aria-label="Next Slide"
-        >
-          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2] translate-x-0.5" />
-        </button>
+          {/* Navigation Arrows (User-friendly on both desktop & mobile with 48x48px touch target) */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePrev();
+            }}
+            className="absolute left-3 sm:left-5 md:left-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-white/85 hover:bg-white text-black shadow-[0_4px_20px_rgba(0,0,0,0.18)] backdrop-blur-md border border-white/80 hover:scale-105 active:scale-95 transition-all duration-300 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 focus:outline-none"
+            aria-label="Previous Slide"
+          >
+            <ChevronLeft className="w-5 h-5 stroke-[2.2] -translate-x-0.5" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleNext();
+            }}
+            className="absolute right-3 sm:right-5 md:right-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center rounded-full bg-white/85 hover:bg-white text-black shadow-[0_4px_20px_rgba(0,0,0,0.18)] backdrop-blur-md border border-white/80 hover:scale-105 active:scale-95 transition-all duration-300 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 focus:outline-none"
+            aria-label="Next Slide"
+          >
+            <ChevronRight className="w-5 h-5 stroke-[2.2] translate-x-0.5" />
+          </button>
 
         {/* Navigation Capsule with 6s Visual Timer Progress */}
         <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/20 shadow-lg">
@@ -337,7 +371,7 @@ const Index = () => {
               {/* Header & Copy */}
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-[#6F6F6F] font-body font-medium block mb-1 sm:mb-2">
+                  <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-neutral-600 font-body font-medium block mb-1 sm:mb-2">
                     CLINICALLY DEVELOPED FORMULA
                   </span>
                   <h2 className="text-2xl sm:text-[30px] md:text-[34px] lg:text-[38px] leading-tight font-heading text-[#111111] tracking-tight font-normal">
@@ -360,7 +394,7 @@ const Index = () => {
                       <div>
                         <div className="flex items-baseline gap-1 sm:gap-1.5 mb-1">
                           <span className="text-lg sm:text-xl md:text-2xl font-light text-[#111111] font-heading">{ing.pct}</span>
-                          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-[#6F6F6F] font-semibold font-mono">{ing.name}</span>
+                          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider text-neutral-600 font-semibold font-mono">{ing.name}</span>
                         </div>
                         <p className="text-[9px] sm:text-[10px] md:text-[11px] text-[#555555] font-body font-light leading-snug line-clamp-2 md:line-clamp-none">
                           {ing.desc}
@@ -394,6 +428,8 @@ const Index = () => {
               <img
                 src={hero2}
                 alt="Follicle 8 Premium Showcase"
+                width="600"
+                height="600"
                 className="w-full h-full object-cover object-center"
                 loading="lazy"
               />
@@ -422,6 +458,8 @@ const Index = () => {
               <img
                 src={scalpPng}
                 alt="Scalp-5 Premium Showcase"
+                width="600"
+                height="600"
                 className="w-full h-full object-cover"
                 loading="lazy"
               />
@@ -438,7 +476,7 @@ const Index = () => {
               {/* Header & Copy */}
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-[#6F6F6F] font-body font-medium block mb-1 sm:mb-2">
+                  <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-neutral-600 font-body font-medium block mb-1 sm:mb-2">
                     OUR SIGNATURE FORMULA
                   </span>
                   <h2 className="text-2xl sm:text-[30px] md:text-[34px] lg:text-[38px] leading-tight font-heading text-[#111111] tracking-tight font-normal">
@@ -466,8 +504,6 @@ const Index = () => {
         </div>
       </section>
 
-
-
       {/* 5. RESPONSIVE CAMPAIGN BANNER SECTION */}
       <section className="bg-[#F6F5F2] py-10 md:py-16 overflow-hidden relative select-none border-t border-neutral-200/70">
         <div className="max-w-7xl mx-auto px-6 lg:px-16 flex items-center justify-center">
@@ -479,10 +515,12 @@ const Index = () => {
             className="w-full"
           >
             <picture className="w-full block">
-              <source media="(min-width: 768px)" srcSet={puneetPng} />
+              <source media="(min-width: 768px)" srcSet={puneetPng} width="1440" height="600" />
               <img
                 src={puneetMobPng}
                 alt="Scalvea Campaign Poster"
+                width="768"
+                height="960"
                 className="w-full h-auto object-contain mx-auto"
                 loading="lazy"
               />
@@ -497,7 +535,7 @@ const Index = () => {
           
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12 md:mb-16">
-            <span className="text-[9px] sm:text-[10px] md:text-xs tracking-[0.25em] uppercase text-neutral-500 font-body font-medium block mb-2 sm:mb-2.5">
+            <span className="text-[9px] sm:text-[10px] md:text-xs tracking-[0.25em] uppercase text-neutral-600 font-body font-medium block mb-2 sm:mb-2.5">
               OUR SCIENCE
             </span>
             <h2 className="text-2xl sm:text-3xl md:text-[36px] lg:text-[40px] leading-tight font-heading text-[#111111] tracking-tight font-normal mb-2.5 sm:mb-3">
@@ -568,6 +606,8 @@ const Index = () => {
                       <img 
                         src={card.icon} 
                         alt={card.title} 
+                        width="64"
+                        height="64"
                         className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 lg:h-16 lg:w-16 object-contain shrink-0 transition-transform duration-300 ease-out group-hover:scale-105"
                         loading="lazy"
                       />
@@ -575,7 +615,7 @@ const Index = () => {
                         {card.title}
                       </h3>
                     </div>
-                    <span className="text-[10px] sm:text-xs md:text-sm font-mono tracking-widest text-neutral-500 group-hover:text-neutral-800 transition-colors duration-300 font-medium shrink-0">
+                    <span className="text-[10px] sm:text-xs md:text-sm font-mono tracking-widest text-neutral-600 group-hover:text-neutral-800 transition-colors duration-300 font-medium shrink-0">
                       {card.num}
                     </span>
                   </div>
@@ -613,6 +653,8 @@ const Index = () => {
               <img
                 src={hero3}
                 alt="Scalvea premium hair care lifestyle"
+                width="1600"
+                height="900"
                 className="w-full h-full object-cover"
                 loading="lazy"
               />
@@ -723,7 +765,7 @@ const Index = () => {
           className="relative z-10 max-w-xl mx-auto text-center px-4 sm:px-6"
         >
           {/* Eyebrow */}
-          <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-neutral-500 font-body font-medium block mb-2 sm:mb-3">
+          <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-neutral-600 font-body font-medium block mb-2 sm:mb-3">
             STAY IN THE KNOW
           </span>
 
@@ -733,7 +775,7 @@ const Index = () => {
           </h2>
 
           {/* Subheading */}
-          <p className="text-xs sm:text-sm text-neutral-500 font-body font-light leading-relaxed max-w-md mx-auto mb-8 sm:mb-9">
+          <p className="text-xs sm:text-sm text-neutral-600 font-body font-light leading-relaxed max-w-md mx-auto mb-8 sm:mb-9">
             Get the latest from Scalvea — new product launches, hair-care insights, exclusive offers, and helpful updates, delivered straight to your inbox.
           </p>
 
@@ -770,7 +812,7 @@ const Index = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email address"
-              className="flex-1 h-11 sm:h-12 px-5 text-xs sm:text-sm bg-white border border-neutral-200/90 rounded-full outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-all duration-200 font-body font-light text-neutral-900 placeholder:text-neutral-500"
+              className="flex-1 h-11 sm:h-12 px-5 text-xs sm:text-sm bg-white border border-neutral-200/90 rounded-full outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-all duration-200 font-body font-light text-neutral-900 placeholder:text-neutral-600"
               required
             />
             <button
@@ -783,7 +825,7 @@ const Index = () => {
           </form>
 
           {/* Privacy micro-note */}
-          <p className="text-[10px] sm:text-xs text-neutral-500 font-body font-light mt-3.5 tracking-normal">
+          <p className="text-[10px] sm:text-xs text-neutral-600 font-body font-light mt-3.5 tracking-normal">
             No spam. Just Scalvea updates.
           </p>
         </motion.div>
@@ -802,6 +844,8 @@ const Index = () => {
 
       {/* AMAZON STORES SECTION */}
       <AmazonStoresSection />
+
+      </main>
 
       <Footer />
     </div>

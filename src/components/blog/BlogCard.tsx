@@ -16,6 +16,8 @@ export const BlogCard = ({ post, index = 0 }: { post: BlogPost; index?: number }
         <img 
           src={post.meta.featuredImage} 
           alt={post.meta.title} 
+          width="600"
+          height="375"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-luxury"
           loading="lazy"
         />
@@ -27,7 +29,7 @@ export const BlogCard = ({ post, index = 0 }: { post: BlogPost; index?: number }
       </Link>
       
       <div className="p-6 flex flex-col flex-1">
-        <div className="flex items-center gap-3 text-[10px] text-neutral-500 uppercase tracking-wider font-medium mb-3">
+        <div className="flex items-center gap-3 text-[10px] text-neutral-600 uppercase tracking-wider font-medium mb-3">
           <span>{format(new Date(post.meta.date), "MMM d, yyyy")}</span>
           <span className="w-1 h-1 rounded-full bg-neutral-300" />
           <span>{post.meta.readingTime}</span>
@@ -39,7 +41,7 @@ export const BlogCard = ({ post, index = 0 }: { post: BlogPost; index?: number }
           </h3>
         </Link>
         
-        <p className="text-sm text-neutral-500 font-light leading-relaxed mb-6 line-clamp-3 flex-1">
+        <p className="text-sm text-neutral-600 font-light leading-relaxed mb-6 line-clamp-3 flex-1">
           {post.meta.description}
         </p>
         

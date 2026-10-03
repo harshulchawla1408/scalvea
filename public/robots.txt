@@ -44,5 +44,8 @@ Disallow: /support
 Disallow: /*?search=
 Disallow: /*?sortBy=
 
-# ── Sitemap Reference ─────────────────────────────────────────────────────────
+# ── Sitemap & Agent Catalog References ─────────────────────────────────────────
 Sitemap: https://scalvea.com/sitemap.xml
+Sitemap: https://scalvea.com/video-sitemap.xml
+Agentmap: https://scalvea.com/ai-catalog.json
+Agentmap: https://scalvea.com/.well-known/ai-catalog.json

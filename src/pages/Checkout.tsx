@@ -472,7 +472,13 @@ const Checkout = () => {
 
   useEffect(() => {
     if (!authLoading && !user && !isIndia) {
-      navigate("/auth?returnTo=/checkout");
+      try {
+        sessionStorage.setItem("scalvea_buying_flow", "true");
+        localStorage.setItem("scalvea_buying_flow", "true");
+        sessionStorage.setItem("scalvea_auth_return_to", "/checkout");
+        localStorage.setItem("scalvea_auth_return_to", "/checkout");
+      } catch (_) {}
+      navigate("/auth?returnTo=/checkout", { replace: true });
     }
   }, [authLoading, user, isIndia, navigate]);
 
@@ -640,6 +646,12 @@ const Checkout = () => {
 
     if (!user && !isIndia) {
       toast({ title: "Please sign in", description: "You need an account to complete checkout.", variant: "destructive" });
+      try {
+        sessionStorage.setItem("scalvea_buying_flow", "true");
+        localStorage.setItem("scalvea_buying_flow", "true");
+        sessionStorage.setItem("scalvea_auth_return_to", "/checkout");
+        localStorage.setItem("scalvea_auth_return_to", "/checkout");
+      } catch (_) {}
       navigate("/auth?returnTo=/checkout");
       return;
     }
@@ -786,6 +798,12 @@ const Checkout = () => {
     e?.preventDefault();
     if (!user) {
       toast({ title: "Please sign in", description: "You need an account to complete checkout.", variant: "destructive" });
+      try {
+        sessionStorage.setItem("scalvea_buying_flow", "true");
+        localStorage.setItem("scalvea_buying_flow", "true");
+        sessionStorage.setItem("scalvea_auth_return_to", "/checkout");
+        localStorage.setItem("scalvea_auth_return_to", "/checkout");
+      } catch (_) {}
       navigate("/auth?returnTo=/checkout");
       return;
     }
@@ -819,6 +837,12 @@ const Checkout = () => {
     e?.preventDefault();
     if (!user) {
       toast({ title: "Please sign in", description: "You need an account to complete checkout.", variant: "destructive" });
+      try {
+        sessionStorage.setItem("scalvea_buying_flow", "true");
+        localStorage.setItem("scalvea_buying_flow", "true");
+        sessionStorage.setItem("scalvea_auth_return_to", "/checkout");
+        localStorage.setItem("scalvea_auth_return_to", "/checkout");
+      } catch (_) {}
       navigate("/auth?returnTo=/checkout");
       return;
     }
@@ -844,6 +868,18 @@ const Checkout = () => {
     }
   };
 
+  if (authLoading || (!user && !isIndia)) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center py-32">
+          <div className="animate-spin w-8 h-8 border-2 border-foreground border-t-transparent rounded-full" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   // ─── Empty cart state ─────────────────────────────────────────────────────
   if (items.length === 0) {
     return (
@@ -854,18 +890,6 @@ const Checkout = () => {
           <Button asChild variant="outline" className="text-sm font-medium tracking-[0.08em] uppercase h-11 px-6">
             <Link to="/shop">Continue Shopping</Link>
           </Button>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="flex items-center justify-center py-32">
-          <div className="animate-spin w-8 h-8 border-2 border-foreground border-t-transparent rounded-full" />
         </div>
         <Footer />
       </div>

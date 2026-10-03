@@ -10,14 +10,14 @@ export default function AmazonStoresSection({ className = "" }: AmazonStoresSect
     <section className={`bg-[#F6F5F2] py-12 sm:py-14 md:py-16 border-t border-neutral-150 select-none ${className}`}>
       <div className="max-w-xl mx-auto px-4 sm:px-6 text-center">
         {/* Eyebrow */}
-        <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-neutral-500 font-body font-medium block mb-1.5 sm:mb-2">
+        <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase text-neutral-600 font-body font-medium block mb-1.5 sm:mb-2">
           SHOP SCALVEA ON AMAZON
         </span>
 
         {/* Heading */}
-        <h3 className="text-lg sm:text-xl md:text-2xl font-heading text-neutral-900 font-normal tracking-tight mb-6 sm:mb-7">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-heading text-neutral-900 font-normal tracking-tight mb-6 sm:mb-7">
           Shop Scalvea products on Amazon
-        </h3>
+        </h2>
 
         {/* Equal-Sized Amazon Store Cards */}
         <div className="grid grid-cols-2 gap-3 sm:gap-5 max-w-md mx-auto">
@@ -32,6 +32,8 @@ export default function AmazonStoresSection({ className = "" }: AmazonStoresSect
             <img
               src={amazonInLogo}
               alt="Amazon India"
+              width="140"
+              height="36"
               className="max-h-7 sm:max-h-9 w-auto max-w-[120px] sm:max-w-[140px] object-contain transition-transform duration-200 group-hover:scale-105"
               loading="lazy"
             />
@@ -48,6 +50,8 @@ export default function AmazonStoresSection({ className = "" }: AmazonStoresSect
             <img
               src={amazonAuLogo}
               alt="Amazon Australia"
+              width="140"
+              height="36"
               className="max-h-7 sm:max-h-9 w-auto max-w-[120px] sm:max-w-[140px] object-contain transition-transform duration-200 group-hover:scale-105"
               loading="lazy"
             />

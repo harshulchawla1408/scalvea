@@ -1,21 +1,22 @@
 # Scalvea
-Science-backed hair and scalp care brand formulated with clinically researched ingredients. Based in Australia and India.
+
+> Science-backed hair and scalp care, formulated with clinically researched ingredients. Operating in Australia and India.
 
 ## Products
-- Follicle 8 Hair Growth Serum: https://scalvea.com/product/follicle-8-hair-growth-serum
-- Scalp-5 Anti-Dandruff Hair Serum: https://scalvea.com/product/scalp-5-anti-dandruff-hair-serum
+- [Follicle 8 Hair Growth Serum](https://scalvea.com/product/follicle-8-hair-growth-serum): Clinically inspired hair growth serum powered by 4% Anagain, 3% Redensyl, 3% Baicapil, and 3% Procapil to nourish follicles and reduce excessive shedding.
+- [Scalp-5 Anti-Dandruff Hair Serum](https://scalvea.com/product/scalp-5-anti-dandruff-hair-serum): Anti-dandruff treatment with Salicylic Acid, Piroctone Olamine, Zinc PCA, and Tea Tree Extract to reduce visible flakes, soothe irritation, and restore scalp comfort.
 
 ## Pages
-- Shop: https://scalvea.com/shop
-- About: https://scalvea.com/about
-- Journal (Blog): https://scalvea.com/blogs
-- Contact: https://scalvea.com/contact
-- FAQ: https://scalvea.com/faq
+- [Shop](https://scalvea.com/shop): Browse all science-backed hair and scalp formulations with regional pricing for Australia (AUD) and India (INR).
+- [About Us](https://scalvea.com/about): Learn about our science-first philosophy, clinically researched actives, and dual Australia/India operations.
+- [Journal & Hair Guide](https://scalvea.com/blogs): Evidence-based articles covering hair thinning causes, hair loss science, ingredients, and daily scalp care routines.
+- [FAQ](https://scalvea.com/faq): Answers to common questions regarding formulation safety, ingredient transparency, shipping times, and returns.
+- [Contact](https://scalvea.com/contact): Reach customer support via direct WhatsApp (+61 494 754 851) or email (info@scalvea.com).
 
 ## Policies
-- Shipping Policy: https://scalvea.com/shipping-policy
-- Returns Policy: https://scalvea.com/returns-policy
-- Privacy Policy: https://scalvea.com/privacy-policy
-- Terms of Service: https://scalvea.com/terms-of-service
-- Payment Policy: https://scalvea.com/payment-policy
-- Cancellation Policy: https://scalvea.com/cancellation-policy
+- [Shipping Policy](https://scalvea.com/shipping-policy): Domestic and international delivery details, estimated dispatch times, and free shipping thresholds.
+- [Return & Refund Policy](https://scalvea.com/returns-policy): 30-day return policy and eligibility criteria.
+- [Privacy Policy](https://scalvea.com/privacy-policy): Transparent disclosure of data protection and security practices.
+- [Terms of Service](https://scalvea.com/terms-of-service): Usage terms, intellectual property, and service agreements.
+- [Payment Policy](https://scalvea.com/payment-policy): Supported payment methods including Stripe, Razorpay, Cash on Delivery, and regional gateways.
+- [Cancellation Policy](https://scalvea.com/cancellation-policy): Order cancellation guidelines and refund processing timelines.
