@@ -55,54 +55,20 @@ Prices, taxes, shipping charges, and delivery time change based on the selected 
 ## 🛠 Tech Stack
 
 ### Frontend
-- Next.js
+- TypeScript
 - React
 - Tailwind CSS
-- Redux Toolkit / Context API
 - Stripe JS
-- Axios
 
-### Backend
-- Node.js
-- Express.js
-- MongoDB
-- Mongoose
-- JWT Authentication
-- Stripe API
+### Backend and Database
+- Supabase
+- PostgreSQL
+- Payments → Stripe & Shiprocket Checkout
 - Cloudinary (Image Upload)
-- Nodemailer / Resend (Emails)
+- Resend (Emails)
 
 ### Deployment
-- Frontend → Vercel
-- Backend → Render / Railway
-- Database → MongoDB Atlas
-- Images → Cloudinary
-- Payments → Stripe
-
----
-
-## 📁 Project Structure
-
-scalvea/
-│
-├── frontend/ # Next.js frontend
-│
-├── backend/
-│ ├── controllers/
-│ ├── routes/
-│ ├── models/
-│ ├── middleware/
-│ ├── utils/
-│ ├── config/
-│ └── server.js
-│
-├── admin/ # Admin dashboard
-│
-├── .env
-├── .gitignore
-├── README.md
-└── package.json
-
+- Hostinger VPS
 
 ---
 
