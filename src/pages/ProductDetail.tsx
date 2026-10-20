@@ -10,6 +10,7 @@ import { useCountry } from "@/contexts/CountryContext";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useAuth } from "@/contexts/AuthContext";
 import { trackViewContent, trackAddToCart } from "@/lib/metaPixel";
+import { trackGtmViewItem } from "@/lib/gtm";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WhatsappIcon } from "@/components/ui/whatsapp-icon";
@@ -416,20 +417,31 @@ const ProductDetail = () => {
     if (product?.id) addRecentlyViewed(product.id);
   }, [product?.id, addRecentlyViewed]);
 
-  // ── Meta Pixel: ViewContent ───────────────────────────────────────────────
+  // ── Meta Pixel & GTM GA4: ViewContent / view_item ────────────────────────
   // Fire once per product load. Guard with ref so re-renders don't duplicate.
   const viewContentFiredForId = useRef<string | null>(null);
   useEffect(() => {
     if (!product?.id) return;
     if (viewContentFiredForId.current === product.id) return;
     viewContentFiredForId.current = product.id;
+    const currentPrice = selectedCountry === "india" ? product.price_inr : product.price_aud;
+    const currentCurrency = selectedCountry === "india" ? "INR" : "AUD";
+
     trackViewContent({
       id: product.id,
       name: product.name,
-      price: selectedCountry === "india" ? product.price_inr : product.price_aud,
-      currency: selectedCountry === "india" ? "INR" : "AUD",
+      price: currentPrice,
+      currency: currentCurrency,
     });
-  }, [product?.id, product?.name, product?.price_inr, product?.price_aud, selectedCountry]);
+
+    trackGtmViewItem({
+      item_id: product.id,
+      item_name: product.name,
+      price: currentPrice,
+      currency: currentCurrency,
+      item_category: product.category || "Hair Care",
+    });
+  }, [product?.id, product?.name, product?.price_inr, product?.price_aud, product?.category, selectedCountry]);
 
   const isUUID = Boolean(product?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(product.id));
 

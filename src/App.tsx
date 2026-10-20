@@ -6,6 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import BuyingFlowRedirector from "./components/BuyingFlowRedirector";
 import MetaPixelRouteTracker from "./components/MetaPixelRouteTracker";
+import GtmRouteTracker from "./components/GtmRouteTracker";
 import ChatbaseController from "./components/ChatbaseController";
 import PageTransition from "./components/layout/PageTransition";
 import { CartProvider } from "./contexts/CartContext";
@@ -29,6 +30,7 @@ const App = () => (
                 <ScrollToTop />
                 <BuyingFlowRedirector />
                 <MetaPixelRouteTracker />
+                <GtmRouteTracker />
                 <ChatbaseController />
                 <PageTransition />
                 <AppRoutes />

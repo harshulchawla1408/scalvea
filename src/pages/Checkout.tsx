@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -28,6 +28,7 @@ import {
   Edit2,
 } from "lucide-react";
 import { trackInitiateCheckout } from "@/lib/metaPixel";
+import { trackGtmBeginCheckout } from "@/lib/gtm";
 import prod1 from "@/assets/prod1.webp";
 import prod2 from "@/assets/prod2.webp";
 import paytmSvg from "@/assets/paytm.svg";
@@ -504,6 +505,20 @@ const Checkout = () => {
   const freeShippingThreshold = isIndia ? 0 : 60;
   const shippingAmount = subtotalAfterDiscount >= freeShippingThreshold ? 0 : (isIndia ? 0 : 9.50);
   const grandTotal = subtotalAfterDiscount + taxAmount + shippingAmount;
+
+  // GTM GA4: begin_checkout
+  const beginCheckoutTracked = useRef(false);
+  useEffect(() => {
+    if (items.length > 0 && !beginCheckoutTracked.current) {
+      beginCheckoutTracked.current = true;
+      trackGtmBeginCheckout({
+        items,
+        total: grandTotal,
+        currency: currencyCode,
+        coupon: appliedCoupon?.code,
+      });
+    }
+  }, [items, grandTotal, currencyCode, appliedCoupon?.code]);
 
   const [form, setForm] = useState({
     email: user?.email || "",

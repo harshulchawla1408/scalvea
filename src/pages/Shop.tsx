@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import Header from "@/components/layout/Header";
@@ -8,6 +8,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useCountry } from "@/contexts/CountryContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSEO } from "@/hooks/useSEO";
+import { trackGtmViewItemList } from "@/lib/gtm";
 
 const Shop = () => {
   const [searchParams] = useSearchParams();
@@ -22,7 +23,7 @@ const Shop = () => {
 
   const [sortBy, setSortBy] = useState("default");
   const { products, loading } = useProducts();
-  const { getPrice } = useCountry();
+  const { getPrice, selectedCountry } = useCountry();
 
   const categories = useMemo(() => {
     const cats = [...new Set(products.map((p) => p.category))];
@@ -43,6 +44,28 @@ const Shop = () => {
     if (sortBy === "name") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     return result;
   }, [activeCategory, sortBy, searchQuery, products, getPrice]);
+
+  // Track view_item_list in Google Tag Manager (GA4 E-commerce)
+  const hasTrackedItemList = useRef<string | null>(null);
+  useEffect(() => {
+    if (loading || filtered.length === 0) return;
+    const listKey = `${activeCategory}_${sortBy}_${searchQuery || ""}_${selectedCountry}_${filtered.length}`;
+    if (hasTrackedItemList.current === listKey) return;
+    hasTrackedItemList.current = listKey;
+
+    trackGtmViewItemList({
+      item_list_id: activeCategory === "All" ? "all_products" : `category_${activeCategory.toLowerCase().replace(/\s+/g, "_")}`,
+      item_list_name: activeCategory === "All" ? "All Products" : activeCategory,
+      items: filtered.map((p, idx) => ({
+        item_id: p.id,
+        item_name: p.name,
+        price: getPrice(p.price_aud, p.price_inr, p.price_usd),
+        currency: selectedCountry === "india" ? "INR" : "AUD",
+        item_category: p.category || "Hair Care",
+        index: idx + 1,
+      })),
+    });
+  }, [loading, filtered, activeCategory, sortBy, searchQuery, selectedCountry, getPrice]);
 
   return (
     <div className="min-h-screen bg-[#FDFCFB] flex flex-col font-body text-neutral-900">

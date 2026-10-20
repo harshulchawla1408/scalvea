@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useCountry } from "./CountryContext";
 import { supabase } from "@/integrations/supabase/client";
+import { trackGtmAddToCart, trackGtmRemoveFromCart } from "@/lib/gtm";
 
 export interface CartItem {
   productId: string;
@@ -123,6 +124,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }));
 
   const addItem = (item: Omit<CartItem, "quantity" | "price">, quantity = 1) => {
+    const currentPrice = getPrice(item.price_aud, item.price_inr, item.price_usd);
+    const currency = selectedCountry === "india" ? "INR" : "AUD";
+
+    // GTM GA4: add_to_cart
+    trackGtmAddToCart({
+      item_id: item.productId,
+      item_name: item.name,
+      price: currentPrice,
+      quantity,
+      currency,
+    });
+
     setStoredItems(prev => {
       const existing = prev.find(i => i.productId === item.productId);
       if (existing) {
@@ -146,6 +159,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeItem = (productId: string) => {
+    const target = items.find((i) => i.productId === productId);
+    if (target) {
+      // GTM GA4: remove_from_cart
+      trackGtmRemoveFromCart({
+        item_id: target.productId,
+        item_name: target.name,
+        price: target.price,
+        quantity: target.quantity,
+        currency: selectedCountry === "india" ? "INR" : "AUD",
+      });
+    }
     setStoredItems(prev => prev.filter(i => i.productId !== productId));
   };
 
@@ -153,6 +177,27 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     if (quantity < 1) {
       removeItem(productId);
       return;
+    }
+    const current = items.find((i) => i.productId === productId);
+    if (current) {
+      const currency = selectedCountry === "india" ? "INR" : "AUD";
+      if (quantity > current.quantity) {
+        trackGtmAddToCart({
+          item_id: current.productId,
+          item_name: current.name,
+          price: current.price,
+          quantity: quantity - current.quantity,
+          currency,
+        });
+      } else if (quantity < current.quantity) {
+        trackGtmRemoveFromCart({
+          item_id: current.productId,
+          item_name: current.name,
+          price: current.price,
+          quantity: current.quantity - quantity,
+          currency,
+        });
+      }
     }
     setStoredItems(prev =>
       prev.map(i => (i.productId === productId ? { ...i, quantity } : i))

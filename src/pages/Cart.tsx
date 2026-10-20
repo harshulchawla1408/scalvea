@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -9,6 +10,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, ShoppingBag, Gift, Check } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
+import { trackGtmViewCart } from "@/lib/gtm";
 import prod1 from "@/assets/prod1.webp";
 import prod2 from "@/assets/prod2.webp";
 
@@ -25,6 +27,19 @@ const Cart = () => {
   const { products } = useProducts();
 
   const isIndia = selectedCountry === "india";
+
+  // GTM GA4: view_cart
+  const viewCartTracked = useRef(false);
+  useEffect(() => {
+    if (!viewCartTracked.current) {
+      viewCartTracked.current = true;
+      trackGtmViewCart({
+        items,
+        total,
+        currency: isIndia ? "INR" : "AUD",
+      });
+    }
+  }, [items, total, isIndia]);
   const formatVal = (val: number) => {
     if (isIndia) {
       return `₹${Math.round(val).toLocaleString("en-IN")}`;

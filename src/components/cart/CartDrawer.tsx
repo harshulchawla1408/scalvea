@@ -1,3 +1,4 @@
+import { useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   X,
@@ -17,6 +18,7 @@ import { useCountry } from "@/contexts/CountryContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useProducts } from "@/hooks/useProducts";
+import { trackGtmViewCart } from "@/lib/gtm";
 import prod1 from "@/assets/prod1.webp";
 import prod2 from "@/assets/prod2.webp";
 
@@ -64,6 +66,19 @@ const CartDrawer = ({ open, onClose }: CartDrawerProps) => {
   const { products } = useProducts();
 
   const isIndia = selectedCountry === "india";
+
+  // GTM GA4: Track view_cart when drawer opens
+  const wasOpenRef = useRef(false);
+  useEffect(() => {
+    if (open && !wasOpenRef.current) {
+      trackGtmViewCart({
+        items,
+        total,
+        currency: isIndia ? "INR" : "AUD",
+      });
+    }
+    wasOpenRef.current = open;
+  }, [open, items, total, isIndia]);
 
   // Dynamic products and prices fetched from DB
   const dbScalp5 = products.find(

@@ -28,6 +28,7 @@ import {
 import { useSEO } from "@/hooks/useSEO";
 import { useCart } from "@/contexts/CartContext";
 import { trackPurchase } from "@/lib/metaPixel";
+import { trackGtmPurchase } from "@/lib/gtm";
 import prod1 from "@/assets/prod1.webp";
 import prod2 from "@/assets/prod2.webp";
 
@@ -96,10 +97,11 @@ const OrderSuccess = () => {
           if (data) {
             setOrder(data);
             clearCart();
-            // ── Meta Pixel: Purchase ──
+            // ── Meta Pixel & GTM GA4: Purchase ──
             if (!purchaseTracked.current) {
               purchaseTracked.current = true;
               trackPurchase(data);
+              trackGtmPurchase(data);
             }
           } else {
             navigate("/order-failed?reason=failed");
@@ -142,6 +144,7 @@ const OrderSuccess = () => {
           if (!purchaseTracked.current) {
             purchaseTracked.current = true;
             trackPurchase(data);
+            trackGtmPurchase(data);
           }
           return;
         }
@@ -158,6 +161,7 @@ const OrderSuccess = () => {
           if (!purchaseTracked.current) {
             purchaseTracked.current = true;
             trackPurchase(fnData.order);
+            trackGtmPurchase(fnData.order);
           }
           return;
         }
