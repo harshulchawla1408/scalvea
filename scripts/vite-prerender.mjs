@@ -90,12 +90,27 @@ async function getProductSlugs() {
     );
     if (!res.ok) return [];
     const products = await res.json();
+
+    // Persist a snapshot for SSR fallback
+    try {
+      const snapshotPath = path.resolve(__dirname, '../src/data/products_snapshot.json');
+      fs.writeFileSync(snapshotPath, JSON.stringify(products, null, 2));
+    } catch (_) {}
+
     return products
       .filter(p => (p.is_active_australia ?? true) || (p.is_active_india ?? true))
       .map(p => p.slug)
       .filter(Boolean);
   } catch (e) {
     console.warn('[prerender] Could not fetch product slugs:', e.message);
+    // Try loading the snapshot fallback
+    try {
+      const snapshotPath = path.resolve(__dirname, '../src/data/products_snapshot.json');
+      if (fs.existsSync(snapshotPath)) {
+        const snapshot = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'));
+        return snapshot.map((p: any) => p.slug).filter(Boolean);
+      }
+    } catch (_) {}
     return [];
   }
 }

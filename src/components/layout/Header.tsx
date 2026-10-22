@@ -250,7 +250,7 @@ const Header = () => {
             {/* Cart (Desktop/Laptop Only) */}
             <motion.button 
               variants={iconItemVariants}
-              onClick={() => setIsCartOpen(true)} 
+              onClick={() => navigate('/cart')}
               className="hidden lg:flex hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] relative p-2 min-w-[48px] min-h-[48px] items-center justify-center" 
               aria-label="Cart"
             >
