@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, ShoppingCart, DollarSign, AlertTriangle, TrendingUp } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } from "recharts";
+import { formatAusDateTime, getAusDateKey, AUS_TIMEZONE } from "@/lib/timezone";
 
 const COLORS = ["#000000", "#555555", "#898989", "#c5c5c5"];
 
@@ -70,13 +71,12 @@ const AdminDashboard = () => {
       }
     });
 
-    // Time calculations
-    const now = new Date();
-    const todayStr = now.toISOString().split("T")[0];
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    // Time calculations using Australian Eastern Time (GMT+11 / AEDT)
+    const todayAusStr = getAusDateKey();
+    const monthStartAusStr = todayAusStr.slice(0, 7); // 'YYYY-MM'
 
-    const ordersToday = filteredOrders.filter(o => o.created_at?.startsWith(todayStr));
-    const ordersMonth = filteredOrders.filter(o => o.created_at >= monthStart);
+    const ordersToday = filteredOrders.filter(o => o.created_at && getAusDateKey(o.created_at) === todayAusStr);
+    const ordersMonth = filteredOrders.filter(o => o.created_at && getAusDateKey(o.created_at).startsWith(monthStartAusStr));
 
     // Helper for revenue formatting
     const formatRevenueSummary = (ordersList: any[]) => {
@@ -157,17 +157,18 @@ const AdminDashboard = () => {
         .slice(0, 5)
     );
 
-    // Monthly charts mapping
+    // Monthly charts mapping (Australian timezone)
+    const now = new Date();
     const monthMap: Record<string, { aud: number; inr: number; orders: number }> = {};
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = d.toLocaleDateString("en", { month: "short", year: "2-digit" });
+      const key = d.toLocaleDateString("en-AU", { timeZone: AUS_TIMEZONE, month: "short", year: "2-digit" });
       monthMap[key] = { aud: 0, inr: 0, orders: 0 };
     }
 
     filteredOrders.forEach((o: any) => {
       const d = new Date(o.created_at);
-      const key = d.toLocaleDateString("en", { month: "short", year: "2-digit" });
+      const key = d.toLocaleDateString("en-AU", { timeZone: AUS_TIMEZONE, month: "short", year: "2-digit" });
       if (key in monthMap) {
         if (o.currency === "INR") monthMap[key].inr += Number(o.total_amount);
         else monthMap[key].aud += Number(o.total_amount);
@@ -368,7 +369,7 @@ const AdminDashboard = () => {
                 <div key={order.id} className="px-4 py-3 flex items-center justify-between text-sm">
                   <div>
                     <p className="font-medium">{order.order_number}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString()} · {order.country}</p>
+                    <p className="text-xs text-muted-foreground">{formatAusDateTime(order.created_at)} · {order.country}</p>
                   </div>
                   <div className="text-right">
                     <p className="font-mono">

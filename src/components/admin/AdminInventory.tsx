@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
+import { formatAusDateTime } from "@/lib/timezone";
 
 const AdminInventory = () => {
   const [products, setProducts] = useState<any[]>([]);
@@ -148,7 +149,7 @@ const AdminInventory = () => {
               <div key={log.id} className="px-4 py-3 flex items-center justify-between text-sm">
                 <div>
                   <p className="font-medium text-xs">{log.products?.name || "Unknown Product"}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{log.reason} · {new Date(log.created_at).toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{log.reason} · {formatAusDateTime(log.created_at)}</p>
                 </div>
                 <p className={`text-xs font-mono font-semibold ${log.change_amount > 0 ? "text-green-600" : "text-red-600"}`}>
                   {log.change_amount > 0 ? "+" : ""}{log.change_amount} ({log.previous_quantity} → {log.new_quantity})

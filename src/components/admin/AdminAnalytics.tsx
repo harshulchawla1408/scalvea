@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
+import { AUS_TIMEZONE } from "@/lib/timezone";
 
 const COLORS = ["#000000", "#555555", "#898989", "#c5c5c5"];
 
@@ -59,18 +60,18 @@ const AdminAnalytics = () => {
       avgOrderValueText = `A$${audAov.toFixed(0)} / ₹${Math.round(inrAov).toLocaleString("en-IN")}`;
     }
 
-    // 2. Daily Revenue (Last 14 days)
+    // 2. Daily Revenue (Last 14 days in Australian Eastern Time)
     const dailyMap: Record<string, { aud: number; inr: number }> = {};
     const now = new Date();
     for (let i = 13; i >= 0; i--) {
       const d = new Date(now); d.setDate(d.getDate() - i);
-      const key = d.toLocaleDateString("en", { month: "short", day: "numeric" });
+      const key = d.toLocaleDateString("en-AU", { timeZone: AUS_TIMEZONE, month: "short", day: "numeric" });
       dailyMap[key] = { aud: 0, inr: 0 };
     }
 
     filteredOrders.forEach((o: any) => {
       const d = new Date(o.created_at);
-      const key = d.toLocaleDateString("en", { month: "short", day: "numeric" });
+      const key = d.toLocaleDateString("en-AU", { timeZone: AUS_TIMEZONE, month: "short", day: "numeric" });
       if (key in dailyMap) {
         if (o.currency === "INR") dailyMap[key].inr += Number(o.total_amount);
         else dailyMap[key].aud += Number(o.total_amount);
@@ -83,17 +84,17 @@ const AdminAnalytics = () => {
       ...(selectedCountry === "All" || selectedCountry === "India" ? { "India (INR)": val.inr } : {}),
     }));
 
-    // 3. Monthly Sales (Last 12 months)
+    // 3. Monthly Sales (Last 12 months in Australian Eastern Time)
     const monthMap: Record<string, { aud: number; inr: number; orders: number }> = {};
     for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = d.toLocaleDateString("en", { month: "short", year: "2-digit" });
+      const key = d.toLocaleDateString("en-AU", { timeZone: AUS_TIMEZONE, month: "short", year: "2-digit" });
       monthMap[key] = { aud: 0, inr: 0, orders: 0 };
     }
 
     filteredOrders.forEach((o: any) => {
       const d = new Date(o.created_at);
-      const key = d.toLocaleDateString("en", { month: "short", year: "2-digit" });
+      const key = d.toLocaleDateString("en-AU", { timeZone: AUS_TIMEZONE, month: "short", year: "2-digit" });
       if (key in monthMap) {
         if (o.currency === "INR") monthMap[key].inr += Number(o.total_amount);
         else monthMap[key].aud += Number(o.total_amount);

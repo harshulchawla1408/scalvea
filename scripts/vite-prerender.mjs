@@ -108,7 +108,7 @@ async function getProductSlugs() {
       const snapshotPath = path.resolve(__dirname, '../src/data/products_snapshot.json');
       if (fs.existsSync(snapshotPath)) {
         const snapshot = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'));
-        return snapshot.map((p: any) => p.slug).filter(Boolean);
+        return snapshot.map((p) => p.slug).filter(Boolean);
       }
     } catch (_) {}
     return [];

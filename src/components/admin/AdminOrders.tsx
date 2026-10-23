@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import AdminManualOrder from "./AdminManualOrder";
 import { generateInvoicePDF } from "@/utils/generateInvoicePDF";
+import { formatAusDateTime } from "@/lib/timezone";
 
 /* ─── Types ─── */
 type OrderSource = "All" | "Online" | "Manual";
@@ -538,15 +539,7 @@ const AdminOrders = () => {
                         )}
                       </div>
                       <p className="text-sm font-semibold text-black mt-1">
-                        {new Date(order.created_at).toLocaleString("en-US", {
-                          year: "numeric",
-                          month: "numeric",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                          second: "2-digit",
-                          hour12: true,
-                        })}
+                        {formatAusDateTime(order.created_at)}
                       </p>
                     </div>
 
@@ -702,7 +695,7 @@ const AdminOrders = () => {
                         </div>
                         <div>
                           <p className="text-[10px] uppercase text-amber-800 tracking-wider mb-1 font-bold">Created At</p>
-                          <p className="text-black font-medium">{order.admin_created_at ? new Date(order.admin_created_at).toLocaleString() : "—"}</p>
+                          <p className="text-black font-medium">{order.admin_created_at ? formatAusDateTime(order.admin_created_at) : "—"}</p>
                         </div>
                       </div>
                     </div>

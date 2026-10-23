@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getStoreSettings, updateStoreSettings, StoreSettings, DEFAULT_SETTINGS } from "@/utils/settingsService";
+import { formatAusDateTime } from "@/lib/timezone";
 
 const AdminSettings = () => {
   const [exporting, setExporting] = useState(false);
@@ -60,8 +61,11 @@ const AdminSettings = () => {
       setExporting(false);
       return;
     }
-    const headers = Object.keys(data[0]).join(",");
-    const rows = data.map(r => Object.values(r).join(",")).join("\n");
+    const headers = Object.keys(data[0]).join(",") + ",order_date_aus";
+    const rows = data.map(r => {
+      const ausTime = formatAusDateTime(r.created_at);
+      return `${Object.values(r).join(",")},"${ausTime}"`;
+    }).join("\n");
     const blob = new Blob([headers + "\n" + rows], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "scalvea-orders.csv"; a.click();
