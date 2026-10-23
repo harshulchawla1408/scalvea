@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Instagram, Mail, ChevronDown, ChevronUp, Linkedin } from "lucide-react";
+import { Facebook, Instagram, Mail, ChevronDown, ChevronUp, Linkedin } from "lucide-react";
 
 const TiktokIcon = ({ className }: { className?: string }) => (
   <svg
@@ -46,8 +46,7 @@ const Footer = () => {
             {/* Text Logo */}
             <div className="space-y-1">
               <span
-                className="text-white text-2xl font-normal tracking-tight leading-none block"
-                style={{ fontFamily: "'Chillax', 'Clash Display', sans-serif" }}
+                className="text-white text-2xl font-light font-display tracking-tight leading-none block"
               >
                 Scalvea
               </span>
@@ -60,8 +59,17 @@ const Footer = () => {
               Science-backed hair care formulated with clinically researched ingredients for healthier hair and scalp. Premium Australian innovation trusted across Australia and India.
             </p>
 
-            {/* Social Icons — Instagram, TikTok, Email */}
+            {/* Social Icons — Facebook, Instagram, LinkedIn, TikTok (Left side) */}
             <div className="flex gap-2 pt-2">
+              <a
+                href="https://www.facebook.com/p/Scalvea-61593812710461/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-neutral-300 hover:text-white transition-colors duration-200 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="Facebook"
+              >
+                <Facebook className="size-[18px]" />
+              </a>
               <a
                 href="https://www.instagram.com/scalvea_/"
                 target="_blank"
@@ -72,31 +80,6 @@ const Footer = () => {
                 <Instagram className="size-[18px]" />
               </a>
               <a
-                href="https://www.tiktok.com/@scalvea/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-neutral-300 hover:text-white transition-colors duration-200 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                aria-label="TikTok"
-              >
-                <TiktokIcon className="size-[18px]" />
-              </a>
-              <a
-                href="https://wa.me/61494754851?text=Hi%20Scalvea%2C%20I%20would%20like%20to%20know%20more%20about%20your%20premium%20hair%20care%20products."
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-neutral-300 hover:text-white transition-colors duration-200 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                aria-label="WhatsApp"
-              >
-                <WhatsappIcon className="size-[18px]" />
-              </a>
-              <a
-                href="mailto:info@scalvea.com"
-                className="text-neutral-300 hover:text-white transition-colors duration-200 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                aria-label="Email"
-              >
-                <Mail className="size-[18px]" />
-              </a>
-              <a
                 href="https://www.linkedin.com/company/scalvea/"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -104,6 +87,15 @@ const Footer = () => {
                 aria-label="LinkedIn"
               >
                 <Linkedin className="size-[18px]" />
+              </a>
+              <a
+                href="https://www.tiktok.com/@scalvea/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-neutral-300 hover:text-white transition-colors duration-200 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="TikTok"
+              >
+                <TiktokIcon className="size-[18px]" />
               </a>
             </div>
           </div>
@@ -210,16 +202,32 @@ const Footer = () => {
                   </address>
                 </div>
                 
-                <div className="pt-2 mt-2 border-t border-neutral-900">
-                  <p className="text-neutral-200 font-semibold tracking-wider text-[11px] uppercase mb-2">
+                <div className="pt-3 mt-3 border-t border-neutral-900">
+                  <p className="text-neutral-200 font-semibold tracking-wider text-[11px] uppercase mb-2.5">
                     Get in Touch
                   </p>
-                  <div className="space-y-1.5">
-                    <a href="https://wa.me/61494754851" target="_blank" rel="noopener noreferrer" className="block text-neutral-300 hover:text-white transition-colors text-[13px]">
-                      WhatsApp: +61 494 754 851
+                  <div className="space-y-2">
+                    <a
+                      href="https://wa.me/61494754851?text=Hi%20Scalvea%2C%20I%20would%20like%20to%20know%20more%20about%20your%20premium%20hair%20care%20products."
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2.5 text-neutral-300 hover:text-white transition-colors text-[13px] group"
+                      aria-label="WhatsApp"
+                    >
+                      <span className="p-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 group-hover:text-emerald-400 group-hover:border-neutral-700 transition-colors flex items-center justify-center shrink-0">
+                        <WhatsappIcon className="size-3.5" />
+                      </span>
+                      <span>WhatsApp: +61 494 754 851</span>
                     </a>
-                    <a href="mailto:info@scalvea.com" className="block text-neutral-300 hover:text-white transition-colors text-[13px]">
-                      info@scalvea.com
+                    <a
+                      href="mailto:info@scalvea.com"
+                      className="flex items-center gap-2.5 text-neutral-300 hover:text-white transition-colors text-[13px] group"
+                      aria-label="Email"
+                    >
+                      <span className="p-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 group-hover:text-white group-hover:border-neutral-700 transition-colors flex items-center justify-center shrink-0">
+                        <Mail className="size-3.5" />
+                      </span>
+                      <span>info@scalvea.com</span>
                     </a>
                   </div>
                 </div>

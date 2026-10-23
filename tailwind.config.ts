@@ -14,9 +14,11 @@ export default {
     },
     extend: {
       fontFamily: {
-        hero: ["var(--font-hero)", "sans-serif"],
+        display: ["var(--font-display)", "sans-serif"],
         heading: ["var(--font-heading)", "sans-serif"],
         body: ["var(--font-body)", "sans-serif"],
+        sans: ["var(--font-sans)", "sans-serif"],
+        hero: ["var(--font-hero)", "sans-serif"],
         chillax: ["var(--font-chillax)", "sans-serif"],
       },
       transitionTimingFunction: {

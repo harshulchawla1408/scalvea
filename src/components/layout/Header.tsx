@@ -248,19 +248,20 @@ const Header = () => {
             </motion.div>
 
             {/* Cart (Desktop/Laptop Only) */}
-            <motion.button 
-              variants={iconItemVariants}
-              onClick={() => navigate('/cart')}
-              className="hidden lg:flex hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] relative p-2 min-w-[48px] min-h-[48px] items-center justify-center" 
-              aria-label="Cart"
-            >
-              <ShoppingBag className="size-[22px]" />
-              {itemCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-black text-white text-[8px] font-mono w-4 h-4 flex items-center justify-center rounded-full font-semibold scale-90 border border-white">
-                  {itemCount}
-                </span>
-              )}
-            </motion.button>
+            <motion.div variants={iconItemVariants} className="hidden lg:block">
+              <Link 
+                to="/cart"
+                className="hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] relative p-2 min-w-[48px] min-h-[48px] flex items-center justify-center" 
+                aria-label={`Shopping Bag (${itemCount} items)`}
+              >
+                <ShoppingBag className="size-[22px]" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-black text-white text-[8px] font-mono w-4 h-4 flex items-center justify-center rounded-full font-semibold scale-90 border border-white">
+                    {itemCount}
+                  </span>
+                )}
+              </Link>
+            </motion.div>
 
             {/* Hamburger menu (Mobile Only) */}
             <motion.button 
@@ -369,13 +370,15 @@ const Header = () => {
                     <Heart className="size-[20px]" />
                     <span>My Wishlist ({wishlistCount})</span>
                   </Link>
-                  <button
-                    onClick={() => { setIsMobileMenuOpen(false); setIsCartOpen(true); }}
+                  <Link
+                    to="/cart"
+                    onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-3 text-sm font-medium tracking-[0.1em] uppercase text-neutral-700 hover:text-black transition-colors text-left"
+                    aria-label={`Shopping Bag (${itemCount} items)`}
                   >
                     <ShoppingBag className="size-[20px]" />
-                    <span>Shopping Cart ({itemCount})</span>
-                  </button>
+                    <span>Shopping Bag ({itemCount})</span>
+                  </Link>
                 </div>
               </div>
 

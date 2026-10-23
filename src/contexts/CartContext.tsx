@@ -28,7 +28,7 @@ interface StoredCartItem {
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, "quantity" | "price">, quantity?: number) => void;
+  addItem: (item: Omit<CartItem, "quantity" | "price">, quantity?: number, openDrawer?: boolean) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -123,7 +123,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     price: getPrice(item.price_aud, item.price_inr, item.price_usd),
   }));
 
-  const addItem = (item: Omit<CartItem, "quantity" | "price">, quantity = 1) => {
+  const addItem = (item: Omit<CartItem, "quantity" | "price">, quantity = 1, openDrawer = true) => {
     const currentPrice = getPrice(item.price_aud, item.price_inr, item.price_usd);
     const currency = selectedCountry === "india" ? "INR" : "AUD";
 
@@ -155,7 +155,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         price_usd: item.price_usd,
       }];
     });
-    setIsCartOpen(true);
+    if (openDrawer) {
+      setIsCartOpen(true);
+    }
   };
 
   const removeItem = (productId: string) => {

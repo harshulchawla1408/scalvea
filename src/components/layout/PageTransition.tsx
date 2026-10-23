@@ -40,10 +40,10 @@ export const PageTransition = () => {
               transition={{ duration: 0.15, ease: "easeOut" }}
               className="flex flex-col items-center"
             >
-              <div className="text-[#F5F5F5] text-4xl md:text-5xl font-chillax font-medium tracking-normal select-none">
+              <div className="text-[#F5F5F5] text-4xl md:text-5xl font-display font-light tracking-tight select-none">
                 Scalvea
               </div>
-              <p className="text-[#F5F5F5] text-[10px] md:text-xs font-chillax font-light uppercase tracking-[0.4em] mt-3 md:mt-4 select-none">
+              <p className="text-[#F5F5F5] text-[10px] md:text-xs font-display font-light uppercase tracking-[0.35em] mt-3 md:mt-4 select-none">
                 CARE YOU DESERVE
               </p>
             </motion.div>

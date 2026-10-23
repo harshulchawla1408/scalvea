@@ -4,7 +4,7 @@ import { useCart } from "@/contexts/CartContext";
 
 const BottomNav = () => {
   const location = useLocation();
-  const { itemCount, setIsCartOpen } = useCart();
+  const { itemCount } = useCart();
 
   // Hide bottom nav on admin pages
   if (location.pathname.startsWith("/admin")) {
@@ -51,13 +51,14 @@ const BottomNav = () => {
           </Link>
 
           {/* 3. CART (Center Highlighted Icon) */}
-          <button
-            type="button"
-            onClick={() => setIsCartOpen(true)}
+          <Link
+            to="/cart"
             className="flex-1 flex flex-col items-center justify-center py-1 text-center transition-all duration-200 active:scale-95 group"
-            aria-label="Open Shopping Cart"
+            aria-label={`Shopping Bag (${itemCount} items)`}
           >
-            <div className="relative flex items-center justify-center -mt-2 bg-black text-white w-10 h-10 rounded-full shadow-md group-hover:scale-105 transition-transform duration-200">
+            <div className={`relative flex items-center justify-center -mt-2 bg-black text-white w-10 h-10 rounded-full shadow-md group-hover:scale-105 transition-transform duration-200 ${
+              location.pathname === "/cart" ? "ring-2 ring-black ring-offset-2" : ""
+            }`}>
               <ShoppingBag className="h-5 w-5 stroke-[2]" />
               {itemCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-amber-400 text-black text-[9px] font-mono w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-sm border border-black">
@@ -65,10 +66,12 @@ const BottomNav = () => {
                 </span>
               )}
             </div>
-            <span className="text-[10px] tracking-tight mt-0.5 font-body font-medium text-black">
+            <span className={`text-[10px] tracking-tight mt-0.5 font-body ${
+              location.pathname === "/cart" ? "text-black font-semibold" : "font-medium text-black"
+            }`}>
               Cart
             </span>
-          </button>
+          </Link>
 
           {/* 4. Blogs */}
           <Link

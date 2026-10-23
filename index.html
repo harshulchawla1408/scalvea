@@ -84,20 +84,11 @@
 
   <!-- ── Preconnects ──────────────────────────────────────────────────────── -->
   <link rel="preconnect" href="https://dtehgajreecaonqalxlf.supabase.co" />
-  <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+  <link rel="preconnect" href="https://flagcdn.com" />
 
-  <!-- ── Fonts (Asynchronous) ─────────────────────────────────────────────── -->
-  <link
-    rel="preload"
-    as="style"
-    href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700&f[]=clash-display@300,400,500,600&display=swap" />
-  <link
-    rel="stylesheet"
-    href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700&f[]=clash-display@300,400,500,600&display=swap"
-    media="print" onload="this.media='all'" />
-  <noscript>
-    <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700&f[]=clash-display@300,400,500,600&display=swap" />
-  </noscript>
+  <!-- ── Typography: Local Self-Hosted Variable WOFF2 (Jost Display + Manrope Body) ── -->
+  <link rel="preload" href="/fonts/jost-variable.woff2" as="font" type="font/woff2" crossorigin />
+
 
   <!-- ── JSON-LD: Organization + WebSite (static, always present in HTML) ── -->
   <script type="application/ld+json">
@@ -160,6 +151,10 @@
     }
     </script>
   <style>
+    /* Critical CSS — prevent FOUC and improve FCP */
+    body { margin: 0; background: #fff; }
+    #root { min-height: 100vh; }
+
     /* Position Chatbase widget above mobile bottom nav */
     @media (max-width: 1023px) {
       #chatbase-bubble-button,

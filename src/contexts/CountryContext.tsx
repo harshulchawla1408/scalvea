@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Globe, X } from "lucide-react";
 
 export interface CountrySettings {
   country: string;
@@ -58,83 +57,192 @@ const COUNTRY_FALLBACKS: Record<CountryType, CountrySettings> = {
   }
 };
 
-const CountrySelectionModal = ({ onSelect, onClose }: { onSelect: (c: CountryType) => void, onClose: () => void }) => {
-  return (
-    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] w-[calc(100%-2rem)] sm:w-auto max-w-sm">
-      <div className="bg-background/95 backdrop-blur-xl border border-border/60 shadow-[0_8px_32px_rgba(0,0,0,0.12)] p-6 relative overflow-hidden rounded-2xl flex flex-col items-start">
-        <button 
-          onClick={onClose}
-          className="absolute top-1 right-1 min-w-[48px] min-h-[48px] flex items-center justify-center p-3 text-muted-foreground/80 hover:text-foreground transition-colors z-10"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" />
-        </button>
-        {/* Subtle premium accent line */}
-        <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-orange-400 via-neutral-200 to-green-600" />
-        
-        <div className="flex items-center gap-3 mb-3">
-          <Globe className="h-5 w-5 text-muted-foreground animate-pulse" />
-          <h2 className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground font-medium">Welcome to Scalvea</h2>
-        </div>
-        
-        <p className="text-xs text-muted-foreground mb-5 max-w-[280px] leading-relaxed">
-          Please select your shopping region for customized pricing and shipping.
-        </p>
-        
-        <div className="w-full space-y-2">
-          <button
-            onClick={() => onSelect("india")}
-            className="w-full py-2.5 px-4 bg-white/50 border border-border/80 hover:border-foreground/40 hover:bg-white transition-all duration-300 flex items-center justify-between group rounded-xl"
-          >
-            <span className="flex items-center gap-3">
-              <span className="text-lg">🇮🇳</span>
-              <span className="text-[11px] tracking-[0.12em] uppercase font-medium">India (INR)</span>
-            </span>
-            <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors group-hover:translate-x-1 duration-300 transform inline-block">→</span>
-          </button>
-          
-          <button
-            onClick={() => onSelect("australia")}
-            className="w-full py-2.5 px-4 bg-white/50 border border-border/80 hover:border-foreground/40 hover:bg-white transition-all duration-300 flex items-center justify-between group rounded-xl"
-          >
-            <span className="flex items-center gap-3">
-              <span className="text-lg">🇦🇺</span>
-              <span className="text-[11px] tracking-[0.12em] uppercase font-medium">Australia (AUD)</span>
-            </span>
-            <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors group-hover:translate-x-1 duration-300 transform inline-block">→</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+/**
+ * Check if the user has manually selected a country preference.
+ * Manual selections must always take precedence over auto-detection.
+ */
+function hasManualCountryPreference(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem("scalvea-country-manual") === "true";
+  } catch {
+    return false;
+  }
+}
 
-export const CountryProvider = ({ children }: { children: ReactNode }) => {
-  const [selectedCountry, setSelectedCountryState] = useState<CountryType | null>(() => {
-    if (typeof window === 'undefined') return 'australia';
-    const stored = localStorage.getItem("scalvea-country");
-    if (!stored) return null;
+/**
+ * Detect country from browser timezone — quick synchronous hint before edge call.
+ * Returns "india" if timezone indicates India, otherwise "australia".
+ */
+function detectCountryFromTimezone(): CountryType {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz === "Asia/Kolkata" || tz === "Asia/Calcutta") {
+      return "india";
+    }
+  } catch {
+    // Intl not available
+  }
+  return "australia";
+}
+
+/**
+ * Inspect server or edge environment headers / cookies / global variables
+ * where available (e.g., Cloudflare Workers, Vercel Edge, SSR injection).
+ */
+function detectCountryFromEdgeEnvironment(): CountryType | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    // 1. Injected server/edge global (e.g. from SSR or Edge Middleware)
+    const win = window as unknown as { __SCALVEA_EDGE_COUNTRY__?: string };
+    if (win.__SCALVEA_EDGE_COUNTRY__) {
+      const code = win.__SCALVEA_EDGE_COUNTRY__.toUpperCase();
+      if (code === "IN" || code === "INDIA") return "india";
+      if (code === "AU" || code === "AUSTRALIA") return "australia";
+      return "australia"; // Default to Australia for all other international visitors
+    }
+
+    // 2. Cookie passed by edge / CDN (e.g. cf_ipcountry or scalvea_edge_country)
+    const cookies = document.cookie || "";
+    const match = cookies.match(/(?:^|;\s*)(?:cf_ipcountry|scalvea_edge_country)=([A-Z]{2})/i);
+    if (match && match[1]) {
+      const code = match[1].toUpperCase();
+      if (code === "IN") return "india";
+      if (code === "AU") return "australia";
+      return "australia";
+    }
+  } catch {
+    // Ignore edge environment read errors
+  }
+
+  return null;
+}
+
+/**
+ * Query fast server/edge-based geolocation endpoints asynchronously.
+ * Multi-tiered edge fallback:
+ * 1. api.country.is (Anycast/edge GeoIP JSON)
+ * 2. ipapi.co/json (trusted edge GeoIP fallback)
+ * 3. cloudflare.com/cdn-cgi/trace (edge trace endpoint)
+ */
+async function fetchEdgeGeolocation(): Promise<CountryType | null> {
+  // First check if edge injected into environment
+  const envCountry = detectCountryFromEdgeEnvironment();
+  if (envCountry) return envCountry;
+
+  // Provider 1: api.country.is (ultra-fast, zero-auth edge GeoIP)
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2500);
+    const res = await fetch("https://api.country.is/", { signal: controller.signal });
+    clearTimeout(timeout);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data.country === "string") {
+        const code = data.country.toUpperCase();
+        return code === "IN" ? "india" : "australia";
+      }
+    }
+  } catch {
+    // Fall through to next provider
+  }
+
+  // Provider 2: ipapi.co/json (established fallback)
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2500);
+    const res = await fetch("https://ipapi.co/json/", { credentials: "omit", signal: controller.signal });
+    clearTimeout(timeout);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && (data.country_code || data.country)) {
+        const code = (data.country_code || data.country).toUpperCase();
+        return code === "IN" ? "india" : "australia";
+      }
+    }
+  } catch {
+    // Fall through to next provider
+  }
+
+  // Provider 3: Cloudflare edge trace
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch("https://www.cloudflare.com/cdn-cgi/trace", { signal: controller.signal });
+    clearTimeout(timeout);
+    if (res.ok) {
+      const text = await res.text();
+      const match = text.match(/loc=([A-Z]{2})/);
+      if (match && match[1]) {
+        return match[1].toUpperCase() === "IN" ? "india" : "australia";
+      }
+    }
+  } catch {
+    // Trace failed
+  }
+
+  return null;
+}
+
+/**
+ * Resolve the initial country synchronously to prevent layout shifts and currency flickering.
+ * Priority: Manual choice > Stored auto-choice > Edge environment > Timezone > Default (Australia)
+ */
+function resolveInitialCountry(): CountryType {
+  if (typeof window === 'undefined') return 'australia';
+
+  const stored = localStorage.getItem("scalvea-country");
+  if (stored) {
     const cleaned = stored.toLowerCase();
     if (cleaned === "india" || cleaned === "inr") return "india";
     if (cleaned === "australia" || cleaned === "aud") return "australia";
-    return null;
-  });
+  }
+
+  // Immediate synchronous edge environment check
+  const envCountry = detectCountryFromEdgeEnvironment();
+  if (envCountry) return envCountry;
+
+  // Secondary hint: Timezone
+  const tzCountry = detectCountryFromTimezone();
+  if (tzCountry === "india") return "india";
+
+  return "australia";
+}
+
+export const CountryProvider = ({ children }: { children: ReactNode }) => {
+  const [selectedCountry, setSelectedCountryState] = useState<CountryType>(resolveInitialCountry);
 
   const [allCountries, setAllCountries] = useState<CountrySettings[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Auto-detect country via IP if none selected
+  // Asynchronous edge geolocation resolution (runs once on mount)
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem("scalvea-country")) {
-      fetch("https://ipapi.co/json/")
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.country_code) {
-            setSelectedCountry(data.country_code === 'IN' ? 'india' : 'australia');
-          }
-        })
-        .catch(err => console.warn("Geolocation fallback failed:", err));
-    }
+    // If the user has manually selected a country, never override it
+    if (hasManualCountryPreference()) return;
+
+    let isMounted = true;
+    fetchEdgeGeolocation().then((edgeCountry) => {
+      if (!isMounted) return;
+      if (edgeCountry) {
+        // If user made a manual choice while the request was in flight, do not override
+        if (hasManualCountryPreference()) return;
+
+        setSelectedCountryState(edgeCountry);
+        try {
+          localStorage.setItem("scalvea-country", edgeCountry);
+          localStorage.setItem("scalvea-market", edgeCountry === "india" ? "IN" : "AU");
+        } catch {
+          // localStorage unavailable
+        }
+      }
+    }).catch(() => {
+      // Default remains Australia on error
+    });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -178,11 +286,18 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
       });
   }, []);
 
-  const setSelectedCountry = (c: CountryType) => {
+  const setSelectedCountry = (c: CountryType, isManualChoice = true) => {
     setSelectedCountryState(c);
     if (typeof window !== 'undefined') {
-      localStorage.setItem("scalvea-country", c);
-      localStorage.setItem("scalvea-market", c === "india" ? "IN" : "AU");
+      try {
+        localStorage.setItem("scalvea-country", c);
+        localStorage.setItem("scalvea-market", c === "india" ? "IN" : "AU");
+        if (isManualChoice) {
+          localStorage.setItem("scalvea-country-manual", "true");
+        }
+      } catch (e) {
+        console.error("Failed to save country preference:", e);
+      }
     }
   };
 
@@ -194,38 +309,37 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
     else if (cleaned === "australia") setSelectedCountry("australia");
   };
 
-  const activeCountry = selectedCountry || "australia";
-  const rawSettings = allCountries.find((s) => s.country.toLowerCase() === activeCountry) || COUNTRY_FALLBACKS[activeCountry];
+  const rawSettings = allCountries.find((s) => s.country.toLowerCase() === selectedCountry) || COUNTRY_FALLBACKS[selectedCountry];
   const settings = rawSettings ? {
     ...rawSettings,
     tax_percentage: 0,
-    shipping_charge: activeCountry === "india" ? 50.00 : 9.50
+    shipping_charge: selectedCountry === "india" ? 50.00 : 9.50
   } : null;
   const countryConfig = settings;
 
-  const currencySymbol = settings?.currency_symbol || (activeCountry === "india" ? "₹" : "A$");
-  const currency = settings?.currency || (activeCountry === "india" ? "INR" : "AUD");
+  const currencySymbol = settings?.currency_symbol || (selectedCountry === "india" ? "₹" : "A$");
+  const currency = settings?.currency || (selectedCountry === "india" ? "INR" : "AUD");
   const currencyCode = currency;
 
-  const getPrice = (priceAud: number, priceInr: number, priceUsd?: number) => {
-    return activeCountry === "india" ? priceInr : priceAud;
+  const getPrice = (priceAud: number, priceInr: number, _priceUsd?: number) => {
+    return selectedCountry === "india" ? priceInr : priceAud;
   };
 
   const formatPrice = (priceAud: number, priceInr: number, priceUsd?: number) => {
     const price = getPrice(priceAud, priceInr);
     // Format INR as whole rupees or standard, AUD with decimals
-    if (activeCountry === "india") {
+    if (selectedCountry === "india") {
       return `${currencySymbol}${Math.round(price).toLocaleString("en-IN")}`;
     }
     return `${currencySymbol}${price.toFixed(2)}`;
   };
 
-  const market = activeCountry === "india" ? "IN" : "AU";
+  const market = selectedCountry === "india" ? "IN" : "AU";
 
   return (
     <CountryContext.Provider
       value={{
-        selectedCountry: activeCountry,
+        selectedCountry,
         setSelectedCountry,
         market,
         country,
@@ -242,12 +356,6 @@ export const CountryProvider = ({ children }: { children: ReactNode }) => {
       }}
     >
       {children}
-      {selectedCountry === null && typeof window !== 'undefined' && (
-        <CountrySelectionModal 
-          onSelect={setSelectedCountry} 
-          onClose={() => setSelectedCountry('australia')} 
-        />
-      )}
     </CountryContext.Provider>
   );
 };

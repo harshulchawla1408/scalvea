@@ -1,135 +1,48 @@
-import { useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 import { useCountry } from "@/contexts/CountryContext";
 import prod1 from "@/assets/prod1.webp";
 import prod2 from "@/assets/prod2.webp";
 
-// Concern Data Configurations
-interface ConcernConfig {
+interface ProductShowcaseConfig {
   id: string;
-  eyebrow: string;
-  problemHeading: string;
-  description: string;
-  videoSrc: string;
+  categoryLabel: string;
   productSlug: string;
   productName: string;
-  productCategory: string;
-  benefitBullets: string[];
+  shortDescription: string;
   ctaLabel: string;
   defaultImage: string;
-  badge?: string;
+  badge: string;
+  originLabel?: string;
 }
 
-const CONCERNS: ConcernConfig[] = [
+const PRODUCTS: ProductShowcaseConfig[] = [
   {
-    id: "hair-fall",
-    eyebrow: "HAIR FALL & THINNING",
-    problemHeading: "Targeting Hair Fall: Stronger Hair Starts at the Root",
-    description:
-      "Support healthier-looking density and help reduce visible shedding with Follicle 8 Hair Growth Serum.",
-    videoSrc:
-      "https://dtehgajreecaonqalxlf.supabase.co/storage/v1/object/public/Videos/hairfall.mp4",
-    productSlug: "follicle-8-hair-growth-serum",
+    id: "follicle-8",
+    categoryLabel: "HAIR GROWTH SERUM",
     productName: "Follicle 8 Hair Growth Serum",
-    productCategory: "Hair Growth Serum",
-    benefitBullets: [
-      "4% Anagain & 3% Redensyl formula",
-      "Helps reduce shedding & strengthens follicles",
-      "Lightweight, non-greasy daily leave-in",
-    ],
+    shortDescription:
+      "Formulated with 4% Anagain & 3% Redensyl to help reduce visible shedding and support fuller, healthier-looking density.",
+    productSlug: "follicle-8-hair-growth-serum",
     ctaLabel: "SHOP FOLLICLE 8",
     defaultImage: prod1,
     badge: "BESTSELLER",
+    originLabel: "AN AUSTRALIAN BRAND",
   },
   {
-    id: "dandruff",
-    eyebrow: "DANDRUFF & FLAKES",
-    problemHeading: "Tackling Dandruff: A Cleaner, Flake-Free Scalp Starts Here",
-    description:
-      "Target stubborn flakes and restore a calm, balanced scalp with Scalp-5 Anti Dandruff Hair Serum.",
-    videoSrc:
-      "https://dtehgajreecaonqalxlf.supabase.co/storage/v1/object/public/Videos/dandruff.mp4",
+    id: "scalp-5",
+    categoryLabel: "ANTI-DANDRUFF SERUM",
+    productName: "Scalp-5 Anti-Dandruff Serum",
+    shortDescription:
+      "Target stubborn flakes and restore a calm, balanced scalp with Piroctone Olamine, Salicylic Acid, and Rosemary Oil.",
     productSlug: "scalp-5-anti-dandruff-hair-serum",
-    productName: "Scalp-5 Anti Dandruff Hair Serum",
-    productCategory: "Anti Dandruff Hair Serum",
-    benefitBullets: [
-      "Piroctone Olamine & Salicylic Acid",
-      "Calms itchiness & clears visible flakes",
-      "Restores natural scalp barrier balance",
-    ],
     ctaLabel: "SHOP SCALP-5",
     defaultImage: prod2,
     badge: "TARGETED CARE",
+    originLabel: "AN AUSTRALIAN BRAND",
   },
 ];
-
-// Reusable Edge-to-Edge Silent Autoplay Video Component
-const ConcernVideo = ({
-  src,
-  alt,
-}: {
-  src: string;
-  alt: string;
-}) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const hasTriggeredLoad = useRef(false);
-
-  useEffect(() => {
-    const videoEl = videoRef.current;
-    const container = containerRef.current;
-    if (!videoEl || !container) return;
-
-    // Strict muted settings for 100% browser autoplay compliance
-    videoEl.muted = true;
-    videoEl.defaultMuted = true;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!videoEl) return;
-        if (entry.isIntersecting) {
-          if (!hasTriggeredLoad.current) {
-            hasTriggeredLoad.current = true;
-            videoEl.src = src;
-            videoEl.load();
-          }
-          videoEl.play().catch(() => {
-            // Autoplay prevention fallback
-          });
-        } else {
-          videoEl.pause();
-        }
-      },
-      { threshold: 0.15 }
-    );
-
-    observer.observe(container);
-
-    return () => observer.disconnect();
-  }, [src]);
-
-  return (
-    <div
-      ref={containerRef}
-      className="relative w-full h-full overflow-hidden bg-neutral-100 select-none pointer-events-none rounded-xl"
-    >
-      <video
-        ref={videoRef}
-        loop
-        muted
-        playsInline
-        preload="none"
-        style={{ transform: "scale(1.28)" }}
-        className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
-        aria-label={alt}
-      />
-      {/* Refined subtle gradient protection overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-black/5 pointer-events-none" />
-    </div>
-  );
-};
 
 export default function ShopByConcern() {
   const { products } = useProducts();
@@ -139,30 +52,30 @@ export default function ShopByConcern() {
   return (
     <section
       id="shop-by-concern"
-      className="bg-light-grid py-14 sm:py-18 md:py-24 lg:py-28 overflow-hidden relative z-20 border-b border-neutral-150"
-      aria-label="Shop by Concern — Real Problems, Real Solutions"
+      className="bg-light-grid py-12 sm:py-16 md:py-20 lg:py-24 relative z-20 border-b border-neutral-150 overflow-visible"
+      aria-label="Shop by Concern — Product Showcase"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-16">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* ==================================================
-            SECTION INTRO
+            SECTION INTRO — Editorial & Light
             ================================================== */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-12 md:mb-14 gap-4 sm:gap-6">
-          <div className="max-w-2xl">
-            <span className="text-[10px] sm:text-[11px] tracking-[0.28em] uppercase text-neutral-600 font-body font-medium block mb-2 sm:mb-3">
-              SHOP BY CONCERN
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-10 md:mb-12 gap-4 sm:gap-6">
+          <div className="max-w-xl">
+            <span className="text-[10px] sm:text-[11px] tracking-[0.28em] uppercase text-neutral-500 font-mono font-medium block mb-2">
+              TARGETED SOLUTIONS
             </span>
-            <h2 className="text-2xl sm:text-3xl md:text-[38px] lg:text-[42px] leading-[1.15] font-heading text-neutral-900 tracking-tight font-normal mb-2.5 sm:mb-3.5">
-              Real Problems. Real Solutions.
+            <h2 className="text-2xl sm:text-3xl md:text-[38px] leading-[1.15] font-heading text-neutral-900 tracking-tight font-normal mb-2">
+              Science-Backed Solutions
             </h2>
-            <p className="text-xs sm:text-sm text-neutral-600 font-body font-light leading-relaxed max-w-xl">
-              Targeted hair care for the concerns that matter most. Choose your concern and discover the Scalvea solution designed for it.
+            <p className="text-xs sm:text-sm text-neutral-600 font-body font-light leading-relaxed">
+              Targeted hair care formulated with clinically researched actives. Select your targeted treatment.
             </p>
           </div>
           
           <Link
             to="/shop"
-            className="group text-[11px] sm:text-xs md:text-sm tracking-[0.14em] uppercase text-black hover:opacity-60 transition-all flex items-center gap-2 font-semibold w-fit border-b border-black/30 pb-1 shrink-0 self-start md:self-end"
+            className="group text-[11px] sm:text-xs md:text-sm tracking-[0.14em] uppercase text-black hover:opacity-60 transition-all flex items-center gap-1.5 font-medium border-b border-black/30 pb-1 shrink-0 self-start md:self-end"
           >
             <span>View All Products</span>
             <ArrowRight className="h-3.5 w-3.5 transform group-hover:translate-x-1.5 transition-transform duration-300" />
@@ -170,21 +83,22 @@ export default function ShopByConcern() {
         </div>
 
         {/* ==================================================
-            CONCERN CARDS GRID (1 Col on Mobile, 2 Col on Laptop/Desktop)
+            PRODUCT SHOWCASE CARDS
+            Controlled overflow beyond boundary, dominant image, refined badges
             ================================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-8 items-stretch">
-          {CONCERNS.map((concern) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-7 sm:gap-8 lg:gap-10 items-stretch pt-2">
+          {PRODUCTS.map((item) => {
             const liveProduct = products.find(
               (p) =>
-                p.slug === concern.productSlug ||
-                p.name.toLowerCase().includes(concern.id === "hair-fall" ? "follicle" : "scalp")
+                p.slug === item.productSlug ||
+                p.name.toLowerCase().includes(item.id === "follicle-8" ? "follicle" : "scalp")
             );
 
             const productImage =
-              liveProduct?.images?.[0] || concern.defaultImage;
+              liveProduct?.images?.[0] || item.defaultImage;
 
             const priceAud = liveProduct?.price_aud ?? 34.5;
-            const priceInr = liveProduct?.price_inr ?? (concern.id === "hair-fall" ? 999 : 899);
+            const priceInr = liveProduct?.price_inr ?? (item.id === "follicle-8" ? 999 : 899);
             const mrpAud = liveProduct?.mrp_aud ?? priceAud;
             const mrpInr = liveProduct?.mrp_inr ?? priceInr;
 
@@ -193,136 +107,119 @@ export default function ShopByConcern() {
             const hasDiscount = currentMrpPrice > currentSellingPrice;
 
             return (
-              <div
-                key={concern.id}
-                className="group relative bg-[#FAF9F7] border border-neutral-200/90 hover:border-neutral-300 rounded-2xl md:rounded-[24px] p-4 sm:p-6 md:p-7 shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.05)] transition-all duration-500 flex flex-col justify-between"
-              >
-                <div className="space-y-4 sm:space-y-5">
-                  
-                  {/* Eyebrow Header Row */}
-                  <div className="flex items-center justify-between pt-0.5">
-                    <div className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 inline-block" />
-                      <span className="text-[10px] sm:text-[11px] font-mono font-medium tracking-[0.22em] uppercase text-neutral-600">
-                        {concern.eyebrow}
+              <div key={item.id} className="showcase-card-wrapper relative">
+                <Link
+                  to={`/product/${item.productSlug}`}
+                  className="showcase-card group relative bg-white border border-neutral-200/80 rounded-2xl md:rounded-[22px] flex flex-col h-full shadow-[0_2px_16px_rgba(0,0,0,0.02)] transition-all duration-300 hover:border-neutral-300 hover:shadow-[0_16px_36px_rgba(0,0,0,0.06)] overflow-visible"
+                >
+                  {/* UPPER STAGE: Badge & Product Image Canvas (Unified, No Double-Box) */}
+                  <div className="relative bg-[#FAF9F7] rounded-t-2xl md:rounded-t-[22px] p-4 sm:p-5 pb-2 sm:pb-3 border-b border-neutral-100/70 overflow-visible">
+                    
+                    {/* 1. BADGE & ORIGIN STRIP */}
+                    <div className="flex items-center justify-between mb-2 z-20 relative">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-mono tracking-[0.18em] uppercase font-medium bg-neutral-900 text-white shadow-2xs">
+                        <span className="w-1 h-1 rounded-full bg-emerald-400" />
+                        {item.badge}
                       </span>
+                      {item.originLabel && (
+                        <span className="text-[9px] font-mono tracking-[0.2em] uppercase text-neutral-400 font-medium">
+                          {item.originLabel}
+                        </span>
+                      )}
                     </div>
 
-                    {concern.badge && (
-                      <span className="text-[9px] font-mono tracking-widest uppercase bg-neutral-900 text-white px-2.5 py-0.5 rounded-full shadow-2xs flex items-center gap-1.5">
-                        <Sparkles className="h-2.5 w-2.5 text-amber-300" />
-                        {concern.badge}
-                      </span>
-                    )}
+                    {/* 2. PRODUCT IMAGE — Dominant visual focus with controlled hover overflow */}
+                    <div className="relative overflow-visible flex items-center justify-center py-1 sm:py-2">
+                      <img
+                        src={productImage}
+                        alt={item.productName}
+                        width="460"
+                        height="460"
+                        className="showcase-img w-full max-w-[280px] sm:max-w-[310px] md:max-w-[330px] h-auto object-contain rounded-lg"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
                   </div>
 
-                  {/* Unified Integrated Media & Solution Bay */}
-                  <div className="bg-white border border-neutral-200/80 rounded-xl p-2.5 sm:p-3.5 shadow-2xs overflow-hidden">
-                    <div className="flex flex-row items-stretch gap-3 sm:gap-4 w-full">
-                      
-                      {/* Left: Edge-to-Edge Problem Video (38-40% width, shrink-0) */}
-                      <div className="w-[38%] sm:w-[40%] shrink-0 relative aspect-[3/4] overflow-hidden rounded-lg bg-neutral-100 shadow-inner">
-                        <ConcernVideo
-                          src={concern.videoSrc}
-                          alt={`${concern.eyebrow} real concern footage`}
-                        />
-                        <div className="absolute top-1.5 left-1.5 z-10">
-                          <span className="text-[7.5px] sm:text-[8px] font-mono font-medium tracking-wider uppercase bg-black/65 backdrop-blur-xs text-white px-1.5 py-0.5 rounded">
-                            PROBLEM
+                  {/* 3–6. CONTENT: Category, Title, Description, CTA */}
+                  <div className="p-5 sm:p-6 pt-4 flex flex-col flex-1 justify-between">
+                    <div className="space-y-2">
+                      {/* 3. Small Category Label */}
+                      <span className="text-[10px] sm:text-[11px] font-mono font-medium tracking-[0.22em] uppercase text-neutral-500 block">
+                        {item.categoryLabel}
+                      </span>
+
+                      {/* 4. Product Title */}
+                      <h3 className="text-lg sm:text-xl md:text-[22px] font-heading text-neutral-900 font-normal leading-snug tracking-tight">
+                        {item.productName}
+                      </h3>
+
+                      {/* 5. Short Description */}
+                      <p className="text-xs sm:text-[13px] text-neutral-600 font-body font-light leading-relaxed">
+                        {item.shortDescription}
+                      </p>
+                    </div>
+
+                    {/* Price + 6. CTA Button */}
+                    <div className="pt-5 mt-auto">
+                      <div className="flex items-baseline gap-2 pb-3">
+                        {hasDiscount && (
+                          <span className="text-xs text-neutral-400 line-through font-body">
+                            {formatPrice(mrpAud, mrpInr)}
                           </span>
-                        </div>
+                        )}
+                        <span className="text-base sm:text-lg font-semibold text-neutral-900 font-body tracking-tight">
+                          {formatPrice(priceAud, priceInr)}
+                        </span>
                       </div>
 
-                      {/* Right: Scalvea Solution Product Showcase (flex-1, min-w-0, strictly contained) */}
-                      <Link
-                        to={`/product/${concern.productSlug}`}
-                        className="flex-1 min-w-0 flex flex-col justify-between py-0.5 px-0.5 group/item overflow-hidden"
+                      <span
+                        className="w-full bg-neutral-900 group-hover:bg-black text-white h-11 rounded-xl flex items-center justify-center gap-2 text-[11px] sm:text-xs tracking-[0.14em] uppercase font-medium transition-all duration-200 shadow-2xs group-hover:shadow-md"
                       >
-                        <div className="min-w-0 flex-1 flex flex-col">
-                          <div className="flex items-center justify-between mb-1 shrink-0">
-                            <span className="text-[8px] sm:text-[9px] font-mono font-medium tracking-wider uppercase text-neutral-600 truncate">
-                              SOLUTION
-                            </span>
-                            <span className="text-[9px] sm:text-[10px] text-neutral-600 group-hover/item:text-black group-hover/item:translate-x-0.5 transition-all font-medium shrink-0">
-                              Shop →
-                            </span>
-                          </div>
-
-                          {/* Product Bottle Image Container */}
-                          <div className="relative w-full flex-1 min-h-[130px] sm:min-h-[155px] max-h-[190px] sm:max-h-[220px] mx-auto my-0.5 flex items-center justify-center p-1 overflow-hidden">
-                            <img
-                              src={productImage}
-                              alt={concern.productName}
-                              width="220"
-                              height="220"
-                              className="w-full h-full max-h-[170px] sm:max-h-[200px] object-contain transform scale-110 group-hover/item:scale-115 transition-transform duration-500"
-                              loading="lazy"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Product Title & Price */}
-                        <div className="space-y-0.5 pt-1 border-t border-neutral-100 min-w-0 shrink-0">
-                          <p className="text-[12px] sm:text-[13px] font-medium text-neutral-900 leading-tight truncate font-heading group-hover/item:text-black transition-colors">
-                            {concern.productName}
-                          </p>
-                          <div className="flex items-baseline gap-1.5 pt-0.5">
-                            {hasDiscount && (
-                              <span className="text-[10px] sm:text-[11px] text-neutral-600 line-through font-body">
-                                {formatPrice(mrpAud, mrpInr)}
-                              </span>
-                            )}
-                            <span className="text-[12px] sm:text-[13px] font-bold text-neutral-900 font-body">
-                              {formatPrice(priceAud, priceInr)}
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-
+                        <span>{item.ctaLabel}</span>
+                        <ArrowRight className="h-3.5 w-3.5 transform group-hover:translate-x-1 transition-transform duration-200" />
+                      </span>
                     </div>
                   </div>
-
-                  {/* Problem & Solution Heading + Copy */}
-                  <div className="space-y-2 pt-1">
-                    <h3 className="text-base sm:text-lg lg:text-[19px] font-heading text-neutral-900 font-normal leading-snug tracking-tight">
-                      {concern.problemHeading}
-                    </h3>
-                    <p className="text-xs sm:text-[13px] text-neutral-600 font-body font-light leading-relaxed">
-                      {concern.description}
-                    </p>
-
-                    {/* Key Actives / Formula Highlights */}
-                    <div className="pt-1.5 space-y-1.5">
-                      {concern.benefitBullets.map((bullet, idx) => (
-                        <div key={idx} className="flex items-center gap-2 text-[11px] sm:text-xs text-neutral-700 font-body">
-                          <span className="w-3.5 h-3.5 rounded-full bg-neutral-900 text-white flex items-center justify-center shrink-0">
-                            <Check className="h-2 w-2 stroke-[3]" />
-                          </span>
-                          <span className="font-light">{bullet}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                </div>
-
-                {/* Primary CTA Button with interactive tap/hover */}
-                <div className="pt-5 mt-auto">
-                  <Link
-                    to={`/product/${concern.productSlug}`}
-                    className="group/btn relative overflow-hidden w-full bg-neutral-900 hover:bg-black text-white active:scale-[0.98] transition-all duration-300 h-11 sm:h-12 flex items-center justify-center gap-2 text-[11px] sm:text-xs tracking-[0.16em] uppercase font-semibold shadow-sm hover:shadow-md rounded-xl"
-                  >
-                    <span>{concern.ctaLabel}</span>
-                    <ArrowRight className="h-3.5 w-3.5 transform group-hover/btn:translate-x-1.5 transition-transform duration-300" />
-                  </Link>
-                </div>
-
+                </Link>
               </div>
             );
           })}
         </div>
 
       </div>
+
+      {/* Scoped Hover & Motion styling — Desktop overflow lift, disabled on touch/mobile */}
+      <style>{`
+        .showcase-img {
+          transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 280ms ease;
+          will-change: transform;
+        }
+
+        @media (hover: hover) and (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+          .showcase-card:hover .showcase-img {
+            transform: translateY(-8px) scale(1.04);
+            box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.12);
+          }
+        }
+
+        @media (max-width: 767px) {
+          .showcase-card:hover .showcase-img,
+          .showcase-img {
+            transform: none !important;
+            transition: none !important;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .showcase-card,
+          .showcase-img {
+            transition: none !important;
+            transform: none !important;
+          }
+        }
+      `}</style>
     </section>
   );
 }

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { LayoutDashboard, Package, ShoppingCart, Users, Globe, Tag, BarChart3, LogOut, Menu, X, Star, LineChart, Settings, CheckSquare } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, Globe, Tag, BarChart3, LogOut, Menu, X, Star, LineChart, Settings, CheckSquare, ShoppingBag } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 
 import { lazy, Suspense } from "react";
@@ -11,6 +11,7 @@ import { lazy, Suspense } from "react";
 const AdminDashboard = lazy(() => import("@/components/admin/AdminDashboard"));
 const AdminProducts = lazy(() => import("@/components/admin/AdminProducts"));
 const AdminOrders = lazy(() => import("@/components/admin/AdminOrders"));
+const AdminCarts = lazy(() => import("@/components/admin/AdminCarts"));
 const AdminUsers = lazy(() => import("@/components/admin/AdminUsers"));
 const AdminCountrySettings = lazy(() => import("@/components/admin/AdminCountrySettings"));
 const AdminCoupons = lazy(() => import("@/components/admin/AdminCoupons"));
@@ -23,6 +24,7 @@ const AdminTasks = lazy(() => import("@/components/admin/AdminTasks"));
 const adminPages = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { key: "orders", label: "Orders", icon: ShoppingCart },
+  { key: "carts", label: "Carts & Abandonment", icon: ShoppingBag },
   { key: "tasks", label: "Tasks", icon: CheckSquare },
   { key: "analytics", label: "Analytics", icon: LineChart },
   { key: "products", label: "Products", icon: Package },
@@ -66,6 +68,7 @@ const Admin = () => {
       case "dashboard": return <AdminDashboard />;
       case "products": return <AdminProducts />;
       case "orders": return <AdminOrders />;
+      case "carts": return <AdminCarts />;
       case "inventory": return <AdminInventory />;
       case "users": return <AdminUsers />;
       case "countries": return <AdminCountrySettings />;

@@ -13,6 +13,7 @@ import { CartProvider } from "./contexts/CartContext";
 import { WishlistProvider } from "./contexts/WishlistContext";
 import { CountryProvider } from "./contexts/CountryContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import CartSyncManager from "./components/cart/CartSyncManager";
 import AppRoutes from "./AppRoutes";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
               <Sonner />
               <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                 <ScrollToTop />
+                <CartSyncManager />
                 <BuyingFlowRedirector />
                 <MetaPixelRouteTracker />
                 <GtmRouteTracker />

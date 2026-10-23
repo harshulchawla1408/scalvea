@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Heart, ShoppingBag, Star, Eye } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
@@ -37,7 +37,35 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
   const [mobileImageIndex, setMobileImageIndex] = useState(0);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+  const [showHoverSecondary, setShowHoverSecondary] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartX = useRef<number | null>(null);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    if (hasSecondImage) {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = setTimeout(() => {
+        setShowHoverSecondary(true);
+      }, 4000);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setShowHoverSecondary(false);
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    };
+  }, []);
 
   const priceAud = "price_aud" in product ? product.price_aud : ("price" in product ? (product as any).price : 0);
   const priceInr = "price_inr" in product ? product.price_inr : 0;
@@ -99,6 +127,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
     <>
       <div 
         className="group relative bg-white border border-neutral-200/80 hover:border-neutral-300 rounded-2xl p-2.5 sm:p-4 shadow-[0_2px_12px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.05)] transition-all duration-300 w-full h-full flex flex-col justify-between overflow-hidden"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <Link
           to={`/product/${product.slug}`}
@@ -128,31 +158,33 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
             {/* Product Images (Desktop & Mobile) */}
             <div className="w-full h-full relative flex items-center justify-center">
-              {/* Primary Image */}
+              {/* Primary Image: Zooms out smoothly during hover (scale-100 down to scale-95), then after 4s fades to secondary */}
               <img
                 src={product.images[0]}
                 alt={product.name}
                 width="600"
                 height="600"
-                className={`w-full h-full object-contain object-center transition-all duration-500 absolute inset-0 transform group-hover:scale-105 ${
+                className={`w-full h-full object-contain object-center absolute inset-0 transform transition-transform duration-[4000ms] ease-out ${
+                  isHovered ? "scale-95" : "scale-100 !duration-500"
+                } ${
                   mobileImageIndex === 0
-                    ? (hasSecondImage ? "opacity-100 group-hover:opacity-0" : "opacity-100")
-                    : "opacity-0"
+                    ? (showHoverSecondary ? "opacity-0 transition-opacity duration-700 ease-in-out" : "opacity-100 transition-opacity duration-500")
+                    : "opacity-0 transition-opacity duration-500"
                 }`}
                 loading="lazy"
               />
               
-              {/* Secondary Image */}
+              {/* Secondary Image: Fades in after 4 seconds */}
               {hasSecondImage && (
                 <img
                   src={product.images[1]}
                   alt={`${product.name} alternate`}
                   width="600"
                   height="600"
-                  className={`w-full h-full object-contain object-center transition-all duration-500 absolute inset-0 transform group-hover:scale-105 ${
-                    mobileImageIndex === 1
-                      ? "opacity-100 group-hover:opacity-100"
-                      : "opacity-0 group-hover:opacity-100"
+                  className={`w-full h-full object-contain object-center absolute inset-0 transform transition-all duration-700 ease-in-out ${
+                    showHoverSecondary || mobileImageIndex === 1
+                      ? "opacity-100 scale-100 pointer-events-auto"
+                      : "opacity-0 scale-95 pointer-events-none"
                   }`}
                   loading="lazy"
                 />

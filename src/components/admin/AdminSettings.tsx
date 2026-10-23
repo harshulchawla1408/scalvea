@@ -4,6 +4,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getStoreSettings, updateStoreSettings, StoreSettings, DEFAULT_SETTINGS } from "@/utils/settingsService";
 import { formatAusDateTime } from "@/lib/timezone";
+import { exportOrdersComprehensiveCSV } from "@/utils/orderExports";
 
 const AdminSettings = () => {
   const [exporting, setExporting] = useState(false);
@@ -55,23 +56,15 @@ const AdminSettings = () => {
 
   const exportOrders = async () => {
     setExporting(true);
-    const { data } = await supabase.from("orders").select("order_number, country, currency, subtotal, tax_amount, shipping_amount, total_amount, payment_method, payment_status, order_status, created_at");
-    if (!data || data.length === 0) {
-      toast({ title: "No orders to export" });
+    const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
+    if (error || !data || data.length === 0) {
+      toast({ title: "No orders to export", description: error?.message });
       setExporting(false);
       return;
     }
-    const headers = Object.keys(data[0]).join(",") + ",order_date_aus";
-    const rows = data.map(r => {
-      const ausTime = formatAusDateTime(r.created_at);
-      return `${Object.values(r).join(",")},"${ausTime}"`;
-    }).join("\n");
-    const blob = new Blob([headers + "\n" + rows], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "scalvea-orders.csv"; a.click();
-    URL.revokeObjectURL(url);
+    exportOrdersComprehensiveCSV(data as any, "scalvea-orders.csv");
     setExporting(false);
-    toast({ title: "Orders exported" });
+    toast({ title: "Orders exported with full normalized details" });
   };
 
   const exportProducts = async () => {

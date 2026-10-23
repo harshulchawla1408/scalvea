@@ -31,7 +31,38 @@ export default defineConfig(async ({ mode, isSsrBuild }) => {
       },
     },
     build: {
-      sourcemap: true,
+      // Disable source maps in production to reduce bundle size
+      sourcemap: mode !== 'production',
+      rollupOptions: {
+        output: {
+          // Manual chunk splitting to reduce initial JS bundle
+          manualChunks: isSsrBuild ? undefined : {
+            // Vendor: React core
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            // Framer Motion — heavy animation library
+            'vendor-motion': ['framer-motion'],
+            // Radix UI primitives — tree-shake by grouping commonly used ones
+            'vendor-radix': [
+              '@radix-ui/react-dialog',
+              '@radix-ui/react-toast',
+              '@radix-ui/react-tooltip',
+              '@radix-ui/react-accordion',
+              '@radix-ui/react-select',
+              '@radix-ui/react-tabs',
+              '@radix-ui/react-popover',
+              '@radix-ui/react-dropdown-menu',
+            ],
+            // Supabase client
+            'vendor-supabase': ['@supabase/supabase-js'],
+            // TanStack Query
+            'vendor-query': ['@tanstack/react-query'],
+            // Heavy utilities (only loaded on specific pages)
+            'vendor-pdf': ['jspdf', 'jspdf-autotable'],
+            'vendor-charts': ['recharts'],
+            'vendor-stripe': ['@stripe/stripe-js'],
+          },
+        },
+      },
     },
     // SSR build configuration
     ...(isSsrBuild && {

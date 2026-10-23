@@ -2,14 +2,15 @@
  * timezone.ts
  *
  * Centralized date & time formatting utilities for Scalvea.
- * Configured for Australian Eastern Time: Australia/Sydney (AEDT / GMT+11).
+ * Configured for Australian Eastern Time: Australia/Melbourne (AEDT / GMT+11).
  */
 
-export const AUS_TIMEZONE = "Australia/Sydney";
+export const MELBOURNE_TIMEZONE = "Australia/Melbourne";
+export const AUS_TIMEZONE = MELBOURNE_TIMEZONE;
 
 /**
- * Formats an ISO date/time string to Australian Eastern Time (GMT+11 / AEDT)
- * Example output: "23 Oct 2026, 10:41:47 pm (AUS - GMT+11)"
+ * Formats an ISO date/time string to Australian Eastern Time: Australia/Melbourne
+ * Example output: "23 Oct 2026, 10:41:47 pm (Melbourne Time)"
  */
 export function formatAusDateTime(dateStr?: string | null): string {
   if (!dateStr) return "—";
@@ -17,7 +18,7 @@ export function formatAusDateTime(dateStr?: string | null): string {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     const formatted = d.toLocaleString("en-AU", {
-      timeZone: AUS_TIMEZONE,
+      timeZone: MELBOURNE_TIMEZONE,
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -26,7 +27,7 @@ export function formatAusDateTime(dateStr?: string | null): string {
       second: "2-digit",
       hour12: true,
     });
-    return `${formatted} (AUS - GMT+11)`;
+    return `${formatted} (Melbourne Time)`;
   } catch {
     return dateStr;
   }

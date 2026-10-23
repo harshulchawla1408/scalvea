@@ -451,7 +451,7 @@ const Checkout = () => {
     noindex: true,
   });
 
-  const { items, total, rawTotal, bundleDiscount, addItem, setIsCartOpen } = useCart();
+  const { items, total, rawTotal, bundleDiscount, addItem } = useCart();
   const { settings, currencyCode, market } = useCountry();
   const { user, loading: authLoading } = useAuth();
   const { products } = useProducts();
@@ -483,12 +483,12 @@ const Checkout = () => {
     }
   }, [authLoading, user, isIndia, navigate]);
 
-  // If user lands on checkout after login but cart is empty, open cart drawer
+  // If user lands on checkout after login but cart is empty, redirect to /cart
   useEffect(() => {
     if (!authLoading && user && items.length === 0) {
-      setIsCartOpen(true);
+      navigate("/cart", { replace: true });
     }
-  }, [authLoading, user, items.length, setIsCartOpen]);
+  }, [authLoading, user, items.length, navigate]);
 
   // ── Coupon state kept for zero-breakage (not rendered) ──
   const [couponCode, setCouponCode] = useState("");
@@ -925,14 +925,14 @@ const Checkout = () => {
               <span className="tracking-[0.05em] uppercase">Secure & Encrypted</span>
             </div>
             <span className="text-muted-foreground">·</span>
-            <button
-              type="button"
-              onClick={() => setIsCartOpen(true)}
+            <Link
+              to="/cart"
               className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2 tracking-[0.03em]"
+              aria-label="View shopping bag"
             >
               <ShoppingBag className="w-3 h-3" />
               View cart
-            </button>
+            </Link>
           </div>
         </div>
 

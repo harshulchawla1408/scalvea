@@ -280,9 +280,26 @@ export type Database = {
           // Customer
           user_id: string | null
           customer_name: string | null
+          customer_first_name: string | null
+          customer_last_name: string | null
           customer_email: string | null
           customer_phone: string | null
           is_guest: boolean | null
+          shipping_address_line1: string | null
+          shipping_address_line2: string | null
+          shipping_city: string | null
+          shipping_state: string | null
+          shipping_postcode: string | null
+          shipping_country: string | null
+          billing_first_name: string | null
+          billing_last_name: string | null
+          billing_address_line1: string | null
+          billing_address_line2: string | null
+          billing_city: string | null
+          billing_state: string | null
+          billing_postcode: string | null
+          billing_country: string | null
+          data_quality_flags: string[] | null
           // Geography
           country: string
           currency: string
@@ -352,9 +369,26 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           customer_name?: string | null
+          customer_first_name?: string | null
+          customer_last_name?: string | null
           customer_email?: string | null
           customer_phone?: string | null
           is_guest?: boolean | null
+          shipping_address_line1?: string | null
+          shipping_address_line2?: string | null
+          shipping_city?: string | null
+          shipping_state?: string | null
+          shipping_postcode?: string | null
+          shipping_country?: string | null
+          billing_first_name?: string | null
+          billing_last_name?: string | null
+          billing_address_line1?: string | null
+          billing_address_line2?: string | null
+          billing_city?: string | null
+          billing_state?: string | null
+          billing_postcode?: string | null
+          billing_country?: string | null
+          data_quality_flags?: string[] | null
           country?: string
           currency?: string
           market?: string | null
@@ -413,9 +447,26 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
           customer_name?: string | null
+          customer_first_name?: string | null
+          customer_last_name?: string | null
           customer_email?: string | null
           customer_phone?: string | null
           is_guest?: boolean | null
+          shipping_address_line1?: string | null
+          shipping_address_line2?: string | null
+          shipping_city?: string | null
+          shipping_state?: string | null
+          shipping_postcode?: string | null
+          shipping_country?: string | null
+          billing_first_name?: string | null
+          billing_last_name?: string | null
+          billing_address_line1?: string | null
+          billing_address_line2?: string | null
+          billing_city?: string | null
+          billing_state?: string | null
+          billing_postcode?: string | null
+          billing_country?: string | null
+          data_quality_flags?: string[] | null
           country?: string
           currency?: string
           market?: string | null
@@ -691,7 +742,63 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_orders_reporting: {
+        Row: {
+          order_id: string
+          order_number: string | null
+          created_at: string | null
+          updated_at: string | null
+          user_id: string | null
+          is_guest: boolean | null
+          customer_name: string | null
+          customer_first_name: string | null
+          customer_last_name: string | null
+          customer_email: string | null
+          customer_phone: string | null
+          shipping_address_line1: string | null
+          shipping_address_line2: string | null
+          shipping_city: string | null
+          shipping_state: string | null
+          shipping_postcode: string | null
+          shipping_country: string | null
+          billing_first_name: string | null
+          billing_last_name: string | null
+          billing_address_line1: string | null
+          billing_address_line2: string | null
+          billing_city: string | null
+          billing_state: string | null
+          billing_postcode: string | null
+          billing_country: string | null
+          country: string | null
+          currency: string | null
+          market: string | null
+          order_source: string | null
+          source: string | null
+          sales_channel: string | null
+          subtotal: number
+          tax_amount: number
+          shipping_amount: number
+          discount_amount: number
+          total_amount: number
+          raw_total: number | null
+          raw_total_amount_payable: number | null
+          coupon_code: string | null
+          order_status: string | null
+          payment_status: string | null
+          fulfillment_status: string | null
+          payment_method: string | null
+          payment_provider: string | null
+          delivery_method: string | null
+          courier_name: string | null
+          tracking_number: string | null
+          product_summary: string | null
+          total_items_count: number | null
+          data_quality_flags: string[] | null
+          raw_shipping_address_json: Json | null
+          raw_billing_address_json: Json | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {

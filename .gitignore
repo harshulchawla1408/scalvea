@@ -71,3 +71,11 @@ tmp/
 *.local
 .cache
 .vercel
+scratch/
+
+# =========================
+# Lighthouse reports
+# =========================
+lighthouse*.json
+lighthouse*.html
+.lighthouseci/

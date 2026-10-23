@@ -208,7 +208,7 @@ const AdminDashboard = () => {
       <div className="flex justify-between items-center border-b border-border pb-4">
         <div>
           <h2 className="text-sm uppercase tracking-[0.15em] font-semibold">Dashboard Overview</h2>
-          <p className="text-xs text-muted-foreground mt-1">Real-time metrics for Scalvea dual-country store.</p>
+          <p className="text-xs text-muted-foreground mt-1">Real-time metrics for Scalvea store · All order times displayed in Melbourne Time.</p>
         </div>
         <div className="flex border border-border">
           {(["All", "Australia", "India"] as const).map((country) => (
@@ -369,7 +369,7 @@ const AdminDashboard = () => {
                 <div key={order.id} className="px-4 py-3 flex items-center justify-between text-sm">
                   <div>
                     <p className="font-medium">{order.order_number}</p>
-                    <p className="text-xs text-muted-foreground">{formatAusDateTime(order.created_at)} · {order.country}</p>
+                    <p className="text-xs text-muted-foreground" title={`Original Record Time: ${order.created_at}`}>{formatAusDateTime(order.created_at)} · {order.country}</p>
                   </div>
                   <div className="text-right">
                     <p className="font-mono">

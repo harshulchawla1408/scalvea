@@ -2,15 +2,16 @@ import { Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { useCountry } from "@/contexts/CountryContext";
-import { ArrowRight, Star, Truck, Shield, Leaf, Check, Microscope, CheckCircle, Globe, Beaker, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState, useEffect, useRef, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Lenis from "lenis";
+import { ArrowRight, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
+import { motion } from "framer-motion";
 import { useSEO } from "@/hooks/useSEO";
-import ScalveaInMotion from "@/components/sections/ScalveaInMotion";
 import ShopByConcern from "@/components/sections/ShopByConcern";
-import ProductInDemand from "@/components/sections/ProductInDemand";
-import AmazonStoresSection from "@/components/sections/AmazonStoresSection";
+
+// Lazy-load below-fold sections to reduce initial JS bundle
+const ScalveaInMotion = lazy(() => import("@/components/sections/ScalveaInMotion"));
+const ProductInDemand = lazy(() => import("@/components/sections/ProductInDemand"));
+const AmazonStoresSection = lazy(() => import("@/components/sections/AmazonStoresSection"));
 
 import auslap from "@/assets/auslap.webp";
 import ausmob from "@/assets/ausmob.webp";
@@ -33,10 +34,6 @@ import labSvg from "@/assets/lab.svg";
 import rootSvg from "@/assets/root.svg";
 import ingredientsSvg from "@/assets/ingredients.svg";
 import shieldSvg from "@/assets/shield.svg";
-
-// Asset aliases
-const follicle8Serum = hero2;
-const follicle8Black = scalpPng;
 
 
 // Helper CountUp Component
@@ -150,14 +147,14 @@ const Index = () => {
   const pointerStartX = useRef<number | null>(null);
   const isPointerDown = useRef(false);
 
-  // 6 seconds per slide
+  // 8 seconds per slide — allows comfortable reading and lets LCP settle on slide 0
   useEffect(() => {
     if (isHovered) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 6000);
+    }, 8000);
     return () => clearInterval(interval);
-  }, [isHovered, slides.length, currentSlide]);
+  }, [isHovered, slides.length]);
 
   const handlePrev = () => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
@@ -257,10 +254,12 @@ const Index = () => {
                   key={idx}
                   className={`${
                     isFirst ? "relative" : "absolute inset-0"
-                  } transition-opacity ease-in-out ${
-                    currentSlide === idx ? "opacity-100 z-10" : "opacity-0 z-0"
+                  } ${
+                    isFirst
+                      ? (currentSlide === 0 ? "opacity-100 z-10" : "opacity-0 z-0 transition-opacity ease-in-out")
+                      : `transition-opacity ease-in-out ${currentSlide === idx ? "opacity-100 z-10" : "opacity-0 z-0"}`
                   }`}
-                  style={{ transitionDuration: "800ms" }}
+                  style={isFirst ? undefined : { transitionDuration: "800ms" }}
                 >
                   <picture className="block lg:pt-5">
                     <source media="(max-width: 768px)" srcSet={slide.mob} width="800" height="1200" />
@@ -271,6 +270,7 @@ const Index = () => {
                       height="1080"
                       loading={isFirst ? "eager" : "lazy"}
                       fetchpriority={isFirst ? "high" : "low"}
+                      decoding={isFirst ? "sync" : "async"}
                       className="w-full object-cover object-center block max-h-[calc(100vh-116px)] md:max-h-[calc(100vh-128px)] lg:max-h-[calc(100vh-74px)] h-auto pointer-events-none"
                     />
                   </picture>
@@ -352,8 +352,10 @@ const Index = () => {
       {/* 2. SHOP BY CONCERN SECTION */}
       <ShopByConcern />
 
-      {/* SCALVEA IN MOTION — Editorial Video Carousel */}
-      <ScalveaInMotion />
+      {/* SCALVEA IN MOTION — Editorial Video Carousel (lazy-loaded) */}
+      <Suspense fallback={<div className="bg-[#F6F5F2] py-16 md:py-24" />}>
+        <ScalveaInMotion />
+      </Suspense>
 
       {/* 3. FOLLICLE 8 PREMIUM SHOWCASE SECTION */}
       <section id="ingredients" className="bg-light-grid py-6 md:py-8 lg:py-10 overflow-hidden border-t border-border/30 relative select-none">
@@ -375,7 +377,7 @@ const Index = () => {
                     CLINICALLY DEVELOPED FORMULA
                   </span>
                   <h2 className="text-2xl sm:text-[30px] md:text-[34px] lg:text-[38px] leading-tight font-heading text-[#111111] tracking-tight font-normal">
-                    Meet the Science Behind Follicle 8 —<br className="hidden sm:inline" /> Premium Hair Growth Solutions
+                    Meet the Science Behind Follicle 8
                   </h2>
                 </div>
 
@@ -417,21 +419,22 @@ const Index = () => {
               </div>
             </motion.div>
 
-            {/* Right Container: Product Image (edge-to-edge fit) (order-1 md:order-2) */}
+            {/* Right Container: Product Image (fit to container) (order-1 md:order-2) */}
             <motion.div 
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="border border-neutral-100 shadow-[0_10px_30px_rgba(0,0,0,0.01)] rounded-2xl md:rounded-[24px] aspect-[4/3] sm:aspect-[16/10] md:aspect-auto relative overflow-hidden order-1 md:order-2 flex items-center justify-center p-0"
+              className="border border-neutral-100 shadow-[0_10px_30px_rgba(0,0,0,0.01)] rounded-2xl md:rounded-[24px] bg-[#2E2E2E] aspect-[4/3] sm:aspect-[16/10] md:aspect-auto relative overflow-hidden order-1 md:order-2 flex items-center justify-center p-0"
             >
               <img
                 src={hero2}
                 alt="Follicle 8 Premium Showcase"
-                width="600"
-                height="600"
-                className="w-full h-full object-cover object-center"
+                width="1447"
+                height="1087"
+                className="w-full h-full object-contain"
                 loading="lazy"
+                decoding="async"
               />
             </motion.div>
 
@@ -439,8 +442,10 @@ const Index = () => {
         </div>
       </section>
 
-      {/* PRODUCT IN DEMAND SECTION */}
-      <ProductInDemand />
+      {/* PRODUCT IN DEMAND SECTION (lazy-loaded) */}
+      <Suspense fallback={<div className="bg-[#F6F5F2] py-14 md:py-20" />}>
+        <ProductInDemand />
+      </Suspense>
 
       {/* 4. SCALPA-5 PREMIUM SHOWCASE SECTION */}
       <section className="bg-light-grid py-6 md:py-8 lg:py-10 overflow-hidden border-t border-border/30 relative select-none">
@@ -462,6 +467,7 @@ const Index = () => {
                 height="600"
                 className="w-full h-full object-cover"
                 loading="lazy"
+                decoding="async"
               />
             </motion.div>
             
@@ -523,6 +529,7 @@ const Index = () => {
                 height="960"
                 className="w-full h-auto object-contain mx-auto"
                 loading="lazy"
+                decoding="async"
               />
             </picture>
           </motion.div>
@@ -657,6 +664,7 @@ const Index = () => {
                 height="900"
                 className="w-full h-full object-cover"
                 loading="lazy"
+                decoding="async"
               />
             </motion.div>
 
@@ -842,8 +850,10 @@ const Index = () => {
         </div>
       </section>
 
-      {/* AMAZON STORES SECTION */}
-      <AmazonStoresSection />
+      {/* AMAZON STORES SECTION (lazy-loaded) */}
+      <Suspense fallback={<div className="bg-[#F6F5F2] py-12" />}>
+        <AmazonStoresSection />
+      </Suspense>
 
       </main>
 
