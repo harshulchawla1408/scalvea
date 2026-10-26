@@ -38,35 +38,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
   const [mobileImageIndex, setMobileImageIndex] = useState(0);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const [showHoverSecondary, setShowHoverSecondary] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartX = useRef<number | null>(null);
-
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-    if (hasSecondImage) {
-      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-      hoverTimerRef.current = setTimeout(() => {
-        setShowHoverSecondary(true);
-      }, 4000);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    setShowHoverSecondary(false);
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current);
-      hoverTimerRef.current = null;
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-    };
-  }, []);
 
   const priceAud = "price_aud" in product ? product.price_aud : ("price" in product ? (product as any).price : 0);
   const priceInr = "price_inr" in product ? product.price_inr : 0;
@@ -74,6 +46,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
   const mrpAud = "mrp_aud" in product && (product as any).mrp_aud ? (product as any).mrp_aud : priceAud;
   const mrpInr = "mrp_inr" in product && (product as any).mrp_inr ? (product as any).mrp_inr : priceInr;
+
+  const inventory = "inventory_quantity" in product 
+    ? (product.inventory_quantity ?? 0) 
+    : ("inventory" in product ? ((product as any).inventory ?? 0) : 100);
+  const rating = "rating" in product ? (product as any).rating : undefined;
+  const reviewsCount = "reviews_count" in product ? (product as any).reviews_count : undefined;
 
   const { selectedCountry } = useCountry();
   const currentSellingPrice = selectedCountry === "india" ? priceInr : priceAud;
@@ -128,8 +106,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
     <>
       <div 
         className="group relative bg-white border border-neutral-200/80 hover:border-neutral-300 rounded-2xl p-2.5 sm:p-4 shadow-[0_2px_12px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.05)] transition-all duration-300 w-full h-full flex flex-col justify-between overflow-hidden"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
       >
         <Link
           to={`/product/${product.slug}`}
@@ -140,16 +116,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
             className="relative bg-[#FAF9F7] aspect-[4/5] overflow-hidden rounded-xl flex items-center justify-center p-3 sm:p-4 md:p-5 cursor-pointer mb-2.5 sm:mb-3.5"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            onClick={(e) => {
-              if (hasSecondImage && (window.matchMedia("(max-width: 1023px), (pointer: coarse)").matches)) {
-                e.preventDefault();
-                e.stopPropagation();
-                setMobileImageIndex((prev) => (prev === 0 ? 1 : 0));
-              }
-            }}
           >
             {/* Out of stock label overlay */}
-            {product.inventory === 0 && (
+            {inventory === 0 && (
               <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex items-center justify-center z-20">
                 <span className="text-[9px] tracking-[0.22em] uppercase bg-white border border-neutral-200 text-neutral-800 px-3 py-1 font-mono font-medium rounded shadow-2xs">
                   Out of Stock
@@ -159,43 +128,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
             {/* Product Images (Desktop & Mobile) */}
             <div className="w-full h-full relative flex items-center justify-center">
-              {/* Primary Image: Zooms out smoothly during hover (scale-100 down to scale-95), then after 4s fades to secondary */}
               <img
-                src={getOptimizedImageUrl(product.images[0], 480)}
-                srcSet={getOptimizedImageSrcSet(product.images[0], [320, 480, 640]) || undefined}
+                src={getOptimizedImageUrl(hasSecondImage && mobileImageIndex === 1 ? product.images[1] : product.images[0], 480)}
+                srcSet={getOptimizedImageSrcSet(hasSecondImage && mobileImageIndex === 1 ? product.images[1] : product.images[0], [320, 480, 640]) || undefined}
                 sizes="(max-width: 640px) 240px, (max-width: 1024px) 340px, 480px"
                 alt={product.name}
                 width="480"
-                height="480"
-                className={`w-full h-full object-contain object-center absolute inset-0 transform transition-transform duration-[4000ms] ease-out ${
-                  isHovered ? "scale-95" : "scale-100 !duration-500"
-                } ${
-                  mobileImageIndex === 0
-                    ? (showHoverSecondary ? "opacity-0 transition-opacity duration-700 ease-in-out" : "opacity-100 transition-opacity duration-500")
-                    : "opacity-0 transition-opacity duration-500"
-                }`}
+                height="600"
+                className="w-full h-full object-contain object-center transition-transform duration-500 ease-out group-hover:scale-[1.04]"
                 loading="lazy"
                 decoding="async"
               />
-              
-              {/* Secondary Image: Fades in after 4 seconds */}
-              {hasSecondImage && (
-                <img
-                  src={getOptimizedImageUrl(product.images[1], 480)}
-                  srcSet={getOptimizedImageSrcSet(product.images[1], [320, 480, 640]) || undefined}
-                  sizes="(max-width: 640px) 240px, (max-width: 1024px) 340px, 480px"
-                  alt={`${product.name} alternate`}
-                  width="480"
-                  height="480"
-                  className={`w-full h-full object-contain object-center absolute inset-0 transform transition-all duration-700 ease-in-out ${
-                    showHoverSecondary || mobileImageIndex === 1
-                      ? "opacity-100 scale-100 pointer-events-auto"
-                      : "opacity-0 scale-95 pointer-events-none"
-                  }`}
-                  loading="lazy"
-                  decoding="async"
-                />
-              )}
             </div>
 
             {/* Mobile Image Indicator Badge */}
@@ -243,15 +186,15 @@ const ProductCard = ({ product }: ProductCardProps) => {
               </h3>
               
               {/* Ratings if available */}
-              {product.rating !== undefined && (
+              {rating !== undefined && (
                 <div className="flex items-center gap-1 pt-0.5">
                   <div className="flex items-center text-amber-500">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={`h-2.5 w-2.5 ${i < Math.round(product.rating || 0) ? "fill-current" : "opacity-30"}`} />
+                      <Star key={i} className={`h-2.5 w-2.5 ${i < Math.round(rating || 0) ? "fill-current" : "opacity-30"}`} />
                     ))}
                   </div>
-                  {product.reviews_count !== undefined && (
-                    <span className="text-[9px] text-neutral-600">({product.reviews_count})</span>
+                  {reviewsCount !== undefined && (
+                    <span className="text-[9px] text-neutral-600">({reviewsCount})</span>
                   )}
                 </div>
               )}
@@ -277,13 +220,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <div className="pt-2.5 sm:pt-3 w-full">
           <button
             onClick={handleAddToCart}
-            disabled={product.inventory === 0}
+            disabled={inventory === 0}
             className={`w-full text-white bg-black hover:bg-neutral-900 active:scale-[0.98] transition-all text-[11px] sm:text-xs tracking-[0.12em] uppercase h-9 sm:h-10 rounded-lg flex items-center justify-center gap-1.5 sm:gap-2 font-medium shadow-2xs ${
-              product.inventory === 0 ? "bg-neutral-300 cursor-not-allowed opacity-60" : "bg-black"
+              inventory === 0 ? "bg-neutral-300 cursor-not-allowed opacity-60" : "bg-black"
             }`}
           >
             <ShoppingBag className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{product.inventory === 0 ? "Out of Stock" : "Add to Bag"}</span>
+            <span className="truncate">{inventory === 0 ? "Out of Stock" : "Add to Bag"}</span>
           </button>
         </div>
       </div>
@@ -322,15 +265,15 @@ const ProductCard = ({ product }: ProductCardProps) => {
                   {product.name}
                 </p>
                 
-                {product.rating !== undefined && (
+                {rating !== undefined && (
                   <div className="flex items-center gap-1.5">
                     <div className="flex items-center text-amber-500">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={`h-3 w-3 ${i < Math.round(product.rating || 0) ? "fill-current" : "opacity-30"}`} />
+                        <Star key={i} className={`h-3 w-3 ${i < Math.round(rating || 0) ? "fill-current" : "opacity-30"}`} />
                       ))}
                     </div>
-                    {product.reviews_count !== undefined && (
-                      <span className="text-[10px] text-neutral-600 font-body">({product.reviews_count} Reviews)</span>
+                    {reviewsCount !== undefined && (
+                      <span className="text-[10px] text-neutral-600 font-body">({reviewsCount} Reviews)</span>
                     )}
                   </div>
                 )}
@@ -357,11 +300,11 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     handleAddToCart(e);
                     setIsQuickViewOpen(false);
                   }}
-                  disabled={product.inventory === 0}
+                  disabled={inventory === 0}
                   className="w-full bg-black text-white hover:bg-neutral-950 transition-colors text-sm tracking-[0.12em] uppercase h-12 flex items-center justify-center gap-2.5 font-semibold"
                 >
                   <ShoppingBag className="h-4.5 w-4.5" />
-                  {product.inventory === 0 ? "Out of Stock" : "Add to Bag"}
+                  {inventory === 0 ? "Out of Stock" : "Add to Bag"}
                 </button>
                 <Link
                   to={`/product/${product.slug}`}

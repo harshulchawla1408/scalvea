@@ -368,21 +368,6 @@ const ProductDetail = () => {
     setUserHasInteracted(false);
   }, [product?.id]);
 
-  // Auto-slideshow timer: 3 sec on images, then video play completion
-  useEffect(() => {
-    if (userHasInteracted || mediaItems.length <= 1) return;
-
-    const currentMedia = mediaItems[selectedMediaIndex];
-    if (!currentMedia) return;
-
-    if (currentMedia.type === "image") {
-      const timer = setTimeout(() => {
-        setSelectedMediaIndex((prev) => (prev + 1) % mediaItems.length);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedMediaIndex, userHasInteracted, mediaItems]);
-
   // Ensure video starts playing when selected
   useEffect(() => {
     if (mediaItems[selectedMediaIndex]?.type === "video" && galleryVideoRef.current) {
@@ -391,10 +376,8 @@ const ProductDetail = () => {
   }, [selectedMediaIndex, mediaItems]);
 
   const handleVideoEnded = useCallback(() => {
-    if (!userHasInteracted) {
-      setSelectedMediaIndex((prev) => (prev + 1) % mediaItems.length);
-    }
-  }, [userHasInteracted, mediaItems.length]);
+    // Keep user's chosen view stable; no automatic switching
+  }, []);
 
   const mainPurchaseRef = useRef<HTMLDivElement>(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -804,7 +787,7 @@ const ProductDetail = () => {
                     sizes="(max-width: 1024px) 100vw, 560px"
                     alt={mediaItems[selectedMediaIndex]?.alt || product.name}
                     width="800"
-                    height="800"
+                    height="1000"
                     loading="eager"
                     fetchpriority="high"
                     decoding="sync"
@@ -844,13 +827,13 @@ const ProductDetail = () => {
                         </div>
                       ) : (
                         <img
-                          src={getOptimizedImageUrl(item.url, 128)}
+                          src={getOptimizedImageUrl(item.url, 160)}
                           alt={item.alt || `${product.name} thumbnail ${i + 1}`}
                           width="64"
-                          height="64"
+                          height="80"
                           loading="lazy"
                           decoding="async"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain p-1"
                         />
                       )}
                     </button>

@@ -17,6 +17,9 @@ export interface DBProduct {
   featured: boolean;
   badge: string | null;
   inventory_quantity: number;
+  inventory?: number;
+  rating?: number;
+  reviews_count?: number;
   price_aud: number;
   price_inr: number;
   price_usd: number;
