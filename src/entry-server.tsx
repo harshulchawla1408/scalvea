@@ -33,6 +33,8 @@ import ShippingPolicy from "./pages/ShippingPolicy";
 import ReturnsPolicy from "./pages/ReturnsPolicy";
 import PaymentPolicy from "./pages/PaymentPolicy";
 import CancellationPolicy from "./pages/CancellationPolicy";
+import VideoList from "./pages/VideoList";
+import VideoWatch from "./pages/VideoWatch";
 import NotFound from "./pages/NotFound";
 
 import { AuthProvider } from "./contexts/AuthContext";
@@ -43,11 +45,23 @@ const ServerRoutes = () => (
     <Route path="/" element={<Index />} />
     <Route path="/shop" element={<Shop />} />
     <Route path="/product/:productId" element={<ProductDetail />} />
+    <Route path="/products" element={<Navigate replace to="/shop" />} />
+    <Route path="/products/hair-growth-serum" element={<Navigate replace to="/product/follicle-8-hair-growth-serum" />} />
+    <Route path="/products/hair-growth-shampoo" element={<Navigate replace to="/shop" />} />
+    <Route path="/products/:productId" element={<Navigate replace to="/product/:productId" />} />
     <Route path="/about" element={<About />} />
     <Route path="/blogs" element={<BlogList />} />
     <Route path="/blog" element={<Navigate replace to="/blogs" />} />
     <Route path="/blogs/:slug" element={<BlogDetail />} />
     <Route path="/blog/:slug" element={<BlogDetail />} />
+    <Route path="/blogs/best-ingredients-for-hair-regrowth" element={<Navigate replace to="/blogs/best-ingredients-for-hair-regrowth-according-to-research" />} />
+    <Route path="/blogs/dht-and-hair-loss" element={<Navigate replace to="/blogs/dht-and-hair-loss-explained-simply" />} />
+    <Route path="/blogs/hair-growth-routine" element={<Navigate replace to="/blogs/hair-growth-routine-for-thinning-hair" />} />
+    <Route path="/blogs/postpartum-hair-loss" element={<Navigate replace to="/blogs/postpartum-hair-loss-whats-normal-and-whats-not" />} />
+    <Route path="/blogs/stress-hair-loss" element={<Navigate replace to="/blogs/how-stress-actually-affects-your-hair" />} />
+    <Route path="/blogs/why-is-my-hair-thinning" element={<Navigate replace to="/blogs/why-is-my-hair-thinning-7-real-causes" />} />
+    <Route path="/videos" element={<VideoList />} />
+    <Route path="/videos/:slug" element={<VideoWatch />} />
     <Route path="/contact" element={<Contact />} />
     <Route path="/faq" element={<FAQ />} />
     <Route path="/faqs" element={<Navigate replace to="/faq" />} />

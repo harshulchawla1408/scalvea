@@ -354,40 +354,55 @@ const ScalveaInMotion = () => {
     setUnmutedVideoId((prev) => (prev === videoId ? null : videoId));
   }, []);
 
-  // Track scroll position for arrows & progress bar
+  const rafId = useRef<number | null>(null);
+
+  // Track scroll position for arrows & progress bar with rAF throttling to prevent layout thrashing
   const updateScrollState = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 10);
-    const maxScroll = el.scrollWidth - el.clientWidth;
-    setCanScrollRight(el.scrollLeft < maxScroll - 10);
-    if (maxScroll > 0) {
-      setScrollProgress(Math.min(1, Math.max(0, el.scrollLeft / maxScroll)));
-    }
+    if (rafId.current !== null) return;
+    rafId.current = requestAnimationFrame(() => {
+      rafId.current = null;
+      const el = scrollRef.current;
+      if (!el) return;
+      const scrollLeft = el.scrollLeft;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      setCanScrollLeft(scrollLeft > 10);
+      setCanScrollRight(scrollLeft < maxScroll - 10);
+      if (maxScroll > 0) {
+        setScrollProgress(Math.min(1, Math.max(0, scrollLeft / maxScroll)));
+      }
+    });
   }, []);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     el.addEventListener("scroll", updateScrollState, { passive: true });
-    updateScrollState();
 
-    // Recalculate on resize
-    const resizeObserver = new ResizeObserver(updateScrollState);
-    resizeObserver.observe(el);
+    // Defer resize observer until after initial render is settled to eliminate forced reflow on mount
+    let resizeObserver: ResizeObserver | null = null;
+    const timer = setTimeout(() => {
+      if (!scrollRef.current) return;
+      resizeObserver = new ResizeObserver(() => {
+        updateScrollState();
+      });
+      resizeObserver.observe(scrollRef.current);
+    }, 1500);
 
     return () => {
+      clearTimeout(timer);
       el.removeEventListener("scroll", updateScrollState);
-      resizeObserver.disconnect();
+      if (resizeObserver) resizeObserver.disconnect();
+      if (rafId.current !== null) {
+        cancelAnimationFrame(rafId.current);
+        rafId.current = null;
+      }
     };
   }, [updateScrollState]);
 
   const scroll = useCallback((direction: "left" | "right") => {
     const el = scrollRef.current;
     if (!el) return;
-    const cardWidth = el.querySelector<HTMLElement>("[data-video-card]")?.offsetWidth ?? 300;
-    const gap = 16;
-    const scrollAmount = direction === "left" ? -(cardWidth + gap) : cardWidth + gap;
+    const scrollAmount = direction === "left" ? -300 : 300;
     el.scrollBy({ left: scrollAmount, behavior: "smooth" });
   }, []);
 
@@ -403,13 +418,13 @@ const ScalveaInMotion = () => {
     el.scrollTo({ left: percentage * maxScroll, behavior: "smooth" });
   };
 
-  // Mouse Drag to Scroll handlers
+  // Mouse Drag to Scroll handlers (pure client coordinates, zero layout thrashing)
   const handleMouseDown = (e: React.MouseEvent) => {
     const el = scrollRef.current;
     if (!el) return;
     isDragging.current = true;
     hasDragged.current = false;
-    startX.current = e.pageX - el.offsetLeft;
+    startX.current = e.clientX;
     scrollLeftStart.current = el.scrollLeft;
   };
 
@@ -418,8 +433,7 @@ const ScalveaInMotion = () => {
     const el = scrollRef.current;
     if (!el) return;
     e.preventDefault();
-    const x = e.pageX - el.offsetLeft;
-    const walk = (x - startX.current) * 1.3;
+    const walk = (e.clientX - startX.current) * 1.3;
     if (Math.abs(walk) > 5) {
       hasDragged.current = true;
     }

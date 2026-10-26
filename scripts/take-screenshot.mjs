@@ -5,7 +5,7 @@ import path from "path";
 
 const CHROME_PATH = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const PORT = 9224;
-const ARTIFACT_DIR = "C:\\Users\\Asus\\.gemini\\antigravity-ide\\brain\\2eaaf0f7-842f-4aa0-b5a2-451346427a7a";
+const ARTIFACT_DIR = "C:\\Users\\Asus\\.gemini\\antigravity-ide\\brain\\8466fe9a-889f-4534-bbfc-51e49707b20c";
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

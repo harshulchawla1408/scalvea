@@ -79,3 +79,41 @@ scratch/
 lighthouse*.json
 lighthouse*.html
 .lighthouseci/
+# Lighthouse ad-hoc runs (lh-*.json, lh-*.html)
+lh-*.json
+lh-*.html
+
+# =========================
+# Performance traces & debug outputs
+# =========================
+# Chrome DevTools performance traces
+perf-trace*.json
+*.trace.json
+# Debug screenshots from CWV/layout-shift investigation
+*-desktop.png
+*-mobile.png
+full-css-*.png
+critical-only-*.png
+
+# =========================
+# Generated CSS artifacts
+# =========================
+# critical-extracted.css is a one-off extraction artifact, not inlined by the build
+critical-extracted.css
+# src/critical.css is the compiled output written by build-critical-css.mjs
+# The authoritative source is src/index.css — regenerated on each build
+src/critical.css
+
+# =========================
+# Generated responsive images
+# =========================
+# These are regenerated on every build by scripts/generate-responsive-images.mjs
+# from the originals in src/assets/*.webp
+# Do NOT commit these; a clean checkout regenerates them via `npm run build`
+src/assets/generated/
+
+# =========================
+# Bundle visualiser report & build caches
+# =========================
+dist/stats.html
+dist/.template.html

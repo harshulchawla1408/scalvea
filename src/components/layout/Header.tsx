@@ -1,85 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Search, ShoppingBag, User, Heart, Menu, Copy, Check } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useCountry } from "@/contexts/CountryContext";
-import CartDrawer from "@/components/cart/CartDrawer";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { motion } from "framer-motion";
-import logo1 from "@/assets/logo1.webp";
+import { logo1Set } from "@/assets/generated";
 import ShippingAnnouncementBar from "@/components/layout/ShippingAnnouncementBar";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
-const headerVariants = {
-  hidden: { opacity: 0, y: -20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: [0.16, 1, 0.3, 1],
-    },
-  },
-};
-
-const logoVariants = {
-  hidden: { opacity: 0, scale: 0.98 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: 0.8,
-      delay: 0.15,
-      ease: "easeOut",
-    },
-  },
-};
-
-const navContainerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.06,
-      delayChildren: 0.25,
-    },
-  },
-};
-
-const navItemVariants = {
-  hidden: { opacity: 0, y: -8 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: [0.16, 1, 0.3, 1],
-    },
-  },
-};
-
-const iconsContainerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.45,
-    },
-  },
-};
-
-const iconItemVariants = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: 0.3,
-      ease: "easeOut",
-    },
-  },
-};
+const CartDrawer = lazy(() => import("@/components/cart/CartDrawer"));
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -98,10 +27,18 @@ const Header = () => {
   const isHome = location.pathname === "/";
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrolled = window.scrollY > 20;
+          setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -118,31 +55,31 @@ const Header = () => {
 
   return (
     <>
-      <motion.header
-        initial="hidden"
-        animate="visible"
-        variants={headerVariants}
+      <header
         className={`z-50 transition-all duration-300 sticky top-0 bg-white w-full ${
           isScrolled ? "shadow-sm border-b border-[#F3F3F3]" : "border-b border-transparent shadow-none"
         }`}
       >
         <nav className="max-w-8xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 h-[62px] lg:h-[74px] flex items-center justify-between relative">
           {/* Left: Logo */}
-          <motion.div variants={logoVariants} className="flex items-center">
+          <div className="flex items-center">
             <Link to="/" className="flex items-center">
               <img 
-                src={logo1} 
+                src={logo1Set.src} 
+                srcSet={logo1Set.srcSet}
+                sizes={logo1Set.sizes}
                 alt="Scalvea" 
+                width="156"
+                height="46"
+                fetchpriority="high"
+                decoding="sync"
                 className="h-[36px] lg:h-[46px] w-auto object-contain transition-all duration-300" 
               />
             </Link>
-          </motion.div>
+          </div>
 
           {/* Center: Navigation Menu */}
-          <motion.div
-            variants={navContainerVariants}
-            className="hidden lg:flex items-center justify-center gap-8 xl:gap-10 absolute left-1/2 -translate-x-1/2"
-          >
+          <div className="hidden lg:flex items-center justify-center gap-8 xl:gap-10 absolute left-1/2 -translate-x-1/2">
             {[
               { label: "Shop", path: "/shop" },
               { label: "About Us", path: "/about" },
@@ -151,7 +88,7 @@ const Header = () => {
             ].map((item) => {
               const isActive = location.pathname === item.path;
               return (
-                <motion.div key={item.label} variants={navItemVariants}>
+                <div key={item.label}>
                   <Link
                     to={item.path}
                     className={`relative py-2 text-[15px] font-semibold tracking-[0.12em] uppercase text-[#111111] hover:text-black transition-colors duration-250
@@ -161,25 +98,22 @@ const Header = () => {
                   >
                     {item.label}
                   </Link>
-                </motion.div>
+                </div>
               );
             })}
-          </motion.div>
+          </div>
 
           {/* Right: Icons */}
-          <motion.div 
-            variants={iconsContainerVariants} 
-            className="flex items-center gap-3 sm:gap-4 lg:gap-5"
-          >
+          <div className="flex items-center gap-3 sm:gap-4 lg:gap-5">
             {/* Country Selector */}
-            <motion.div variants={iconItemVariants} className="relative">
+            <div className="relative">
               <button 
                 onClick={() => setIsCountryOpen(!isCountryOpen)} 
                 className="hover:opacity-60 transition-all flex items-center gap-1.5 border border-neutral-250 px-2 sm:px-3 py-1.5 text-xs tracking-[0.06em] uppercase font-medium text-[#111111] bg-white"
                 aria-label="Choose country"
               >
                 <span className="flex items-center gap-1.5">
-                  <img src={country === "India" ? "https://flagcdn.com/w20/in.png" : "https://flagcdn.com/w20/au.png"} alt={country} className="w-4 h-auto rounded-[1px] shadow-[0_0_2px_rgba(0,0,0,0.1)]" />
+                  <img src={country === "India" ? "/flags/in.png" : "/flags/au.png"} alt={country} width="16" height="12" className="w-4 h-auto rounded-[1px] shadow-[0_0_2px_rgba(0,0,0,0.1)]" />
                   <span>{country === "India" ? "INR" : "AUD"}</span>
                 </span>
                 <span className="text-[9px] opacity-60">▼</span>
@@ -191,7 +125,7 @@ const Header = () => {
                     className={`w-full flex items-center justify-between px-5 py-3.5 text-xs tracking-[0.06em] uppercase hover:bg-neutral-50 transition-colors duration-200 whitespace-nowrap ${country === "India" ? "bg-neutral-50 font-semibold text-black" : "text-neutral-600 font-medium"}`}
                   >
                     <span className="flex items-center gap-2.5">
-                      <img src="https://flagcdn.com/w20/in.png" alt="India" className="w-4 h-auto rounded-sm shadow-sm" />
+                      <img src="/flags/in.png" alt="India" width="16" height="12" className="w-4 h-auto rounded-sm shadow-sm" />
                       <span className="text-neutral-800 font-medium">India</span>
                     </span>
                     <span className="text-muted-foreground font-mono text-xs">₹ INR</span>
@@ -201,27 +135,26 @@ const Header = () => {
                     className={`w-full flex items-center justify-between px-5 py-3.5 text-xs tracking-[0.06em] uppercase hover:bg-neutral-50 transition-colors duration-200 whitespace-nowrap ${country === "Australia" ? "bg-neutral-50 font-semibold text-black" : "text-neutral-600 font-medium"}`}
                   >
                     <span className="flex items-center gap-2.5">
-                      <img src="https://flagcdn.com/w20/au.png" alt="Australia" className="w-4 h-auto rounded-sm shadow-sm" />
+                      <img src="/flags/au.png" alt="Australia" width="16" height="12" className="w-4 h-auto rounded-sm shadow-sm" />
                       <span className="text-neutral-800 font-medium">Australia</span>
                     </span>
                     <span className="text-muted-foreground font-mono text-xs">A$ AUD</span>
                   </button>
                 </div>
               )}
-            </motion.div>
+            </div>
 
             {/* Search */}
-            <motion.button 
-              variants={iconItemVariants}
+            <button 
               onClick={() => setIsSearchOpen(!isSearchOpen)} 
               className="flex hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-2 min-w-[44px] min-h-[44px] sm:min-w-[48px] sm:min-h-[48px] items-center justify-center" 
               aria-label="Search"
             >
               <Search className="size-[22px]" />
-            </motion.button>
+            </button>
 
             {/* Account (Desktop/Laptop Only) */}
-            <motion.div variants={iconItemVariants} className="hidden lg:block">
+            <div className="hidden lg:block">
               <Link 
                 to="/account" 
                 className="hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-2 min-w-[48px] min-h-[48px] flex items-center justify-center" 
@@ -229,10 +162,10 @@ const Header = () => {
               >
                 <User className="size-[22px]" />
               </Link>
-            </motion.div>
+            </div>
 
             {/* Wishlist (Desktop/Laptop Only) */}
-            <motion.div variants={iconItemVariants} className="hidden lg:block">
+            <div className="hidden lg:block">
               <Link 
                 to="/wishlist" 
                 className="hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-2 min-w-[48px] min-h-[48px] flex items-center justify-center relative" 
@@ -245,12 +178,14 @@ const Header = () => {
                   </span>
                 )}
               </Link>
-            </motion.div>
+            </div>
 
             {/* Cart (Desktop/Laptop Only) */}
-            <motion.div variants={iconItemVariants} className="hidden lg:block">
+            <div className="hidden lg:block">
               <Link 
                 to="/cart"
+                onMouseEnter={() => import("@/components/cart/CartDrawer")}
+                onTouchStart={() => import("@/components/cart/CartDrawer")}
                 className="hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] relative p-2 min-w-[48px] min-h-[48px] flex items-center justify-center" 
                 aria-label={`Shopping Bag (${itemCount} items)`}
               >
@@ -261,18 +196,17 @@ const Header = () => {
                   </span>
                 )}
               </Link>
-            </motion.div>
+            </div>
 
             {/* Hamburger menu (Mobile Only) */}
-            <motion.button 
-              variants={iconItemVariants}
+            <button 
               onClick={() => setIsMobileMenuOpen(true)} 
               className="lg:hidden hover:scale-105 hover:opacity-70 transition-all duration-200 text-[#111111] p-2 min-w-[44px] min-h-[44px] flex items-center justify-center" 
               aria-label="Open menu"
             >
               <Menu className="size-[22px]" />
-            </motion.button>
-          </motion.div>
+            </button>
+          </div>
         </nav>
 
         {/* HIGHLIGHTED SHIPPING BANNER */}
@@ -310,8 +244,14 @@ const Header = () => {
             {/* Mobile Drawer Header */}
             <div className="flex items-center justify-between px-6 h-[64px] border-b border-neutral-100 relative">
               <img 
-                src={logo1} 
+                src={logo1Set.src} 
+                srcSet={logo1Set.srcSet}
+                sizes={logo1Set.sizes}
                 alt="Scalvea" 
+                width="130"
+                height="38"
+                loading="lazy"
+                decoding="async"
                 className="h-[40px] w-auto object-contain" 
               />
             </div>
@@ -411,8 +351,10 @@ const Header = () => {
             </div>
           </SheetContent>
         </Sheet>
-      </motion.header>
-      <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      </header>
+      <Suspense fallback={null}>
+        {isCartOpen && <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />}
+      </Suspense>
     </>
   );
 };

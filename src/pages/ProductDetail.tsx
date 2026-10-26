@@ -18,7 +18,7 @@ import {
   Minus, Plus, Heart, Star, Share2, ShoppingBag, Check,
   ChevronDown, ChevronRight, Truck, Lock, FlaskConical, MessageCircle,
   Leaf, Award, Zap, Droplets, Sparkles, Shield, Clock, ChevronLeft,
-  Volume2, VolumeX, Play, ExternalLink,
+  Volume2, VolumeX, Play, ExternalLink, ArrowRight,
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import IngredientShowcase from "@/components/products/IngredientShowcase";
 import amazonInLogo from "@/assets/Amazon.in-Logo.webp";
 import amazonAuLogo from "@/assets/au.webp";
+import { getOptimizedImageUrl, getOptimizedImageSrcSet } from "@/utils/imageOptimizer";
 
 /* ─── Scroll-reveal hook ─── */
 function useReveal() {
@@ -798,10 +799,15 @@ const ProductDetail = () => {
                   </div>
                 ) : (
                   <img
-                    src={mediaItems[selectedMediaIndex]?.url || product.images[0]}
+                    src={getOptimizedImageUrl(mediaItems[selectedMediaIndex]?.url || product.images[0], 800)}
+                    srcSet={getOptimizedImageSrcSet(mediaItems[selectedMediaIndex]?.url || product.images[0], [480, 800, 1080]) || undefined}
+                    sizes="(max-width: 1024px) 100vw, 560px"
                     alt={mediaItems[selectedMediaIndex]?.alt || product.name}
+                    width="800"
+                    height="800"
                     loading="eager"
                     fetchpriority="high"
+                    decoding="sync"
                     className="w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.03]"
                   />
                 )}
@@ -837,7 +843,15 @@ const ProductDetail = () => {
                           </div>
                         </div>
                       ) : (
-                        <img src={item.url} alt={item.alt || `${product.name} thumbnail ${i + 1}`} className="w-full h-full object-cover" />
+                        <img
+                          src={getOptimizedImageUrl(item.url, 128)}
+                          alt={item.alt || `${product.name} thumbnail ${i + 1}`}
+                          width="64"
+                          height="64"
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-cover"
+                        />
                       )}
                     </button>
                   ))}
@@ -963,7 +977,7 @@ const ProductDetail = () => {
                   </Button>
 
                   <a
-                    href="https://wa.me/61494754851?text=Hi%20Scalvea%2C%20I%20need%20help%20placing%20my%20order."
+                    href="https://wa.me/917527862966?text=Hi%20Scalvea%2C%20I%20need%20help%20placing%20my%20order."
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Chat with us on WhatsApp"
@@ -995,6 +1009,18 @@ const ProductDetail = () => {
                       {icon}<span>{label}</span>
                     </div>
                   ))}
+                </div>
+
+                {/* Educational Video Guide Link */}
+                <div className="pt-2">
+                  <Link
+                    to={product.id.includes("follicle") ? "/videos/follicle-8-application-guide" : "/videos/scalvea-hair-growth-science-showcase"}
+                    className="inline-flex items-center gap-1.5 text-xs text-neutral-600 hover:text-black font-medium transition-colors"
+                  >
+                    <Play className="h-3 w-3 fill-neutral-700" />
+                    <span>Watch application &amp; routine video guide</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
                 </div>
               </div>
 

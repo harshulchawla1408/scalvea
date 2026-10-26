@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 import { useCountry } from "@/contexts/CountryContext";
-import prod1 from "@/assets/prod1.webp";
-import prod2 from "@/assets/prod2.webp";
+import { prod1Set, prod2Set, type ResponsiveImageSet } from "@/assets/generated";
+import { getOptimizedImageUrl, getOptimizedImageSrcSet } from "@/utils/imageOptimizer";
 
 interface ProductShowcaseConfig {
   id: string;
@@ -12,7 +12,7 @@ interface ProductShowcaseConfig {
   productName: string;
   shortDescription: string;
   ctaLabel: string;
-  defaultImage: string;
+  defaultSet: ResponsiveImageSet;
   badge: string;
   originLabel?: string;
 }
@@ -26,7 +26,7 @@ const PRODUCTS: ProductShowcaseConfig[] = [
       "Formulated with 4% Anagain & 3% Redensyl to help reduce visible shedding and support fuller, healthier-looking density.",
     productSlug: "follicle-8-hair-growth-serum",
     ctaLabel: "SHOP FOLLICLE 8",
-    defaultImage: prod1,
+    defaultSet: prod1Set,
     badge: "BESTSELLER",
     originLabel: "AN AUSTRALIAN BRAND",
   },
@@ -38,7 +38,7 @@ const PRODUCTS: ProductShowcaseConfig[] = [
       "Target stubborn flakes and restore a calm, balanced scalp with Piroctone Olamine, Salicylic Acid, and Rosemary Oil.",
     productSlug: "scalp-5-anti-dandruff-hair-serum",
     ctaLabel: "SHOP SCALP-5",
-    defaultImage: prod2,
+    defaultSet: prod2Set,
     badge: "TARGETED CARE",
     originLabel: "AN AUSTRALIAN BRAND",
   },
@@ -94,8 +94,13 @@ export default function ShopByConcern() {
                 p.name.toLowerCase().includes(item.id === "follicle-8" ? "follicle" : "scalp")
             );
 
-            const productImage =
-              liveProduct?.images?.[0] || item.defaultImage;
+            const defaultSet = item.defaultSet;
+            const supaImg = liveProduct?.images?.[0];
+            const isOriginal = !supaImg || supaImg.includes('1786916700729') || supaImg.includes('1786916747760');
+
+            const imageSrc = isOriginal ? defaultSet.src : getOptimizedImageUrl(supaImg, 480);
+            const imageSrcSet = isOriginal ? defaultSet.srcSet : (getOptimizedImageSrcSet(supaImg, [320, 480, 640]) || undefined);
+            const imageSizes = isOriginal ? defaultSet.sizes : "(max-width: 640px) 280px, (max-width: 1024px) 380px, 480px";
 
             const priceAud = liveProduct?.price_aud ?? 34.5;
             const priceInr = liveProduct?.price_inr ?? (item.id === "follicle-8" ? 999 : 899);
@@ -131,10 +136,12 @@ export default function ShopByConcern() {
                     {/* 2. PRODUCT IMAGE — Dominant visual focus with controlled hover overflow */}
                     <div className="relative overflow-visible flex items-center justify-center py-1 sm:py-2">
                       <img
-                        src={productImage}
+                        src={imageSrc}
+                        srcSet={imageSrcSet}
+                        sizes={imageSizes}
                         alt={item.productName}
-                        width="460"
-                        height="460"
+                        width="480"
+                        height="480"
                         className="showcase-img w-full max-w-[280px] sm:max-w-[310px] md:max-w-[330px] h-auto object-contain rounded-lg"
                         loading="lazy"
                         decoding="async"

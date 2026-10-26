@@ -38,7 +38,7 @@ const PrivacyPolicy = () => {
           </div>
           <div>
             <h2 className="text-foreground text-xs tracking-[0.12em] uppercase mb-2">Contact</h2>
-            <p>For privacy inquiries, contact us at <a href="mailto:info@scalvea.com" className="underline hover:text-foreground">info@scalvea.com</a> or call <a href="tel:+61494754851" className="underline hover:text-foreground">+61 494 754 851</a>.</p>
+            <p>For privacy inquiries, contact us at <a href="mailto:info@scalvea.com" className="underline hover:text-foreground">info@scalvea.com</a> or call <a href="tel:+917527862966" className="underline hover:text-foreground">+91 7527 862 966</a>.</p>
           </div>
         </div>
       </main>

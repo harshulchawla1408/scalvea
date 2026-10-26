@@ -2,39 +2,36 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
   <url>
-    <loc>https://scalvea.com/product/follicle-8-hair-growth-serum</loc>
+    <loc>https://scalvea.com/videos/follicle-8-application-guide</loc>
     <video:video>
       <video:thumbnail_loc>https://scalvea.com/og-image.webp</video:thumbnail_loc>
-      <video:title>Scalvea Follicle 8 Hair Growth Serum Application &amp; Demonstration</video:title>
+      <video:title>How to Apply Scalvea Follicle 8 Hair Growth Serum — Demonstration &amp; Routine Guide</video:title>
       <video:description>Watch how to apply Scalvea Follicle 8 Hair Growth Serum featuring 4% Anagain, 3% Redensyl, 3% Baicapil, and 3% Procapil.</video:description>
       <video:content_loc>https://dtehgajreecaonqalxlf.supabase.co/storage/v1/object/public/Videos/Reel4.mp4</video:content_loc>
-      <video:player_loc>https://scalvea.com/product/follicle-8-hair-growth-serum</video:player_loc>
       <video:duration>45</video:duration>
       <video:publication_date>2026-09-01T08:00:00+00:00</video:publication_date>
       <video:family_friendly>yes</video:family_friendly>
     </video:video>
   </url>
   <url>
-    <loc>https://scalvea.com/</loc>
+    <loc>https://scalvea.com/videos/scalvea-hair-growth-science-showcase</loc>
     <video:video>
       <video:thumbnail_loc>https://scalvea.com/og-image.webp</video:thumbnail_loc>
-      <video:title>Scalvea Hair &amp; Scalp Care — Product In Demand Showcase</video:title>
+      <video:title>Scalvea Hair &amp; Scalp Care — Formulation &amp; Active Ingredients Showcase</video:title>
       <video:description>Explore Scalvea science-backed hair growth and scalp revitalization solutions.</video:description>
       <video:content_loc>https://dtehgajreecaonqalxlf.supabase.co/storage/v1/object/public/Videos/demanded.mp4</video:content_loc>
-      <video:player_loc>https://scalvea.com/</video:player_loc>
       <video:duration>30</video:duration>
       <video:publication_date>2026-09-05T08:00:00+00:00</video:publication_date>
       <video:family_friendly>yes</video:family_friendly>
     </video:video>
   </url>
   <url>
-    <loc>https://scalvea.com/about</loc>
+    <loc>https://scalvea.com/videos/about-scalvea-brand-story</loc>
     <video:video>
       <video:thumbnail_loc>https://scalvea.com/og-image.webp</video:thumbnail_loc>
-      <video:title>About Scalvea — Australian Science Meets Everyday Hair Care</video:title>
+      <video:title>The Scalvea Story — Australian Science Meets Daily Hair Wellness</video:title>
       <video:description>Our journey, philosophy, and dedication to transparent, clinically inspired formulations.</video:description>
       <video:content_loc>https://dtehgajreecaonqalxlf.supabase.co/storage/v1/object/public/Videos/About.mp4</video:content_loc>
-      <video:player_loc>https://scalvea.com/about</video:player_loc>
       <video:duration>60</video:duration>
       <video:publication_date>2026-09-01T08:00:00+00:00</video:publication_date>
       <video:family_friendly>yes</video:family_friendly>

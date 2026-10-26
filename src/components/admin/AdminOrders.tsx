@@ -21,7 +21,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AdminManualOrder from "./AdminManualOrder";
-import { generateInvoicePDF } from "@/utils/generateInvoicePDF";
 import { formatAusDateTime } from "@/lib/timezone";
 import { exportOrdersComprehensiveCSV, exportMetaCustomAudienceCSV } from "@/utils/orderExports";
 import { NormalizedOrder, OrderSortField, SortDirection } from "@/types/ordersReporting";
@@ -727,14 +726,13 @@ const AdminOrders = () => {
           {/* Row 2: Secondary Filters (Date range, Order Status, Payment Status, Currency, State) */}
           <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/40 text-xs">
             {/* Date Range Presets */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-wrap">
               <span className="text-[10px] uppercase text-muted-foreground font-semibold mr-1">Date:</span>
               {[
                 { id: "all", label: "All" },
                 { id: "today", label: "Today" },
                 { id: "7d", label: "7D" },
                 { id: "30d", label: "30D" },
-                { id: "this_month", label: "Month" },
                 { id: "custom", label: "Custom" },
               ].map(d => (
                 <button
@@ -751,19 +749,20 @@ const AdminOrders = () => {
 
             {/* Custom Date Inputs (when selected) */}
             {dateRangeFilter === "custom" && (
-              <div className="flex items-center gap-1.5 ml-2">
+              <div className="flex items-center gap-1.5 w-full sm:w-auto my-1 sm:my-0 bg-muted/40 px-2 py-1 rounded border border-border">
+                <span className="text-[10px] uppercase font-semibold text-muted-foreground">From:</span>
                 <input
                   type="date"
                   value={customStartDate}
                   onChange={e => { setCustomStartDate(e.target.value); setCurrentPage(1); }}
-                  className="h-8 text-xs border border-border px-2 bg-transparent"
+                  className="h-7 text-xs border border-border px-1.5 bg-background rounded-xs"
                 />
                 <span className="text-muted-foreground text-xs">to</span>
                 <input
                   type="date"
                   value={customEndDate}
                   onChange={e => { setCustomEndDate(e.target.value); setCurrentPage(1); }}
-                  className="h-8 text-xs border border-border px-2 bg-transparent"
+                  className="h-7 text-xs border border-border px-1.5 bg-background rounded-xs"
                 />
               </div>
             )}
@@ -822,7 +821,7 @@ const AdminOrders = () => {
             )}
 
             {/* Sorting Controls */}
-            <div className="ml-auto flex items-center gap-1.5">
+            <div className="w-full sm:w-auto sm:ml-auto flex items-center gap-1.5 flex-wrap pt-1 sm:pt-0">
               <span className="text-[10px] uppercase text-muted-foreground font-semibold">Sort:</span>
               <button
                 onClick={() => handleSortToggle("created_at")}
@@ -944,7 +943,7 @@ const AdminOrders = () => {
                   </div>
 
                   {/* ── Normalized Customer & Address Details ── */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-black py-1">
+                  <div className={`grid grid-cols-1 ${hasDistinctBilling ? "sm:grid-cols-3" : "sm:grid-cols-2"} gap-4 text-xs text-black py-1`}>
                     {/* Customer Info */}
                     <div className="space-y-1">
                       <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Customer</p>
@@ -971,23 +970,14 @@ const AdminOrders = () => {
                       <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-semibold">{shipCountry}</p>
                     </div>
 
-                    {/* Billing Address or Delivery / Fulfillment info */}
-                    <div className="space-y-1">
-                      {hasDistinctBilling ? (
-                        <>
-                          <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Bill To</p>
-                          <p className="font-medium text-black">{billLine1}</p>
-                          <p className="font-medium text-black">{[billCity, order.billing_state || billing.state, order.billing_postcode || billing.postcode].filter(Boolean).join(", ")}</p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Fulfillment & Delivery</p>
-                          <p className="font-medium">{order.delivery_method ? order.delivery_method.replace(/_/g, " ") : (order.delivery_estimate || "Standard Shipping")}</p>
-                          {order.courier_name && <p className="font-mono text-[11px]">Courier: {order.courier_name}</p>}
-                          {order.tracking_number && <p className="font-mono text-[11px]">Tracking: {order.tracking_number}</p>}
-                        </>
-                      )}
-                    </div>
+                    {/* Billing Address (only shown when distinctly different from shipping) */}
+                    {hasDistinctBilling && (
+                      <div className="space-y-1">
+                        <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Bill To</p>
+                        <p className="font-medium text-black">{billLine1}</p>
+                        <p className="font-medium text-black">{[billCity, order.billing_state || billing.state, order.billing_postcode || billing.postcode].filter(Boolean).join(", ")}</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* ── Order Items Breakdown ── */}
@@ -1039,10 +1029,17 @@ const AdminOrders = () => {
 
                       {/* Download Invoice */}
                       <Button
-                        onClick={() => generateInvoicePDF({
-                          ...order,
-                          order_items: (orderItems[order.id]?.length ? orderItems[order.id] : order.order_items) || [],
-                        })}
+                        onClick={async () => {
+                          try {
+                            const { generateInvoicePDF } = await import("@/utils/generateInvoicePDF");
+                            await generateInvoicePDF({
+                              ...order,
+                              order_items: (orderItems[order.id]?.length ? orderItems[order.id] : order.order_items) || [],
+                            });
+                          } catch (err: any) {
+                            console.error("Failed to generate invoice PDF:", err);
+                          }
+                        }}
                         variant="outline"
                         className="h-10 px-3.5 text-xs font-semibold tracking-wider uppercase border-black text-black hover:bg-black hover:text-white transition-all shadow-xs flex items-center gap-2"
                       >

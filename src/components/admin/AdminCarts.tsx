@@ -532,7 +532,7 @@ export const AdminCarts = () => {
       </div>
 
       {/* ─── 2. KPI SUMMARY METRIC CARDS ──────────────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Total Carts */}
         <div className="bg-card border border-border p-4 rounded-xl shadow-2xs">
           <div className="flex items-center justify-between text-muted-foreground mb-1">
@@ -575,7 +575,7 @@ export const AdminCarts = () => {
             <span className="text-[11px] font-semibold uppercase tracking-wider">Total Value Tracked</span>
             <DollarSign className="w-4 h-4" />
           </div>
-          <p className="text-xl font-bold font-mono tracking-tight text-foreground">
+          <p className="text-lg sm:text-xl font-bold font-mono tracking-tight text-foreground truncate">
             A${stats.totalValueAud.toFixed(0)} <span className="text-xs text-muted-foreground font-normal">/</span> ₹{Math.round(stats.totalValueInr).toLocaleString("en-IN")}
           </p>
           <p className="text-[10px] text-muted-foreground mt-1">Australia & India Combined</p>
@@ -641,29 +641,29 @@ export const AdminCarts = () => {
         </div>
 
         {/* Inactivity Threshold setting */}
-        <div className="flex items-center justify-between pt-2 border-t border-border/60 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-foreground">Inactivity Threshold:</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-3 border-t border-border/60 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium text-foreground shrink-0">Inactivity Threshold:</span>
             <select
               value={abandonmentHours}
               onChange={(e) => setAbandonmentHours(Number(e.target.value))}
-              className="h-7 px-2 text-xs bg-background border border-border rounded outline-none"
+              className="h-8 px-2.5 text-xs bg-background border border-border rounded-md outline-none focus:border-foreground"
             >
               <option value={12}>12 Hours</option>
               <option value={24}>24 Hours (1 Day — Default)</option>
               <option value={48}>48 Hours (2 Days)</option>
               <option value={72}>72 Hours (3 Days)</option>
             </select>
-            <span>Carts idle longer than this are classified as Abandoned.</span>
+            <span className="text-[11px] text-muted-foreground">Idle carts beyond threshold = Abandoned</span>
           </div>
 
-          <span className="font-mono text-[11px]">
-            Showing {filteredCarts.length} of {carts.length} records
+          <span className="font-mono text-[11px] text-muted-foreground shrink-0">
+            Showing <strong className="text-foreground">{filteredCarts.length}</strong> of {carts.length} records
           </span>
         </div>
       </div>
 
-      {/* ─── 4. CARTS TABLE ─────────────────────────────────────────────────── */}
+      {/* ─── 4. CARTS TABLE & RESPONSIVE MOBILE VIEW ─────────────────────────── */}
       <div className="bg-card border border-border rounded-xl shadow-2xs overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-muted-foreground text-xs space-y-2">
@@ -677,104 +677,187 @@ export const AdminCarts = () => {
             <p className="text-xs font-light">Try adjusting your status, date, or search criteria.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-muted/40 border-b border-border text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Customer</th>
-                  <th className="py-3 px-4">Market</th>
-                  <th className="py-3 px-4">Items in Cart</th>
-                  <th className="py-3 px-4 text-right">Value</th>
-                  <th className="py-3 px-4">Last Activity</th>
-                  <th className="py-3 px-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredCarts.map((cart) => {
-                  const effectiveStatus = cart.computed_status || cart.status;
-                  const formattedTotal =
-                    cart.currency === "AUD"
-                      ? `A$${Number(cart.total).toFixed(2)}`
-                      : `₹${Math.round(Number(cart.total)).toLocaleString("en-IN")}`;
+          <>
+            {/* Desktop Full Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-muted/40 border-b border-border text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <tr>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4">Customer</th>
+                    <th className="py-3 px-4">Market</th>
+                    <th className="py-3 px-4">Items in Cart</th>
+                    <th className="py-3 px-4 text-right">Value</th>
+                    <th className="py-3 px-4">Last Activity</th>
+                    <th className="py-3 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredCarts.map((cart) => {
+                    const effectiveStatus = cart.computed_status || cart.status;
+                    const formattedTotal =
+                      cart.currency === "AUD"
+                        ? `A$${Number(cart.total).toFixed(2)}`
+                        : `₹${Math.round(Number(cart.total)).toLocaleString("en-IN")}`;
 
-                  return (
-                    <tr
-                      key={cart.id}
-                      className="hover:bg-muted/20 transition-colors cursor-pointer"
-                      onClick={() => openCartDetails(cart)}
-                    >
-                      {/* Status */}
-                      <td className="py-3 px-4 whitespace-nowrap">
-                        {renderStatusBadge(effectiveStatus)}
-                      </td>
+                    return (
+                      <tr
+                        key={cart.id}
+                        className="hover:bg-muted/20 transition-colors cursor-pointer"
+                        onClick={() => openCartDetails(cart)}
+                      >
+                        {/* Status */}
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          {renderStatusBadge(effectiveStatus)}
+                        </td>
 
-                      {/* Customer Info */}
-                      <td className="py-3 px-4">
-                        <div className="font-semibold text-foreground">
-                          {cart.customer_name || "Guest Customer"}
-                        </div>
-                        <div className="text-[11px] text-muted-foreground font-mono">
-                          {cart.customer_email || "No email"}
-                        </div>
-                        {cart.customer_phone && (
-                          <div className="text-[10px] text-muted-foreground">
-                            {cart.customer_phone}
+                        {/* Customer Info */}
+                        <td className="py-3 px-4">
+                          <div className="font-semibold text-foreground">
+                            {cart.customer_name || "Guest Customer"}
                           </div>
-                        )}
-                      </td>
+                          <div className="text-[11px] text-muted-foreground font-mono">
+                            {cart.customer_email || "No email"}
+                          </div>
+                          {cart.customer_phone && (
+                            <div className="text-[10px] text-muted-foreground">
+                              {cart.customer_phone}
+                            </div>
+                          )}
+                        </td>
 
-                      {/* Country & Currency */}
-                      <td className="py-3 px-4 whitespace-nowrap">
-                        <div className="font-medium text-foreground">{cart.country}</div>
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          {cart.currency}
-                        </span>
-                      </td>
+                        {/* Country & Currency */}
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <div className="font-medium text-foreground">{cart.country}</div>
+                          <span className="text-[10px] text-muted-foreground font-mono">
+                            {cart.currency}
+                          </span>
+                        </td>
 
-                      {/* Products Summary */}
-                      <td className="py-3 px-4 max-w-xs">
-                        <div className="text-[11px] font-medium text-foreground truncate">
-                          {cart.items && cart.items.length > 0
-                            ? cart.items.map((i) => `${i.quantity}x ${i.name}`).join(", ")
-                            : "Empty bag"}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground">
-                          {cart.item_count} total {cart.item_count === 1 ? "unit" : "units"}
-                        </div>
-                      </td>
+                        {/* Products Summary */}
+                        <td className="py-3 px-4 max-w-xs">
+                          <div className="text-[11px] font-medium text-foreground truncate">
+                            {cart.items && cart.items.length > 0
+                              ? cart.items.map((i) => `${i.quantity}x ${i.name}`).join(", ")
+                              : "Empty bag"}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">
+                            {cart.item_count} total {cart.item_count === 1 ? "unit" : "units"}
+                          </div>
+                        </td>
 
-                      {/* Total Value */}
-                      <td className="py-3 px-4 text-right whitespace-nowrap font-mono font-bold text-foreground">
+                        {/* Total Value */}
+                        <td className="py-3 px-4 text-right whitespace-nowrap font-mono font-bold text-foreground">
+                          {formattedTotal}
+                        </td>
+
+                        {/* Last Updated */}
+                        <td className="py-3 px-4 whitespace-nowrap text-muted-foreground text-[11px]">
+                          <div>{formatAusDateTime(cart.updated_at)}</div>
+                          <span className="text-[10px] opacity-75">Event: {cart.last_event || "active"}</span>
+                        </td>
+
+                        {/* Action */}
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-2.5 text-xs text-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openCartDetails(cart);
+                            }}
+                          >
+                            <Eye className="w-3.5 h-3.5 mr-1" /> View
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Touch-Friendly Card Feed */}
+            <div className="block md:hidden divide-y divide-border">
+              {filteredCarts.map((cart) => {
+                const effectiveStatus = cart.computed_status || cart.status;
+                const formattedTotal =
+                  cart.currency === "AUD"
+                    ? `A$${Number(cart.total).toFixed(2)}`
+                    : `₹${Math.round(Number(cart.total)).toLocaleString("en-IN")}`;
+
+                return (
+                  <div
+                    key={cart.id}
+                    className="p-4 space-y-3 hover:bg-muted/15 transition-colors cursor-pointer"
+                    onClick={() => openCartDetails(cart)}
+                  >
+                    {/* Header Row: Status & Total */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div>{renderStatusBadge(effectiveStatus)}</div>
+                      <span className="font-mono text-base font-bold text-foreground">
                         {formattedTotal}
-                      </td>
+                      </span>
+                    </div>
 
-                      {/* Last Updated */}
-                      <td className="py-3 px-4 whitespace-nowrap text-muted-foreground text-[11px]">
-                        <div>{formatAusDateTime(cart.updated_at)}</div>
-                        <span className="text-[10px] opacity-75">Event: {cart.last_event || "active"}</span>
-                      </td>
+                    {/* Customer details */}
+                    <div className="space-y-0.5">
+                      <p className="font-semibold text-sm text-foreground">
+                        {cart.customer_name || "Guest Customer"}
+                      </p>
+                      {cart.customer_email && (
+                        <p className="text-xs text-muted-foreground font-mono flex items-center gap-1.5 truncate">
+                          <Mail className="w-3 h-3 shrink-0 text-muted-foreground" />
+                          <span className="truncate">{cart.customer_email}</span>
+                        </p>
+                      )}
+                      {cart.customer_phone && (
+                        <p className="text-xs text-muted-foreground font-mono flex items-center gap-1.5">
+                          <Phone className="w-3 h-3 shrink-0 text-muted-foreground" />
+                          <span>{cart.customer_phone}</span>
+                        </p>
+                      )}
+                    </div>
 
-                      {/* Action */}
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2.5 text-xs text-foreground"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openCartDetails(cart);
-                          }}
-                        >
-                          <Eye className="w-3.5 h-3.5 mr-1" /> View
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                    {/* Cart Items Summary */}
+                    <div className="bg-muted/40 rounded-lg p-2.5 text-xs space-y-1">
+                      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                        <span className="font-semibold uppercase tracking-wider">
+                          {cart.country} · {cart.currency}
+                        </span>
+                        <span>{cart.item_count} {cart.item_count === 1 ? "unit" : "units"}</span>
+                      </div>
+                      <p className="font-medium text-foreground text-[11px] line-clamp-2">
+                        {cart.items && cart.items.length > 0
+                          ? cart.items.map((i) => `${i.quantity}x ${i.name}`).join(", ")
+                          : "Empty cart"}
+                      </p>
+                    </div>
+
+                    {/* Footer Row: Activity timestamp + View button */}
+                    <div className="flex items-center justify-between pt-1 text-[11px] text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-muted-foreground" />
+                        <span>{formatAusDateTime(cart.updated_at)}</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-3 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openCartDetails(cart);
+                        }}
+                      >
+                        <Eye className="w-3 h-3 mr-1" /> View Details
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 

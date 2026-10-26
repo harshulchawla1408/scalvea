@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { 
   Users, 
   FlaskConical, 
@@ -173,13 +172,7 @@ const ProductInDemand = () => {
             TOP SECTION HEADER — Above Video for Mobile & Desktop
             "Product in Demand" is prominently larger than product name
            ======================================================== */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-8 md:mb-14 text-center lg:text-left"
-        >
+        <div className="mb-8 md:mb-14 text-center lg:text-left">
           <span className="text-[10px] md:text-xs tracking-[0.25em] uppercase text-neutral-600 font-body font-medium block mb-2.5">
             FEATURED SPOTLIGHT
           </span>
@@ -189,7 +182,7 @@ const ProductInDemand = () => {
           <p className="text-base sm:text-lg md:text-xl font-heading text-neutral-600 font-normal mt-2 tracking-normal">
             Follicle 8 Hair Growth Serum
           </p>
-        </motion.div>
+        </div>
 
         {/* ========================================================
             2-COLUMN GRID (Video on Left, Editorial on Right)
@@ -200,11 +193,7 @@ const ProductInDemand = () => {
               LEFT COLUMN — 9:16 Vertical Video Player
              ======================================================== */}
           <div className="lg:col-span-5 flex justify-center w-full">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            <div
               className="relative w-full max-w-[280px] xs:max-w-[320px] sm:max-w-[360px] lg:max-w-[400px] aspect-[9/16] rounded-[24px] md:rounded-[28px] overflow-hidden border border-neutral-150 shadow-[0_16px_48px_rgba(0,0,0,0.06)] bg-neutral-100 group cursor-pointer"
               onClick={() => togglePlay()}
             >
@@ -272,20 +261,14 @@ const ProductInDemand = () => {
                   Featured Reel
                 </span>
               </div>
-            </motion.div>
+            </div>
           </div>
 
           {/* ========================================================
               RIGHT COLUMN — Editorial Content & Highlights
              ======================================================== */}
           <div className="lg:col-span-7 flex flex-col justify-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="space-y-6"
-            >
+            <div className="space-y-6">
               {/* Feature Focus Headline & High-Visibility Luxury Card */}
               <div className="p-5 sm:p-6 rounded-2xl bg-[#F9F9F7] border border-neutral-200/80 shadow-[0_4px_16px_rgba(0,0,0,0.03)] space-y-3">
                 <h3 className="text-2xl sm:text-3xl md:text-[32px] font-heading font-semibold text-black tracking-tight leading-[1.2]">
@@ -347,18 +330,27 @@ const ProductInDemand = () => {
                     <img
                       src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
                       alt="Customer"
+                      width="28"
+                      height="28"
+                      decoding="async"
                       className="w-7 h-7 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-neutral-200/60"
                       loading="lazy"
                     />
                     <img
                       src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
                       alt="Customer"
+                      width="28"
+                      height="28"
+                      decoding="async"
                       className="w-7 h-7 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-neutral-200/60"
                       loading="lazy"
                     />
                     <img
                       src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80"
                       alt="Customer"
+                      width="28"
+                      height="28"
+                      decoding="async"
                       className="w-7 h-7 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-neutral-200/60"
                       loading="lazy"
                     />
@@ -389,8 +381,7 @@ const ProductInDemand = () => {
                   <ArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform duration-300" />
                 </Link>
               </div>
-
-            </motion.div>
+            </div>
           </div>
 
         </div>

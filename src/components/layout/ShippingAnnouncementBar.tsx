@@ -15,22 +15,26 @@ export const ShippingAnnouncementBar = ({
   const isIndia = selectedCountry === "india";
 
   const flagUrl = isIndia
-    ? "https://flagcdn.com/w20/in.png"
-    : "https://flagcdn.com/w20/au.png";
+    ? "/flags/in.png"
+    : "/flags/au.png";
   const flagAlt = isIndia ? "India" : "Australia";
 
   const message = isIndia
     ? "Free Delivery Across India"
     : "Free Australia-Wide Shipping on Orders A$60+";
 
-  const [displayedText, setDisplayedText] = useState(() => {
-    if (typeof window === "undefined") return message;
-    return "";
-  });
-  const [isTypingComplete, setIsTypingComplete] = useState(() => typeof window === "undefined");
+  const [displayedText, setDisplayedText] = useState(message);
+  const [isTypingComplete, setIsTypingComplete] = useState(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const initialMount = useRef(true);
 
   useEffect(() => {
+    // On initial mount, keep full SSR text to prevent CLS layout shift
+    if (initialMount.current) {
+      initialMount.current = false;
+      return;
+    }
+
     // Check for prefers-reduced-motion
     const prefersReducedMotion =
       typeof window !== "undefined" &&
@@ -94,10 +98,12 @@ export const ShippingAnnouncementBar = ({
             />
           )}
 
-          {/* Country Flag Image after country text */}
+          {/* Country Flag Image after country text with explicit dimensions to eliminate CLS */}
           <img
             src={flagUrl}
             alt={flagAlt}
+            width="16"
+            height="12"
             className={`w-3.5 sm:w-4 h-auto rounded-[2px] shadow-sm ml-0.5 inline-block shrink-0 transition-opacity duration-300 ${
               isTypingComplete ? "opacity-100" : "opacity-0"
             }`}

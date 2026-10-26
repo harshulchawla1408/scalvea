@@ -5,6 +5,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useCountry } from "@/contexts/CountryContext";
 import type { DBProduct } from "@/hooks/useProducts";
+import { getOptimizedImageUrl, getOptimizedImageSrcSet } from "@/utils/imageOptimizer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface ProductCardProps {
@@ -140,7 +141,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onClick={(e) => {
-              if (hasSecondImage && (window.innerWidth < 1024 || window.matchMedia("(pointer: coarse)").matches)) {
+              if (hasSecondImage && (window.matchMedia("(max-width: 1023px), (pointer: coarse)").matches)) {
                 e.preventDefault();
                 e.stopPropagation();
                 setMobileImageIndex((prev) => (prev === 0 ? 1 : 0));
@@ -160,10 +161,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
             <div className="w-full h-full relative flex items-center justify-center">
               {/* Primary Image: Zooms out smoothly during hover (scale-100 down to scale-95), then after 4s fades to secondary */}
               <img
-                src={product.images[0]}
+                src={getOptimizedImageUrl(product.images[0], 480)}
+                srcSet={getOptimizedImageSrcSet(product.images[0], [320, 480, 640]) || undefined}
+                sizes="(max-width: 640px) 240px, (max-width: 1024px) 340px, 480px"
                 alt={product.name}
-                width="600"
-                height="600"
+                width="480"
+                height="480"
                 className={`w-full h-full object-contain object-center absolute inset-0 transform transition-transform duration-[4000ms] ease-out ${
                   isHovered ? "scale-95" : "scale-100 !duration-500"
                 } ${
@@ -172,21 +175,25 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     : "opacity-0 transition-opacity duration-500"
                 }`}
                 loading="lazy"
+                decoding="async"
               />
               
               {/* Secondary Image: Fades in after 4 seconds */}
               {hasSecondImage && (
                 <img
-                  src={product.images[1]}
+                  src={getOptimizedImageUrl(product.images[1], 480)}
+                  srcSet={getOptimizedImageSrcSet(product.images[1], [320, 480, 640]) || undefined}
+                  sizes="(max-width: 640px) 240px, (max-width: 1024px) 340px, 480px"
                   alt={`${product.name} alternate`}
-                  width="600"
-                  height="600"
+                  width="480"
+                  height="480"
                   className={`w-full h-full object-contain object-center absolute inset-0 transform transition-all duration-700 ease-in-out ${
                     showHoverSecondary || mobileImageIndex === 1
                       ? "opacity-100 scale-100 pointer-events-auto"
                       : "opacity-0 scale-95 pointer-events-none"
                   }`}
                   loading="lazy"
+                  decoding="async"
                 />
               )}
             </div>

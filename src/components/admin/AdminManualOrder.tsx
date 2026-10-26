@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { X, Plus, Minus, Package, Truck, CreditCard, Download } from "lucide-react";
-import { generateInvoicePDF } from "@/utils/generateInvoicePDF";
 
 /* ─── Types ─── */
 interface CustomLineItem {
@@ -162,7 +161,8 @@ const AdminManualOrder = ({ onClose, onOrderCreated }: Props) => {
           .single();
           
         if (fullOrder) {
-          generateInvoicePDF(fullOrder as any);
+          const { generateInvoicePDF } = await import("@/utils/generateInvoicePDF");
+          await generateInvoicePDF(fullOrder as any);
         }
       }
 

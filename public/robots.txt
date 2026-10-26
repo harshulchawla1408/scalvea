@@ -21,6 +21,8 @@ Allow: /shipping-policy
 Allow: /cancellation-policy
 Allow: /payment-policy
 Allow: /product/
+Allow: /videos
+Allow: /videos/
 
 # ── Block administrative, account, and checkout flows ─────────────────────────
 Disallow: /admin
@@ -38,7 +40,6 @@ Disallow: /auth/
 Disallow: /order-success
 Disallow: /order-failed
 Disallow: /shiprocket-callback
-Disallow: /support
 
 # ── Block search queries and sort parameters to save crawl budget ─────────────
 Disallow: /*?search=

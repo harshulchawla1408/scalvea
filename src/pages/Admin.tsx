@@ -30,7 +30,6 @@ const adminPages = [
   { key: "products", label: "Products", icon: Package },
   { key: "inventory", label: "Inventory", icon: BarChart3 },
   { key: "users", label: "Users", icon: Users },
-  { key: "countries", label: "Country / Tax / Shipping", icon: Globe },
   { key: "coupons", label: "Coupons", icon: Tag },
   { key: "reviews", label: "Reviews", icon: Star },
   { key: "settings", label: "Settings", icon: Settings },
@@ -43,15 +42,19 @@ const Admin = () => {
     noindex: true
   });
 
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
-      toast({ title: "Access denied", description: "Admin privileges required.", variant: "destructive" });
-      navigate("/");
+    if (!loading) {
+      if (!user) {
+        navigate("/auth?returnTo=/admin", { replace: true });
+      } else if (!isAdmin) {
+        toast({ title: "Access denied", description: "Admin privileges required.", variant: "destructive" });
+        navigate("/", { replace: true });
+      }
     }
   }, [loading, user, isAdmin, navigate]);
 
@@ -59,7 +62,7 @@ const Admin = () => {
   if (!user || !isAdmin) return null;
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     navigate("/");
   };
 
@@ -71,7 +74,6 @@ const Admin = () => {
       case "carts": return <AdminCarts />;
       case "inventory": return <AdminInventory />;
       case "users": return <AdminUsers />;
-      case "countries": return <AdminCountrySettings />;
       case "coupons": return <AdminCoupons />;
       case "reviews": return <AdminReviews />;
       case "analytics": return <AdminAnalytics />;

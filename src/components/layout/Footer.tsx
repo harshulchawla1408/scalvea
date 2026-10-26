@@ -139,6 +139,7 @@ const Footer = () => {
               <ul className="space-y-3.5 text-[15px] text-neutral-300 font-normal">
                 <FooterLink to="/about">About Us</FooterLink>
                 <FooterLink to="/blogs">Blog</FooterLink>
+                <FooterLink to="/videos">Video Guides</FooterLink>
                 <FooterLink to="/faq">FAQs</FooterLink>
                 <FooterLink to="/terms-of-service">Terms &amp; Conditions</FooterLink>
               </ul>
@@ -164,6 +165,8 @@ const Footer = () => {
                 <FooterLink to="/shipping-policy">Shipping Policy</FooterLink>
                 <FooterLink to="/returns-policy">Return &amp; Refund Policy</FooterLink>
                 <FooterLink to="/privacy-policy">Privacy Policy</FooterLink>
+                <FooterLink to="/payment-policy">Payment Policy</FooterLink>
+                <FooterLink to="/cancellation-policy">Cancellation Policy</FooterLink>
               </ul>
             </div>
           </div>
@@ -185,7 +188,7 @@ const Footer = () => {
               <div className="space-y-5 text-sm text-neutral-300 font-light">
                 <div>
                   <p className="text-neutral-200 font-semibold tracking-wider text-[11px] uppercase mb-1.5 flex items-center gap-1.5">
-                    <img src="https://flagcdn.com/w40/au.png" alt="Australia" className="w-3.5 h-auto rounded-[1.5px] shadow-sm" width="14" height="10" />
+                    <img src="/flags/au.png" alt="Australia" className="w-3.5 h-auto rounded-[1.5px] shadow-sm" width="14" height="10" />
                     <span>Australia (HQ)</span>
                   </p>
                   <address className="not-italic leading-relaxed text-neutral-300 text-[13px]">
@@ -194,7 +197,7 @@ const Footer = () => {
                 </div>
                 <div>
                   <p className="text-neutral-200 font-semibold tracking-wider text-[11px] uppercase mb-1.5 flex items-center gap-1.5">
-                    <img src="https://flagcdn.com/w40/in.png" alt="India" className="w-3.5 h-auto rounded-[1.5px] shadow-sm" width="14" height="10" />
+                    <img src="/flags/in.png" alt="India" className="w-3.5 h-auto rounded-[1.5px] shadow-sm" width="14" height="10" />
                     <span>India</span>
                   </p>
                   <address className="not-italic leading-relaxed text-neutral-300 text-[13px]">
@@ -208,7 +211,7 @@ const Footer = () => {
                   </p>
                   <div className="space-y-2">
                     <a
-                      href="https://wa.me/61494754851?text=Hi%20Scalvea%2C%20I%20would%20like%20to%20know%20more%20about%20your%20premium%20hair%20care%20products."
+                      href="https://wa.me/917527862966?text=Hi%20Scalvea%2C%20I%20would%20like%20to%20know%20more%20about%20your%20premium%20hair%20care%20products."
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2.5 text-neutral-300 hover:text-white transition-colors text-[13px] group"
@@ -217,7 +220,7 @@ const Footer = () => {
                       <span className="p-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 group-hover:text-emerald-400 group-hover:border-neutral-700 transition-colors flex items-center justify-center shrink-0">
                         <WhatsappIcon className="size-3.5" />
                       </span>
-                      <span>WhatsApp: +61 494 754 851</span>
+                      <span>WhatsApp: +91 7527 862 966</span>
                     </a>
                     <a
                       href="mailto:info@scalvea.com"

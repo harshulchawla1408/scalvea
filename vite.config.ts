@@ -35,31 +35,109 @@ export default defineConfig(async ({ mode, isSsrBuild }) => {
       sourcemap: mode !== 'production',
       rollupOptions: {
         output: {
-          // Manual chunk splitting to reduce initial JS bundle
-          manualChunks: isSsrBuild ? undefined : {
-            // Vendor: React core
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            // Framer Motion — heavy animation library
-            'vendor-motion': ['framer-motion'],
-            // Radix UI primitives — tree-shake by grouping commonly used ones
-            'vendor-radix': [
-              '@radix-ui/react-dialog',
-              '@radix-ui/react-toast',
-              '@radix-ui/react-tooltip',
-              '@radix-ui/react-accordion',
-              '@radix-ui/react-select',
-              '@radix-ui/react-tabs',
-              '@radix-ui/react-popover',
-              '@radix-ui/react-dropdown-menu',
-            ],
-            // Supabase client
-            'vendor-supabase': ['@supabase/supabase-js'],
-            // TanStack Query
-            'vendor-query': ['@tanstack/react-query'],
-            // Heavy utilities (only loaded on specific pages)
-            'vendor-pdf': ['jspdf', 'jspdf-autotable'],
-            'vendor-charts': ['recharts'],
-            'vendor-stripe': ['@stripe/stripe-js'],
+          // Manual chunk splitting to eliminate unused JS from initial homepage load
+          manualChunks: isSsrBuild ? undefined : (id) => {
+            // Internal runtime helpers: keep with vendor-react
+            if (
+              id.includes('vite/preload-helper') ||
+              id.includes('modulepreload-polyfill') ||
+              id.includes('commonjsHelpers')
+            ) {
+              return 'vendor-react';
+            }
+
+            if (id.includes('node_modules')) {
+              // React core, router, react-is, babel runtime & scheduler
+              if (
+                id.includes('/react/') ||
+                id.includes('/react-dom/') ||
+                id.includes('/react-router/') ||
+                id.includes('/react-router-dom/') ||
+                id.includes('/scheduler/') ||
+                id.includes('react-is') ||
+                id.includes('@babel/runtime')
+              ) {
+                return 'vendor-react';
+              }
+
+              // Isolated heavy PDF & canvas tools (NEVER loaded on public routes)
+              if (
+                id.includes('jspdf') ||
+                id.includes('jspdf-autotable') ||
+                id.includes('canvg') ||
+                id.includes('html2canvas') ||
+                id.includes('dompurify')
+              ) {
+                return 'vendor-pdf';
+              }
+
+              // Isolated charts (only loaded on admin / analytics)
+              if (
+                id.includes('recharts') ||
+                id.includes('d3-') ||
+                id.includes('victory-vendor') ||
+                id.includes('decimal.js-light')
+              ) {
+                return 'vendor-charts';
+              }
+
+              // Framer motion (isolated for routes that animate)
+              if (id.includes('framer-motion')) {
+                return 'vendor-motion';
+              }
+
+              // Stripe SDK
+              if (id.includes('@stripe/stripe-js')) {
+                return 'vendor-stripe';
+              }
+
+              // Supabase client
+              if (id.includes('@supabase/')) {
+                return 'vendor-supabase';
+              }
+
+              // TanStack Query
+              if (id.includes('@tanstack/react-query')) {
+                return 'vendor-query';
+              }
+
+              // Radix UI: Primitives + Toast + Tooltip + Dialog/Sheet in core, heavy components (select, tabs, accordion) in heavy
+              if (id.includes('@radix-ui/')) {
+                if (
+                  id.includes('primitive') ||
+                  id.includes('compose-refs') ||
+                  id.includes('context') ||
+                  id.includes('react-slot') ||
+                  id.includes('react-use-') ||
+                  id.includes('react-id') ||
+                  id.includes('react-presence') ||
+                  id.includes('react-portal') ||
+                  id.includes('react-dismissable-layer') ||
+                  id.includes('react-focus-scope') ||
+                  id.includes('react-focus-guards') ||
+                  id.includes('react-arrow') ||
+                  id.includes('react-popper') ||
+                  id.includes('react-collection') ||
+                  id.includes('react-visually-hidden') ||
+                  id.includes('react-direction') ||
+                  id.includes('react-dialog') ||
+                  id.includes('react-toast') ||
+                  id.includes('react-tooltip')
+                ) {
+                  return 'vendor-radix-core';
+                }
+                return 'vendor-radix-heavy';
+              }
+
+              // Styling utilities (clsx, tailwind-merge, cva)
+              if (
+                id.includes('clsx') ||
+                id.includes('tailwind-merge') ||
+                id.includes('class-variance-authority')
+              ) {
+                return 'vendor-utils';
+              }
+            }
           },
         },
       },

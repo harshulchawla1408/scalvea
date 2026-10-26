@@ -1,0 +1,41 @@
+# =============================================================================
+# SCALVEA — Git Line-Ending Policy
+# =============================================================================
+# Normalise all text files to LF on commit regardless of OS.
+# This eliminates the LF→CRLF warnings on Windows and keeps diffs clean.
+# =============================================================================
+
+# Default: normalise text files to LF
+* text=auto eol=lf
+
+# Explicitly text files
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.js    text eol=lf
+*.mjs   text eol=lf
+*.cjs   text eol=lf
+*.css   text eol=lf
+*.html  text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.toml  text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.sql   text eol=lf
+*.conf  text eol=lf
+*.txt   text eol=lf
+*.sh    text eol=lf
+
+# Binary assets — never mangle newlines
+*.woff2 binary
+*.woff  binary
+*.ttf   binary
+*.otf   binary
+*.webp  binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.svg   text eol=lf
+*.ico   binary
+*.mp4   binary
+*.webm  binary

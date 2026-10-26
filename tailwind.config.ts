@@ -20,6 +20,8 @@ export default {
         sans: ["var(--font-sans)", "sans-serif"],
         hero: ["var(--font-hero)", "sans-serif"],
         chillax: ["var(--font-chillax)", "sans-serif"],
+        manrope: ["var(--font-manrope)", "sans-serif"],
+        jost: ["var(--font-jost)", "sans-serif"],
       },
       transitionTimingFunction: {
         'luxury': 'cubic-bezier(0.16, 1, 0.3, 1)',

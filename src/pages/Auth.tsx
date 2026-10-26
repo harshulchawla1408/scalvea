@@ -186,7 +186,7 @@ const Auth = () => {
   const [rightLightPos, setRightLightPos] = useState({ x: 0, y: 0 });
   const [rightLightOpacity, setRightLightOpacity] = useState(0);
 
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const { currency, selectedCountry, market } = useCountry();
   const { items } = useCart();
   const navigate = useNavigate();
@@ -202,6 +202,11 @@ const Auth = () => {
       sessionStorage.getItem("scalvea_auth_return_to") ||
       localStorage.getItem("scalvea_auth_return_to");
     if (storedReturnTo && storedReturnTo !== "/") return storedReturnTo;
+
+    // If an admin user signs in without a specific returnTo, default to /admin
+    if (isAdmin) {
+      return "/admin";
+    }
 
     const isAustralia =
       selectedCountry === "australia" || market === "AU" || currency === "AUD";

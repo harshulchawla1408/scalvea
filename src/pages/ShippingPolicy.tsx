@@ -161,9 +161,9 @@ const ShippingPolicy = () => {
                   <Mail className="size-[15px] text-neutral-450" />
                   <span>info@scalvea.com</span>
                 </a>
-                <a href="tel:+61494754851" className="flex items-center gap-2 text-neutral-700 hover:text-black transition-colors font-medium">
+                <a href="tel:+917527862966" className="flex items-center gap-2 text-neutral-700 hover:text-black transition-colors font-medium">
                   <Phone className="size-[15px] text-neutral-450" />
-                  <span>+61 494 754 851</span>
+                  <span>+91 7527 862 966</span>
                 </a>
               </div>
             </div>

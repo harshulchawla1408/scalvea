@@ -25,7 +25,7 @@ export function LazyVideo({
       const video = videoRef.current;
       if (!video) return;
 
-      const isMobile = window.innerWidth <= 768;
+      const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches;
       video.src = (isMobile && videoSrcMobile) ? videoSrcMobile : videoSrc;
       video.load();
 

@@ -109,7 +109,10 @@ const AdminProducts = () => {
       const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const filePath = `products/${fileName}`;
 
-      const { error } = await supabase.storage.from("product-images").upload(filePath, file);
+      const { error } = await supabase.storage.from("product-images").upload(filePath, file, {
+        cacheControl: "31536000",
+        upsert: false,
+      });
       if (error) {
         toast({ title: "Upload failed", description: error.message, variant: "destructive" });
         continue;

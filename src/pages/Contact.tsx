@@ -144,14 +144,14 @@ const Contact = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 max-w-xl mx-auto">
               {[
                 { 
-                  flagUrl: "https://flagcdn.com/w40/au.png", 
+                  flagUrl: "/flags/au.png", 
                   label: "Australian Headquarters", 
                   state: "Victoria", 
                   country: "Australia",
                   address: "Little Collins St, Melbourne VIC 3000, Australia"
                 },
                 { 
-                  flagUrl: "https://flagcdn.com/w40/in.png", 
+                  flagUrl: "/flags/in.png", 
                   label: "India Operations", 
                   state: "Punjab", 
                   country: "India",
@@ -228,7 +228,7 @@ const Contact = () => {
 
                   {/* WhatsApp */}
                   <a
-                    href="https://wa.me/61494754851?text=Hi%20Scalvea%2C%20I%20would%20like%20to%20know%20more%20about%20your%20premium%20hair%20care%20products."
+                    href="https://wa.me/917527862966?text=Hi%20Scalvea%2C%20I%20would%20like%20to%20know%20more%20about%20your%20premium%20hair%20care%20products."
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group flex items-center gap-5 p-5 border border-neutral-100 rounded-2xl bg-[#F9F9F7] hover:border-neutral-300 hover:bg-white hover:shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition-all duration-300"
@@ -238,7 +238,7 @@ const Contact = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[9px] uppercase tracking-[0.2em] text-neutral-500 font-body font-medium mb-0.5">WhatsApp</p>
-                      <p className="text-sm font-body font-medium text-neutral-900 truncate">+61 494 754 851</p>
+                      <p className="text-sm font-body font-medium text-neutral-900 truncate">+91 7527 862 966</p>
                       <p className="text-[10px] text-neutral-500 font-body font-light">Message us anytime</p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-neutral-300 group-hover:text-neutral-600 group-hover:translate-x-1 transition-all duration-300 shrink-0" />

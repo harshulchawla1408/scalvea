@@ -53,12 +53,17 @@ export const IngredientShowcase = ({ product }: IngredientShowcaseProps) => {
         { id: "follicle4", img: follicle4, title: "Procapil — 3%", num: "04" },
       ];
 
+  const scrollRaf = useRef<number | null>(null);
   const handleScroll = () => {
-    if (!carouselRef.current) return;
-    const { scrollLeft, offsetWidth } = carouselRef.current;
-    const cardWidth = offsetWidth * 0.84;
-    const newIdx = Math.round(scrollLeft / cardWidth);
-    setActiveMobileIndex(Math.min(Math.max(0, newIdx), activeIngredients.length - 1));
+    if (scrollRaf.current !== null) return;
+    scrollRaf.current = requestAnimationFrame(() => {
+      scrollRaf.current = null;
+      if (!carouselRef.current) return;
+      const { scrollLeft, offsetWidth } = carouselRef.current;
+      const cardWidth = offsetWidth * 0.84;
+      const newIdx = Math.round(scrollLeft / cardWidth);
+      setActiveMobileIndex(Math.min(Math.max(0, newIdx), activeIngredients.length - 1));
+    });
   };
 
   const scrollToSlide = (idx: number) => {

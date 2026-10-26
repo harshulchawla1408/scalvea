@@ -202,10 +202,10 @@ export const CartMilestoneProgress: React.FC<CartMilestoneProgressProps> = ({
             aria-valuemax={3}
             aria-valuetext={`${details.title} — ${serumCount} serums`}
           >
-            {/* Smooth Left-to-Right Animated Fill (250-400ms transition, respects reduced motion) */}
+            {/* Smooth Left-to-Right Animated Fill (GPU-accelerated scaleX to avoid forced reflow) */}
             <div
-              className="h-full bg-gradient-to-r from-slate-400 via-amber-400 to-sky-600 rounded-full transition-all duration-300 ease-out motion-reduce:transition-none"
-              style={{ width: `${progressPercent}%` }}
+              className="h-full w-full bg-gradient-to-r from-slate-400 via-amber-400 to-sky-600 rounded-full transition-transform duration-300 ease-out will-change-transform motion-reduce:transition-none"
+              style={{ transform: `scaleX(${Math.max(0, Math.min(100, progressPercent)) / 100})`, transformOrigin: "left" }}
             />
           </div>
 

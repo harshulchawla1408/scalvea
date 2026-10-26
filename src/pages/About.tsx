@@ -7,8 +7,7 @@ import { ArrowRight, Mail } from "lucide-react";
 import { useRef, useState, useCallback } from "react";
 
 // Asset imports
-import puneetPng from "@/assets/puneet.webp";
-import puneetMobPng from "@/assets/puneet-mob.webp";
+import { puneetSet, puneetMobSet } from "@/assets/generated";
 
 // Supabase public video URL
 const ABOUT_VIDEO_SRC =
@@ -196,10 +195,18 @@ const About = () => {
               <p className="text-2xl md:text-3xl lg:text-4xl font-heading text-neutral-900 leading-snug">
                 "I didn't want to keep recommending products I couldn't genuinely stand behind."
               </p>
-              <p className="text-[10px] tracking-[0.22em] uppercase text-neutral-600 font-body font-semibold mt-5">
-                — Puneet, The Barber Behind The Brand
-              </p>
             </motion.div>
+
+            {/* Watch Brand Story Video Link */}
+            <div className="mt-8 pl-8">
+              <Link
+                to="/videos/about-scalvea-brand-story"
+                className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-semibold text-neutral-900 hover:text-black hover:underline"
+              >
+                <span>Watch the full brand story video guide</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
 
           </div>
         </section>
@@ -211,12 +218,15 @@ const About = () => {
           <div className="max-w-7xl mx-auto px-0">
             {/* Desktop/Laptop poster */}
             <motion.img
-              src={puneetPng}
+              src={puneetSet.src}
+              srcSet={puneetSet.srcSet}
+              sizes={puneetSet.sizes}
               alt="Scalvea Campaign Poster"
-              width="1440"
-              height="600"
+              width={puneetSet.width}
+              height={puneetSet.height}
               className="hidden md:block w-full h-auto object-contain"
               loading="lazy"
+              decoding="async"
               draggable={false}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -225,12 +235,15 @@ const About = () => {
             />
             {/* Mobile poster */}
             <motion.img
-              src={puneetMobPng}
+              src={puneetMobSet.src}
+              srcSet={puneetMobSet.srcSet}
+              sizes={puneetMobSet.sizes}
               alt="Scalvea Campaign Poster"
-              width="768"
-              height="960"
+              width={puneetMobSet.width}
+              height={puneetMobSet.height}
               className="block md:hidden w-full h-auto object-contain"
               loading="lazy"
+              decoding="async"
               draggable={false}
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}

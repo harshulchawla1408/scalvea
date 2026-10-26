@@ -914,7 +914,7 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-[#f8f8f8]">
       <Header />
-      <main className="px-4 sm:px-6 lg:px-12 py-8 lg:py-14 max-w-7xl mx-auto">
+      <main className="px-4 sm:px-6 lg:px-12 pt-6 pb-28 lg:py-14 max-w-7xl mx-auto">
 
         {/* Page header */}
         <div className="mb-6 lg:mb-8">
@@ -1053,8 +1053,6 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                {/* Payment icons strip */}
-                <IndiaPaymentTrustStrip />
               </div>
 
               {/* RIGHT — India Order summary & CTA */}
@@ -1231,23 +1229,29 @@ const Checkout = () => {
                     type="button"
                     onClick={(e) => handleShiprocketCheckout(e)}
                     disabled={placing}
-                    className="w-full h-14 rounded-xl bg-foreground text-background hover:bg-foreground/90 text-sm font-bold tracking-[0.1em] uppercase shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-all hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 active:translate-y-0"
+                    className="w-full min-h-14 py-3.5 px-4 rounded-xl bg-foreground text-background hover:bg-foreground/90 text-xs sm:text-sm font-bold tracking-[0.05em] sm:tracking-[0.1em] uppercase shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-all hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 active:translate-y-0 whitespace-normal leading-snug"
                   >
                     {placing ? (
-                      <span className="flex items-center gap-2">
-                        <span className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin" />
-                        Loading...
+                      <span className="flex items-center justify-center gap-2 text-center">
+                        <span className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin shrink-0" />
+                        Connecting to Secure Checkout...
                       </span>
                     ) : (
-                      <span className="flex items-center gap-2">
-                        <Lock className="w-4 h-4" />
-                        Continue to Secure Checkout
+                      <span className="flex items-center justify-center gap-2 text-center">
+                        <Lock className="w-4 h-4 shrink-0" />
+                        <span>Continue to Secure Checkout</span>
+                        <ChevronRight className="w-4 h-4 shrink-0" />
                       </span>
                     )}
                   </Button>
-                  <p className="flex items-center justify-center gap-1.5 mt-3 text-[10px] text-muted-foreground/70 tracking-widest uppercase">
+                  <p className="flex items-center justify-center gap-1.5 mt-2.5 text-[10px] text-muted-foreground/70 tracking-widest uppercase">
                     <Lock className="w-3 h-3" /> SSL Secured Checkout
                   </p>
+                </div>
+
+                {/* Accepted Payment Methods (Positioned directly below payment button) */}
+                <div className="pt-1">
+                  <IndiaPaymentTrustStrip />
                 </div>
 
                 {/* Partial COD Available badge — just below CTA for India */}
@@ -1608,16 +1612,19 @@ const Checkout = () => {
                       <Button
                         type="button"
                         onClick={proceedToPayment}
-                        className="w-full h-14 rounded-xl bg-foreground text-background hover:bg-foreground/90 text-sm font-bold tracking-[0.1em] uppercase shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-all hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 active:translate-y-0"
+                        className="w-full min-h-14 py-3.5 px-4 rounded-xl bg-foreground text-background hover:bg-foreground/90 text-xs sm:text-sm font-bold tracking-[0.05em] sm:tracking-[0.1em] uppercase shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-all hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 active:translate-y-0 whitespace-normal leading-snug"
                       >
-                        <span className="flex items-center gap-2">
-                          Continue to Payment — {formatVal(grandTotal)} <ChevronRight className="w-4 h-4" />
+                        <span className="flex items-center justify-center gap-2 text-center flex-wrap sm:flex-nowrap">
+                          <span>Continue to Payment</span>
+                          <span className="opacity-50">·</span>
+                          <span className="font-mono">{formatVal(grandTotal)}</span>
+                          <ChevronRight className="w-4 h-4 shrink-0" />
                         </span>
                       </Button>
                       <button
                         type="button"
                         onClick={() => setAuStep(1)}
-                        className="w-full py-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1.5 uppercase tracking-wider"
+                        className="w-full py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1.5 uppercase tracking-wider"
                       >
                         <ArrowLeft className="w-3.5 h-3.5" /> Edit Shipping Details
                       </button>
@@ -1696,11 +1703,58 @@ const Checkout = () => {
                       </div>
                     </div>
 
-                    {/* Payment Cards & Logos */}
-                    <div className="rounded-xl border border-[#e8e8e8] bg-[#fafafa] p-5">
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3.5">
+                    {/* Final summary highlight */}
+                    <div className="p-4 sm:p-5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] font-bold tracking-wider uppercase text-emerald-800">
+                          Amount to Pay
+                        </p>
+                        <p className="text-xs text-muted-foreground font-light">
+                          Australia Delivery · GST Included
+                        </p>
+                      </div>
+                      <span className="text-2xl font-mono font-extrabold text-foreground">
+                        {formatVal(grandTotal)}
+                      </span>
+                    </div>
+
+                    {/* Action CTA */}
+                    <div className="space-y-3 pt-2">
+                      <Button
+                        type="button"
+                        onClick={handlePaySecurely}
+                        disabled={placing}
+                        className="w-full min-h-14 py-3.5 px-4 rounded-xl bg-foreground text-background hover:bg-foreground/90 text-xs sm:text-sm font-bold tracking-[0.05em] sm:tracking-[0.1em] uppercase shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-all hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 active:translate-y-0 whitespace-normal leading-snug"
+                      >
+                        {placing ? (
+                          <span className="flex items-center justify-center gap-2 text-center">
+                            <span className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin shrink-0" />
+                            Connecting to Stripe...
+                          </span>
+                        ) : (
+                          <span className="flex items-center justify-center gap-2 text-center">
+                            <Lock className="w-4 h-4 shrink-0" />
+                            <span>Pay Securely</span>
+                            <span className="opacity-50">·</span>
+                            <span className="font-mono">{formatVal(grandTotal)}</span>
+                          </span>
+                        )}
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => setAuStep(2)}
+                        disabled={placing}
+                        className="w-full py-2.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1.5 uppercase tracking-wider"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" /> Back to Order Review
+                      </button>
+                    </div>
+
+                    {/* Payment Cards & Logos (Positioned directly below payment button) */}
+                    <div className="rounded-xl border border-[#e8e8e8] bg-[#fafafa] p-4 sm:p-5">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
                         <Lock className="w-3.5 h-3.5 flex-shrink-0 text-emerald-600" />
-                        <span className="tracking-[0.05em] uppercase font-medium text-foreground">
+                        <span className="tracking-[0.05em] uppercase font-medium text-foreground text-[11px] sm:text-xs">
                           Guaranteed 256-Bit SSL Encrypted Checkout
                         </span>
                       </div>
@@ -1724,54 +1778,9 @@ const Checkout = () => {
                         </div>
                       </div>
 
-                      <p className="text-xs text-muted-foreground mt-3.5 font-light">
+                      <p className="text-[11px] text-muted-foreground mt-3 font-light">
                         You will be redirected to complete your payment securely via Stripe.
                       </p>
-                    </div>
-
-                    {/* Final summary highlight */}
-                    <div className="p-4 sm:p-5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between">
-                      <div>
-                        <p className="text-[10px] font-bold tracking-wider uppercase text-emerald-800">
-                          Amount to Pay
-                        </p>
-                        <p className="text-xs text-muted-foreground font-light">
-                          Australia Delivery · GST Included
-                        </p>
-                      </div>
-                      <span className="text-2xl font-mono font-extrabold text-foreground">
-                        {formatVal(grandTotal)}
-                      </span>
-                    </div>
-
-                    {/* Action CTA */}
-                    <div className="space-y-3 pt-2">
-                      <Button
-                        type="button"
-                        onClick={handlePaySecurely}
-                        disabled={placing}
-                        className="w-full h-14 rounded-xl bg-foreground text-background hover:bg-foreground/90 text-sm font-bold tracking-[0.1em] uppercase shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition-all hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 active:translate-y-0"
-                      >
-                        {placing ? (
-                          <span className="flex items-center gap-2">
-                            <span className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin" />
-                            Connecting to Stripe...
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-2">
-                            <Lock className="w-4 h-4" />
-                            Pay Securely — {formatVal(grandTotal)}
-                          </span>
-                        )}
-                      </Button>
-                      <button
-                        type="button"
-                        onClick={() => setAuStep(2)}
-                        disabled={placing}
-                        className="w-full py-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1.5 uppercase tracking-wider"
-                      >
-                        <ArrowLeft className="w-3.5 h-3.5" /> Back to Order Review
-                      </button>
                     </div>
                   </div>
                 )}

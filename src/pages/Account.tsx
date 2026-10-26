@@ -11,7 +11,6 @@ import { useCountry } from "@/contexts/CountryContext";
 import { useCart } from "@/contexts/CartContext";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import { useProducts } from "@/hooks/useProducts";
-import { generateInvoicePDF } from "@/utils/generateInvoicePDF";
 import ProductCard from "@/components/products/ProductCard";
 import { toast } from "@/hooks/use-toast";
 import { 
@@ -42,7 +41,7 @@ const Account = () => {
     noindex: true
   });
 
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isAdmin, signOut } = useAuth();
   const { country, setCountry, allCountries, selectedCountry, market } = useCountry();
   const { items } = useCart();
   const { items: recentlyViewedIds } = useRecentlyViewed();
@@ -66,7 +65,7 @@ const Account = () => {
       if (isAustralia && isBuyingFlow) {
         navigate("/auth?returnTo=/checkout", { replace: true });
       } else {
-        navigate("/auth", { replace: true });
+        navigate("/auth?returnTo=/account", { replace: true });
       }
     }
   }, [loading, user, selectedCountry, market, items.length, navigate]);
@@ -151,15 +150,21 @@ const Account = () => {
   }, [profile, user]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     toast({ title: "Signed out successfully" });
     navigate("/");
   };
 
   // Download invoice as PDF
-  const downloadInvoice = (order: any) => {
-    generateInvoicePDF(order);
-    toast({ title: "Invoice downloaded" });
+  const downloadInvoice = async (order: any) => {
+    try {
+      const { generateInvoicePDF } = await import("@/utils/generateInvoicePDF");
+      await generateInvoicePDF(order);
+      toast({ title: "Invoice downloaded" });
+    } catch (err: any) {
+      console.error("Failed to generate invoice PDF:", err);
+      toast({ title: "Failed to download invoice", variant: "destructive" });
+    }
   };
 
   const recentlyViewedProducts = allProducts.filter((p) => recentlyViewedIds.includes(p.id)).slice(0, 4);

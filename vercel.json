@@ -1,0 +1,80 @@
+{
+  "redirects": [
+    { "source": "/blog", "destination": "/blogs", "permanent": true },
+    { "source": "/blog/:slug", "destination": "/blogs/:slug", "permanent": true },
+    { "source": "/support", "destination": "/contact", "permanent": true },
+    { "source": "/faqs", "destination": "/faq", "permanent": true },
+    { "source": "/terms-conditions", "destination": "/terms-of-service", "permanent": true },
+    { "source": "/return-refund-policy", "destination": "/returns-policy", "permanent": true },
+    { "source": "/shipping-returns", "destination": "/shipping-policy", "permanent": true },
+    { "source": "/products", "destination": "/shop", "permanent": true },
+    { "source": "/products/hair-growth-serum", "destination": "/product/follicle-8-hair-growth-serum", "permanent": true },
+    { "source": "/products/hair-growth-shampoo", "destination": "/shop", "permanent": true },
+    { "source": "/products/:slug", "destination": "/product/:slug", "permanent": true },
+    { "source": "/blogs/dht-and-hair-loss", "destination": "/blogs/dht-and-hair-loss-explained-simply", "permanent": true },
+    { "source": "/blogs/hair-growth-routine", "destination": "/blogs/hair-growth-routine-for-thinning-hair", "permanent": true },
+    { "source": "/blogs/postpartum-hair-loss", "destination": "/blogs/postpartum-hair-loss-whats-normal-and-whats-not", "permanent": true },
+    { "source": "/blogs/stress-hair-loss", "destination": "/blogs/how-stress-actually-affects-your-hair", "permanent": true },
+    { "source": "/blogs/why-is-my-hair-thinning", "destination": "/blogs/why-is-my-hair-thinning-7-real-causes", "permanent": true },
+    { "source": "/blogs/best-ingredients-for-hair-regrowth", "destination": "/blogs/best-ingredients-for-hair-regrowth-according-to-research", "permanent": true }
+  ],
+  "headers": [
+    {
+      "source": "/(.*sitemap.*\\.xml)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/xml; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    },
+    {
+      "source": "/fonts/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(ico|webp|png|jpg|jpeg|svg|webmanifest)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)\\.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    }
+  ]
+}
