@@ -113,7 +113,7 @@ export interface OrderFilterState {
 }
 
 /**
- * Meta Pixel / Conversions API Custom Audience format
+ * Meta Ads Custom Audience CSV format
  * Columns required: email, phone, fn, ln, ct, st, zp, country, value, currency
  */
 export interface MetaAudienceExportRow {

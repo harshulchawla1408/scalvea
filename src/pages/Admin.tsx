@@ -42,23 +42,32 @@ const Admin = () => {
     noindex: true
   });
 
-  const { user, loading, isAdmin, signOut } = useAuth();
+  const { user, loading, isAdmin, isAdminLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [activePage, setActivePage] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !isAdminLoading) {
       if (!user) {
         navigate("/auth?returnTo=/admin", { replace: true });
       } else if (!isAdmin) {
-        toast({ title: "Access denied", description: "Admin privileges required.", variant: "destructive" });
         navigate("/", { replace: true });
       }
     }
-  }, [loading, user, isAdmin, navigate]);
+  }, [loading, isAdminLoading, user, isAdmin, navigate]);
 
-  if (loading) return (<div className="min-h-screen bg-background flex items-center justify-center"><div className="space-y-3 w-64"><div className="h-6 bg-muted animate-pulse" /><div className="h-4 bg-muted animate-pulse w-3/4" /><div className="h-4 bg-muted animate-pulse w-1/2" /></div></div>);
+  if (loading || isAdminLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="space-y-3 w-64">
+          <div className="h-6 bg-muted animate-pulse" />
+          <div className="h-4 bg-muted animate-pulse w-3/4" />
+          <div className="h-4 bg-muted animate-pulse w-1/2" />
+        </div>
+      </div>
+    );
+  }
   if (!user || !isAdmin) return null;
 
   const handleSignOut = async () => {

@@ -101,8 +101,44 @@ const IMAGE_CONFIGS = [
     sizes: '(max-width: 640px) 280px, (max-width: 1024px) 380px, 480px'
   },
   {
+    name: 'follicle2',
+    widths: [320, 480, 800],
+    quality: 82,
+    sizes: '(max-width: 640px) 280px, (max-width: 1024px) 380px, 480px'
+  },
+  {
+    name: 'follicle3',
+    widths: [320, 480, 800],
+    quality: 82,
+    sizes: '(max-width: 640px) 280px, (max-width: 1024px) 380px, 480px'
+  },
+  {
+    name: 'follicle4',
+    widths: [320, 480, 800],
+    quality: 82,
+    sizes: '(max-width: 640px) 280px, (max-width: 1024px) 380px, 480px'
+  },
+  {
     name: 'prod2', // Scalp-5
     widths: [320, 480, 640, 800],
+    quality: 82,
+    sizes: '(max-width: 640px) 280px, (max-width: 1024px) 380px, 480px'
+  },
+  {
+    name: 'scalp2',
+    widths: [320, 480, 800],
+    quality: 82,
+    sizes: '(max-width: 640px) 280px, (max-width: 1024px) 380px, 480px'
+  },
+  {
+    name: 'scalp3',
+    widths: [320, 480, 800],
+    quality: 82,
+    sizes: '(max-width: 640px) 280px, (max-width: 1024px) 380px, 480px'
+  },
+  {
+    name: 'scalp4',
+    widths: [320, 480, 800],
     quality: 82,
     sizes: '(max-width: 640px) 280px, (max-width: 1024px) 380px, 480px'
   },

@@ -41,7 +41,7 @@ const Account = () => {
     noindex: true
   });
 
-  const { user, loading, isAdmin, signOut } = useAuth();
+  const { user, loading, isAdmin, authStatus, signOut } = useAuth();
   const { country, setCountry, allCountries, selectedCountry, market } = useCountry();
   const { items } = useCart();
   const { items: recentlyViewedIds } = useRecentlyViewed();
@@ -55,20 +55,20 @@ const Account = () => {
   const [activeTab, setActiveTab] = useState("profile");
 
   useEffect(() => {
-    if (!loading && !user) {
+    // Only redirect if auth status has fully resolved as unauthenticated
+    if (authStatus === "UNAUTHENTICATED" && !user && !loading) {
       const isAustralia = selectedCountry === "australia" || market === "AU";
-      const isBuyingFlow =
+      const isExplicitBuyingFlow =
         sessionStorage.getItem("scalvea_buying_flow") === "true" ||
-        localStorage.getItem("scalvea_buying_flow") === "true" ||
-        items.length > 0;
+        localStorage.getItem("scalvea_buying_flow") === "true";
 
-      if (isAustralia && isBuyingFlow) {
+      if (isAustralia && isExplicitBuyingFlow) {
         navigate("/auth?returnTo=/checkout", { replace: true });
       } else {
         navigate("/auth?returnTo=/account", { replace: true });
       }
     }
-  }, [loading, user, selectedCountry, market, items.length, navigate]);
+  }, [authStatus, loading, user, selectedCountry, market, navigate]);
 
   // Real-time Postgres changes for orders
   useEffect(() => {

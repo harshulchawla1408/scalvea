@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 import { useCountry } from "@/contexts/CountryContext";
 import { prod1Set, prod2Set, type ResponsiveImageSet } from "@/assets/generated";
-import { getOptimizedImageUrl, getOptimizedImageSrcSet } from "@/utils/imageOptimizer";
+import { getOptimizedImageUrl, getOptimizedImageSrcSet, getFallbackProductImageUrl } from "@/utils/imageOptimizer";
 
 interface ProductShowcaseConfig {
   id: string;
@@ -145,6 +145,14 @@ export default function ShopByConcern() {
                         className="showcase-img w-full max-w-[280px] sm:max-w-[310px] md:max-w-[330px] h-auto object-contain rounded-lg"
                         loading="lazy"
                         decoding="async"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          const fallback = getFallbackProductImageUrl(item.productName);
+                          if (target.src !== fallback) {
+                            target.src = fallback;
+                            target.removeAttribute("srcset");
+                          }
+                        }}
                       />
                     </div>
                   </div>

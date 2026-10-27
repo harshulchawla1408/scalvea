@@ -10,6 +10,9 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { PageLoader } from "./components/ui/page-loader";
 import BottomNav from "./components/layout/BottomNav";
 
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import AdminRoute from "./components/auth/AdminRoute";
+
 const Index = lazy(() => import("./pages/Index"));
 const Shop = lazy(() => import("./pages/Shop"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
@@ -74,9 +77,23 @@ const AppRoutes = () => (
         {/* /support redirects to /contact */}
         <Route path="/support" element={<Navigate replace to="/contact" />} />
         <Route path="/auth" element={<Auth />} />
-        <Route path="/account" element={<Account />} />
+        <Route
+          path="/account"
+          element={
+            <ProtectedRoute>
+              <Account />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/admin/*" element={<Admin />} />
+        <Route
+          path="/admin/*"
+          element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          }
+        />
         <Route path="/payment-policy" element={<PaymentPolicy />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         {/* Terms: /terms-of-service is canonical */}

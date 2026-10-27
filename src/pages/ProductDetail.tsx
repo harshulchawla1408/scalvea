@@ -28,8 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import IngredientShowcase from "@/components/products/IngredientShowcase";
 import amazonInLogo from "@/assets/Amazon.in-Logo.webp";
-import amazonAuLogo from "@/assets/au.webp";
-import { getOptimizedImageUrl, getOptimizedImageSrcSet } from "@/utils/imageOptimizer";
+import { getOptimizedImageUrl, getOptimizedImageSrcSet, getFallbackProductImageUrl } from "@/utils/imageOptimizer";
 
 /* ─── Scroll-reveal hook ─── */
 function useReveal() {
@@ -792,6 +791,14 @@ const ProductDetail = () => {
                     fetchpriority="high"
                     decoding="sync"
                     className="w-full h-full object-contain object-center transition-transform duration-500 group-hover:scale-[1.03]"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      const fallback = getFallbackProductImageUrl(product.name);
+                      if (target.src !== fallback) {
+                        target.src = fallback;
+                        target.removeAttribute("srcset");
+                      }
+                    }}
                   />
                 )}
                 {product.badge && (
@@ -834,6 +841,14 @@ const ProductDetail = () => {
                           loading="lazy"
                           decoding="async"
                           className="w-full h-full object-contain p-1"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            const fallback = getFallbackProductImageUrl(product.name);
+                            if (target.src !== fallback) {
+                              target.src = fallback;
+                              target.removeAttribute("srcset");
+                            }
+                          }}
                         />
                       )}
                     </button>

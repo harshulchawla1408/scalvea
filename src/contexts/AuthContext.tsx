@@ -25,23 +25,66 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const STORAGE_KEY = "sb-dtehgajreecaonqalxlf-auth-token";
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [authStatus, setAuthStatus] = useState<AuthStatus>("INITIALIZING");
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isAdminLoading, setIsAdminLoading] = useState(false);
+  // Synchronous probe from localStorage on initial render to prevent flash
+  const getInitialState = () => {
+    if (typeof window === "undefined") {
+      return { initialUser: null, initialSession: null, initialAdmin: false };
+    }
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.user) {
+          const cachedAdmin = window.sessionStorage.getItem(`scalvea_admin_${parsed.user.id}`) === "true";
+          return {
+            initialUser: parsed.user as User,
+            initialSession: parsed as Session,
+            initialAdmin: cachedAdmin,
+          };
+        }
+      }
+    } catch {}
+    return { initialUser: null, initialSession: null, initialAdmin: false };
+  };
+
+  const initial = getInitialState();
+
+  const [user, setUser] = useState<User | null>(initial.initialUser);
+  const [session, setSession] = useState<Session | null>(initial.initialSession);
+  const [authStatus, setAuthStatus] = useState<AuthStatus>(
+    initial.initialUser ? "AUTHENTICATED" : "INITIALIZING"
+  );
+  const [isAdmin, setIsAdmin] = useState<boolean>(initial.initialAdmin);
+  const [isAdminLoading, setIsAdminLoading] = useState<boolean>(false);
 
   const isMountedRef = useRef(true);
-  const adminCache = useRef<Record<string, boolean>>({});
+  const userRef = useRef<User | null>(initial.initialUser);
+  const adminCache = useRef<Record<string, boolean>>(
+    initial.initialUser && initial.initialAdmin ? { [initial.initialUser.id]: true } : {}
+  );
   const initialProcessed = useRef(false);
   const pendingAdminCheckId = useRef<string | null>(null);
 
-  // Check admin role securely via user_roles table
+  // Check admin role securely via user_roles table with multi-layer caching
   const checkAdminRole = useCallback(async (userId: string): Promise<boolean> => {
+    // 1. In-memory cache
     if (adminCache.current[userId] !== undefined) {
       return adminCache.current[userId];
     }
+    // 2. SessionStorage cache (preserves verified admin state across page refreshes)
+    try {
+      if (typeof window !== "undefined") {
+        const cached = window.sessionStorage.getItem(`scalvea_admin_${userId}`);
+        if (cached === "true") {
+          adminCache.current[userId] = true;
+          return true;
+        }
+      }
+    } catch {}
+
     try {
       const { data, error } = await supabase
         .from("user_roles")
@@ -52,10 +95,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.warn("[AuthContext] Admin verification query failed:", error.message);
+        // Do not immediately strip admin on transient network error if previously verified in session
+        if (typeof window !== "undefined") {
+          const cached = window.sessionStorage.getItem(`scalvea_admin_${userId}`);
+          if (cached === "true") return true;
+        }
         return false;
       }
+
       const isRoleAdmin = !!data;
       adminCache.current[userId] = isRoleAdmin;
+
+      if (typeof window !== "undefined") {
+        try {
+          if (isRoleAdmin) {
+            window.sessionStorage.setItem(`scalvea_admin_${userId}`, "true");
+          } else {
+            window.sessionStorage.removeItem(`scalvea_admin_${userId}`);
+          }
+        } catch {}
+      }
+
       return isRoleAdmin;
     } catch (err) {
       console.error("[AuthContext] Unexpected error during admin verification:", err);
@@ -69,16 +129,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!isMountedRef.current) return;
 
       const currentUser = currentSession?.user ?? null;
+      const prevUser = userRef.current;
+
+      userRef.current = currentUser;
       setSession(currentSession);
       setUser(currentUser);
 
       if (currentUser) {
         setAuthStatus("AUTHENTICATED");
+
+        // If this is a TOKEN_REFRESHED event for the exact same active user,
+        // do not reset admin loading or trigger UI unmounts!
+        if (event === "TOKEN_REFRESHED" && prevUser?.id === currentUser.id && adminCache.current[currentUser.id] !== undefined) {
+          return;
+        }
+
+        // Check if admin status is already verified in memory or sessionStorage
+        let cachedAdmin = adminCache.current[currentUser.id];
+        if (cachedAdmin === undefined && typeof window !== "undefined") {
+          try {
+            if (window.sessionStorage.getItem(`scalvea_admin_${currentUser.id}`) === "true") {
+              cachedAdmin = true;
+              adminCache.current[currentUser.id] = true;
+            }
+          } catch {}
+        }
+
+        if (cachedAdmin !== undefined) {
+          setIsAdmin(cachedAdmin);
+          setIsAdminLoading(false);
+          return;
+        }
+
         setIsAdminLoading(true);
         pendingAdminCheckId.current = currentUser.id;
 
-        // CRITICAL: Defer the async database query outside of onAuthStateChange
-        // to prevent client-side lock deadlocks during session transitions.
+        // Defer database query outside of auth event loop to prevent deadlocks
         setTimeout(async () => {
           if (!isMountedRef.current) return;
           if (pendingAdminCheckId.current !== currentUser.id) return;
@@ -110,7 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       applySession(newSession, event);
     });
 
-    // 2. Initial session check on mount with safety fallback
+    // 2. Authoritative initial getSession call
     supabase.auth
       .getSession()
       .then(({ data: { session: existingSession }, error }) => {
@@ -118,29 +204,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) {
           console.warn("[AuthContext] getSession error on mount:", error.message);
         }
-        // Only apply if onAuthStateChange hasn't already fired INITIAL_SESSION
-        if (!initialProcessed.current) {
-          initialProcessed.current = true;
-          applySession(existingSession, "INITIAL_SESSION_FALLBACK");
-        }
+        initialProcessed.current = true;
+        applySession(existingSession, "GET_SESSION_INITIAL");
       })
       .catch((err) => {
-        console.error("[AuthContext] getSession threw an error:", err);
+        console.error("[AuthContext] getSession error:", err);
         if (!initialProcessed.current && isMountedRef.current) {
           initialProcessed.current = true;
           applySession(null, "INITIAL_SESSION_ERROR");
         }
       });
 
-    // 3. Safety timeout: guarantee that initial loading resolves within 4s max
-    // even on extreme network throttling or offline states
+    // 3. Safety timeout: guarantee that initial loading resolves within 5s
     const safetyTimeout = setTimeout(() => {
       if (!initialProcessed.current && isMountedRef.current) {
         initialProcessed.current = true;
         setAuthStatus((prev) => (prev === "INITIALIZING" ? "UNAUTHENTICATED" : prev));
         setIsAdminLoading(false);
       }
-    }, 4000);
+    }, 5000);
 
     return () => {
       isMountedRef.current = false;
@@ -151,8 +233,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
+      const currentId = userRef.current?.id;
+      if (currentId && typeof window !== "undefined") {
+        try {
+          window.sessionStorage.removeItem(`scalvea_admin_${currentId}`);
+        } catch {}
+      }
       adminCache.current = {};
       pendingAdminCheckId.current = null;
+      userRef.current = null;
       setIsAdmin(false);
       setIsAdminLoading(false);
       setUser(null);
@@ -176,7 +265,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [applySession]);
 
-  // loading is true while initializing, or while a logged-in user is awaiting admin role verification
+  // loading is true ONLY while initializing initial session, or while logged-in user awaits admin check
   const loading = authStatus === "INITIALIZING" || (!!user && isAdminLoading);
 
   return (

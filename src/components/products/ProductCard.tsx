@@ -5,7 +5,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useCountry } from "@/contexts/CountryContext";
 import type { DBProduct } from "@/hooks/useProducts";
-import { getOptimizedImageUrl, getOptimizedImageSrcSet } from "@/utils/imageOptimizer";
+import { getOptimizedImageUrl, getOptimizedImageSrcSet, getFallbackProductImageUrl } from "@/utils/imageOptimizer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface ProductCardProps {
@@ -28,9 +28,10 @@ interface ProductCardProps {
     inventory?: number;
     colors?: string[];
   };
+  priority?: boolean;
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
+const ProductCard = ({ product, priority = false }: ProductCardProps) => {
   const { addItem } = useCart();
   const { toggleItem, isInWishlist } = useWishlist();
   const { formatPrice } = useCountry();
@@ -136,8 +137,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 width="480"
                 height="600"
                 className="w-full h-full object-contain object-center transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-                loading="lazy"
-                decoding="async"
+                loading={priority ? "eager" : "lazy"}
+                fetchpriority={priority ? "high" : "low"}
+                decoding={priority ? "sync" : "async"}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  const fallback = getFallbackProductImageUrl(product.name);
+                  if (target.src !== fallback) {
+                    target.src = fallback;
+                    target.removeAttribute("srcset");
+                  }
+                }}
               />
             </div>
 

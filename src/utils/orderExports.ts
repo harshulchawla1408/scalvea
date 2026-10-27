@@ -4,7 +4,7 @@
  * Secure, Excel-compatible CSV export utilities for Scalvea Admin Orders.
  * - Formula injection prevention (prepends single quote to '=', '+', '-', '@')
  * - UTF-8 BOM (\uFEFF) for Microsoft Excel compatibility
- * - Meta Pixel / Conversions API custom audience value-based export
+ * - Meta Ads custom audience value-based CSV export
  * - Preserves leading zeros on postcodes and phone numbers
  */
 
@@ -159,7 +159,7 @@ export function exportOrdersComprehensiveCSV(orders: NormalizedOrder[], filename
 }
 
 /**
- * Exports Meta Ads / Conversions API Value-Based Custom Audience.
+ * Exports Meta Ads Value-Based Custom Audience CSV.
  * Columns: email,phone,fn,ln,ct,st,zp,country,value,currency
  * Restricted to verified, eligible paid orders (excludes cancelled and refunded orders).
  */

@@ -71,7 +71,7 @@ export async function syncCartNow(params: SyncCartParams): Promise<void> {
   // Consistent Event ID for browser / server deduplication with Meta & GTM
   const eventId = params.eventId || `cart_${eventName}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-  // Capture First-Party Meta Cookies for Enhanced CAPI Match Quality
+  // Capture First-Party Meta Attribution Cookies (_fbp, _fbc)
   const fbp = getMetaCookie("_fbp");
   const fbc = getMetaCookie("_fbc");
 

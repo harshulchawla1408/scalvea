@@ -13,7 +13,6 @@
 import Stripe from "npm:stripe@^22";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendOrderEmails } from "../_shared/shiprocket-mapper.ts";
-import { sendMetaCapiEvent } from "../_shared/meta-capi.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!);
 const cryptoProvider = Stripe.createSubtleCryptoProvider();
@@ -318,40 +317,6 @@ async function handlePaymentSuccess(event: Stripe.Event, supabase: any) {
     console.error("Email sending failed (non-fatal):", emailErr.message);
   }
 
-  // ── Meta Conversions API (CAPI): Purchase Event ───────────────────────────
-  try {
-    await sendMetaCapiEvent({
-      eventName: "Purchase",
-      eventId: `purchase-${newOrder.id}`,
-      eventSourceUrl: "https://scalvea.com/checkout",
-      userData: {
-        email: customerEmail,
-        phone: customerPhone,
-        firstName,
-        lastName,
-        city,
-        state,
-        postcode,
-        country: "AU",
-      },
-      customData: {
-        currency: "AUD",
-        value: Number(newOrder.total_amount),
-        order_id: newOrder.order_number,
-        content_type: "product",
-        content_ids: orderItemsToInsert.map((item: any) => item.product_id),
-        contents: orderItemsToInsert.map((item: any) => ({
-          id: item.product_id,
-          quantity: item.quantity,
-          item_price: item.price,
-        })),
-        num_items: orderItemsToInsert.reduce((sum: number, item: any) => sum + item.quantity, 0),
-      },
-    });
-    console.log(`✅ Meta CAPI Purchase event dispatched for order: ${newOrder.order_number}`);
-  } catch (capiErr: any) {
-    console.error("Meta CAPI dispatch failed (non-fatal):", capiErr.message);
-  }
 }
 
 // ─── Payment Failure ──────────────────────────────────────────────────────────
